@@ -7,7 +7,7 @@ const BASE =
 
 export const api = axios.create({
   baseURL: BASE.replace(/\/+$/, ""), // 끝 슬래시 제거해 이중 // 방지
-  withCredentials: true,             // 토큰/쿠키 쓰면 유지, 아니면 빼도 OK
+  withCredentials: false,             // 토큰/쿠키 쓰면 유지, 아니면 빼도 OK
 });
 
 api.interceptors.request.use((config) => {
