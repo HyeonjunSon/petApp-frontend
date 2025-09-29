@@ -1,0 +1,4 @@
+.card{background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;max-width:720px}
+.row{display:grid;grid-template-columns:1fr 100px;gap:8px;margin-top:8px}
+.input{padding:10px;border:1px solid #ccc;border-radius:8px}
+.btn{padding:10px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer}
