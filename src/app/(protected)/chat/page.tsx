@@ -58,12 +58,23 @@ export default function ChatPage() {
     })();
   }, []);
 
+ 
+  useEffect(() => {
+    if (!myId) return;
+
+    const token = localStorage.getItem("token") || "";
+    socket.auth = { token };
+    socket.connect();
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [myId]);
+ 
   // =========================
   // (A) 메시지 수신 (이벤트명: "message:new")
   // =========================
   useEffect(() => {
-    if (!socket.connected) socket.connect();
-
     const onNew = (m: Message) => {
       // 다른 방의 메시지면 -> 해당 매치 안읽음 +1, 마지막 메시지 갱신만 하고 종료
       if (m.match !== current) {
@@ -296,10 +307,13 @@ export default function ChatPage() {
   const partnerName = partner?.name || "";
 
   const partnerPets = useMemo(() => {
-  const list =
-    (partner?.ownedPets?.length ? partner.ownedPets : partner?.pets) || [];
-  return list.map(p => p?.name).filter(Boolean).join(", ");
-}, [partner]);
+    const list =
+      (partner?.ownedPets?.length ? partner.ownedPets : partner?.pets) || [];
+    return list
+      .map((p) => p?.name)
+      .filter(Boolean)
+      .join(", ");
+  }, [partner]);
 
   // (B) 전송(ACK로 tempId 치환) + from 포함
   const send = async () => {
