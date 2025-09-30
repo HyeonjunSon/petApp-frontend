@@ -14,7 +14,7 @@ const BASE = normalizeBase(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 export const api = axios.create({
   baseURL: BASE,
-  withCredentials: false,
+  withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
