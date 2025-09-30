@@ -1,3 +1,4 @@
+// frontend/app/pets/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +8,14 @@ import type { Pet } from "@/types/pet";
 type Species = "dog" | "cat" | "other";
 type Sex = "male" | "female" | "unknown";
 type Size = "s" | "m" | "l";
+
+/** Cloudinary 썸네일 변환 & 캐시버스트 헬퍼 */
+const cdnThumb = (url: string, w = 300, h = 300) =>
+  url?.includes("/upload/")
+    ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`)
+    : url;
+const bust = (url: string, v: number) =>
+  !url ? url : url.includes("?") ? `${url}&v=${v}` : `${url}?v=${v}`;
 
 export default function PetsPage() {
   const [pets, setPets] = useState<Pet[]>([]);
@@ -20,8 +29,21 @@ export default function PetsPage() {
   const [temperament, setTemperament] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
+  // 이미지 갱신용 버전 (업로드 후 화면 즉시 반영)
+  const [ver, setVer] = useState(0);
+
   const temperOptions = useMemo(
-    () => ["친화적", "활발함", "차분함", "사교적", "훈련중", "산책러버", "장난꾸러기", "고양이친화", "강아지친화"],
+    () => [
+      "친화적",
+      "활발함",
+      "차분함",
+      "사교적",
+      "훈련중",
+      "산책러버",
+      "장난꾸러기",
+      "고양이친화",
+      "강아지친화",
+    ],
     []
   );
 
@@ -29,11 +51,13 @@ export default function PetsPage() {
     const { data } = await api.get("/pets");
     setPets(data);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const toggleTemper = (t: string) => {
-    setTemperament(prev => {
-      if (prev.includes(t)) return prev.filter(x => x !== t);
+    setTemperament((prev) => {
+      if (prev.includes(t)) return prev.filter((x) => x !== t);
       if (prev.length >= 5) return prev;
       return [...prev, t];
     });
@@ -53,8 +77,14 @@ export default function PetsPage() {
         size,
         temperament,
       });
-      setName(""); setAbout(""); setBreed(""); setAge("");
-      setSex("unknown"); setSize("m"); setSpecies("dog"); setTemperament([]);
+      setName("");
+      setAbout("");
+      setBreed("");
+      setAge("");
+      setSex("unknown");
+      setSize("m");
+      setSpecies("dog");
+      setTemperament([]);
       await load();
     } finally {
       setSaving(false);
@@ -72,13 +102,30 @@ export default function PetsPage() {
     await load();
   };
 
+  /** Cloudinary 서버 라우트로 전송 (서버: multer.memoryStorage + cloudinary.uploader.upload_stream) */
   const upload = async (petId: string, file?: File) => {
     if (!file) return;
+
+    // 타입/크기 가드
+    if (!/^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/.test(file.type)) {
+      alert("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert("파일 크기는 최대 10MB입니다.");
+      return;
+    }
+
     const fd = new FormData();
     fd.append("photo", file);
     fd.append("type", "pet");
-    await api.post(`/pets/${petId}/photo`, fd);
-    await load();
+
+    await api.post(`/pets/${petId}/photo`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    await load(); // 목록 새로고침
+    setVer((v) => v + 1); // 캐시버스트
   };
 
   return (
@@ -87,7 +134,9 @@ export default function PetsPage() {
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">내 펫</h1>
-          <p className="mt-1 text-sm text-slate-600">매칭에 필요한 최소 정보만 빠르게 등록하세요.</p>
+          <p className="mt-1 text-sm text-slate-600">
+            매칭에 필요한 최소 정보만 빠르게 등록하세요.
+          </p>
         </div>
         <a
           href="#"
@@ -146,7 +195,11 @@ export default function PetsPage() {
               placeholder="예: 2"
               value={age}
               onChange={(e) =>
-                setAge(e.target.value === "" ? "" : Math.max(0, Math.min(30, Number(e.target.value))))
+                setAge(
+                  e.target.value === ""
+                    ? ""
+                    : Math.max(0, Math.min(30, Number(e.target.value)))
+                )
               }
             />
           </div>
@@ -212,7 +265,9 @@ export default function PetsPage() {
                 );
               })}
             </div>
-            <div className="mt-1 text-xs text-slate-500">{temperament.length}/5 선택됨</div>
+            <div className="mt-1 text-xs text-slate-500">
+              {temperament.length}/5 선택됨
+            </div>
           </div>
         </div>
 
@@ -222,7 +277,9 @@ export default function PetsPage() {
             disabled={saving || !name.trim()}
             className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving && <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />}
+            {saving && (
+              <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
+            )}
             등록
           </button>
         </div>
@@ -240,18 +297,24 @@ export default function PetsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="truncate text-base font-semibold">{p.name}</h3>
+                      <h3 className="truncate text-base font-semibold">
+                        {p.name}
+                      </h3>
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
                         {labelSpecies(p.species)}
                       </span>
                     </div>
                     <div className="mt-1 truncate text-xs text-slate-500">
-                      {(p.breed || "품종 미상")} · {labelSize(p.size)} · {labelSex(p.sex)} {p.age ? `· ${p.age}살` : ""}
+                      {(p.breed || "품종 미상")} · {labelSize(p.size)} ·{" "}
+                      {labelSex(p.sex)} {p.age ? `· ${p.age}살` : ""}
                     </div>
-                    {!!(p.temperament?.length) && (
+                    {!!p.temperament?.length && (
                       <div className="mt-2 flex flex-wrap gap-1">
                         {p.temperament.slice(0, 5).map((t: string, i: number) => (
-                          <span key={i} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700">
+                          <span
+                            key={i}
+                            className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700"
+                          >
                             {t}
                           </span>
                         ))}
@@ -260,7 +323,9 @@ export default function PetsPage() {
                   </div>
                 </div>
 
-                {p.about && <p className="mt-3 text-sm text-slate-700">{p.about}</p>}
+                {p.about && (
+                  <p className="mt-3 text-sm text-slate-700">{p.about}</p>
+                )}
 
                 {/* 사진 업로드 */}
                 <div className="mt-3">
@@ -276,12 +341,25 @@ export default function PetsPage() {
                 </div>
 
                 {/* 갤러리 */}
-                {!!(p.photos?.length) && (
+                {!!p.photos?.length && (
                   <div className="mt-3 grid grid-cols-3 gap-2">
-                    {p.photos.slice(0, 3).map((ph: any, idx: number) => (
+                    {p.photos.slice(0, 3).map((ph: any, idx: number) => {
+                      const srcRaw = ph?.url || "/img/placeholder.png";
+                      const src = bust(cdnThumb(srcRaw, 300, 300), ver);
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img key={idx} src={ph.url} alt="" className="h-24 w-full rounded-lg border object-cover" />
-                    ))}
+                      return (
+                        <img
+                          key={idx}
+                          src={src}
+                          alt=""
+                          className="h-24 w-full rounded-lg border object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "/img/placeholder.png";
+                          }}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -318,8 +396,18 @@ export default function PetsPage() {
 
 /* ---------- 작은 컴포넌트 & helpers ---------- */
 
-function Label({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`mb-1 text-sm font-medium text-slate-700 ${className}`}>{children}</div>;
+function Label({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`mb-1 text-sm font-medium text-slate-700 ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 function labelSpecies(s?: string) {

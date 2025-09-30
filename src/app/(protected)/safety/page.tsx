@@ -1,6 +1,7 @@
+// frontend/app/report-block/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 
 type Block = { _id: string; targetId: string; createdAt: string };
@@ -22,6 +23,11 @@ const CATEGORIES = [
   "스토킹/위협",
   "기타",
 ] as const;
+
+/** ---- 증거 파일 클라이언트 가드 ---- */
+const MAX_FILES = 20;
+const MAX_SIZE = 25 * 1024 * 1024; // 25MB
+const ALLOWED = /^(image|video|audio)\//;
 
 export default function ReportBlockPage() {
   // 공통 상태
@@ -83,6 +89,23 @@ export default function ReportBlockPage() {
     }
   };
 
+  const onPickFiles = (picked: FileList | null) => {
+    const arr = Array.from(picked || []);
+    // 타입/크기/개수 가드
+    const badType = arr.find((f) => !ALLOWED.test(f.type));
+    if (badType) {
+      setToast("이미지/영상/음성 파일만 업로드 가능합니다.");
+      return;
+    }
+    const tooBig = arr.find((f) => f.size > MAX_SIZE);
+    if (tooBig) {
+      setToast("파일당 최대 25MB 까지 업로드할 수 있어요.");
+      return;
+    }
+    const next = [...files, ...arr].slice(0, MAX_FILES);
+    setFiles(next);
+  };
+
   const submitReport = async () => {
     const id = reportId.trim();
     const why = reason.trim();
@@ -94,25 +117,30 @@ export default function ReportBlockPage() {
     setSending(true);
     try {
       let evidenceUrls: string[] | undefined;
+
       if (files.length) {
         const fd = new FormData();
         files.forEach((f) => fd.append("evidences", f));
-        // 서버 업로드 엔드포인트 예시
-        const up = await api.post<{ urls: string[] }>("/uploads/evidences", fd, {
+        // ✅ Cloudinary 업로드 라우트(서버 구현 필요): resource_type:auto 로 이미지/영상/오디오 허용
+        const up = await api.post<{ urls: string[] }>("/reports/evidences", fd, {
           headers: { "Content-Type": "multipart/form-data" },
         });
         evidenceUrls = up.data.urls;
       }
+
       await api.post("/reports", {
         targetId: id,
         category,
         reason: why,
         evidenceUrls,
       });
+
+      // 폼 리셋
       setReportId("");
       setCategory(CATEGORIES[0]);
       setReason("");
       setFiles([]);
+
       setToast("신고가 접수되었습니다.");
       loadReports();
     } catch (e) {
@@ -253,18 +281,19 @@ export default function ReportBlockPage() {
 
               <div className="col-span-12">
                 <Label>
-                  증거 파일(선택) <span className="text-slate-400">(이미지/영상/녹음 등)</span>
+                  증거 파일(선택) <span className="text-slate-400">(이미지/영상/녹음 등, 최대 20개/개당 25MB)</span>
                 </Label>
                 <input
                   type="file"
                   multiple
                   accept="image/*,video/*,audio/*"
-                  onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                  onChange={(e) => onPickFiles(e.target.files)}
                   className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:border-slate-400"
                 />
                 {files.length > 0 && (
                   <div className="mt-2 text-xs text-slate-500">
-                    {files.length}개 선택됨 ({Math.round(files.reduce((a, f) => a + f.size, 0) / 1024)}KB)
+                    {files.length}개 선택됨 (
+                    {Math.round(files.reduce((a, f) => a + f.size, 0) / 1024)}KB)
                   </div>
                 )}
               </div>

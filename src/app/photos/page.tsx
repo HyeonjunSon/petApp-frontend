@@ -1,28 +1,43 @@
+// frontend/app/photos/page.tsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 
 type Photo = {
   _id: string;
-  url: string;          // ex) /uploads/xxx.jpg  (서버 상대경로)
-  originalName: string;
-  size: number;
+  url: string;          // Cloudinary secure_url (또는 과거 /uploads/상대경로가 섞여 있을 수 있음)
+  originalName?: string;
+  size?: number;
   createdAt: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
-// 업로드 정적 경로는 /api 를 제거한 베이스에 붙입니다. → http://localhost:5050 + /uploads/xxx
-const UPLOAD_BASE = API_BASE.replace(/\/api\/?$/, "");
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
+const ORIGIN = API_BASE.replace(/\/api\/?$/, "");
+
+// Cloudinary 썸네일 변환: /upload/ → /upload/c_fill,w_320,h_320/
+const cdnThumb = (url: string, w = 320, h = 320) =>
+  url?.includes("/upload/")
+    ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`)
+    : url;
+
+// 상대경로(/uploads/...) 대비용 안전 가드
+const toAbs = (u?: string) => (!u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`);
+
+// 파일 업로드 클라이언트 가드
+const ALLOWED = /^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/;
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function PhotosPage() {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null); // 로컬 미리보기
+  const [preview, setPreview] = useState<string | null>(null);
   const [list, setList] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [ver, setVer] = useState(0); // 캐시버스터
 
   const fetchList = async () => {
     try {
@@ -58,13 +73,32 @@ export default function PhotosPage() {
 
   const upload = async () => {
     if (!file) return;
+
+    // 타입/크기 가드
+    if (!ALLOWED.test(file.type)) {
+      alert("이미지 파일만 업로드 가능합니다.");
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      alert("파일 크기는 최대 10MB까지 가능합니다.");
+      return;
+    }
+
     setUploading(true);
     try {
       const fd = new FormData();
       fd.append("photo", file);
-      await api.post("/photos", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      // 필요하면 type 추가: fd.append("type", "other");
+
+      // ✅ 서버 측은 Cloudinary 업로드 라우트여야 함 (/api/photos)
+      //   응답 예: { ok: true, photo: { _id, url, publicId, ... } }
+      await api.post("/photos", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       onPick(null);
       await fetchList();
+      setVer((v) => v + 1); // 캐시버스트
     } catch (e) {
       alert("업로드 실패");
       console.error(e);
@@ -77,6 +111,7 @@ export default function PhotosPage() {
     if (!confirm("삭제할까요?")) return;
     await api.delete(`/photos/${id}`);
     await fetchList();
+    setVer((v) => v + 1);
   };
 
   return (
@@ -88,7 +123,10 @@ export default function PhotosPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           {/* 드래그&드롭 + 파일선택 */}
           <label
-            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
             className={`flex-1 cursor-pointer rounded-xl border px-4 py-3 text-slate-600 ${
@@ -101,7 +139,10 @@ export default function PhotosPage() {
               </span>
               <button
                 type="button"
-                onClick={(e) => { e.preventDefault(); inputRef.current?.click(); }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }}
                 className="rounded-md border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
               >
                 사진 선택
@@ -129,9 +170,10 @@ export default function PhotosPage() {
         {/* 로컬 미리보기 */}
         {preview && (
           <div className="mt-4">
-            <div className="text-sm mb-2 text-slate-500">미리보기</div>
-            <div className="rounded-xl border border-slate-200 p-3 w-64 bg-slate-50">
-              {/* 로컬 blob URL → 미리보기는 UPLOAD_BASE 불필요 */}
+            <div className="mb-2 text-sm text-slate-500">미리보기</div>
+            <div className="w-64 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              {/* 로컬 blob URL → 미리보기는 절대경로 변환 불필요 */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="preview" className="h-40 w-full rounded-md object-cover" />
               <div className="mt-2 truncate text-sm">{file?.name}</div>
               <div className="text-xs text-slate-500">
@@ -149,24 +191,35 @@ export default function PhotosPage() {
         <div className="text-slate-500">아직 업로드된 사진이 없습니다.</div>
       ) : (
         <ul className="grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {list.map((p) => (
-            <li key={p._id} className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-              {/* 서버 상대경로 → 절대경로로 변환 */}
-              <img
-                src={`${UPLOAD_BASE}${p.url}`}
-                alt={p.originalName}
-                className="h-44 w-full rounded-lg object-cover"
-              />
-              <div className="mt-2 truncate text-sm">{p.originalName}</div>
-              <div className="text-xs text-slate-500">{Math.round(p.size / 1024)} KB</div>
-              <button
-                className="mt-2 w-full rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
-                onClick={() => remove(p._id)}
-              >
-                삭제
-              </button>
-            </li>
-          ))}
+          {list.map((p) => {
+            // Cloudinary면 그대로 썸네일 변환, 과거 /uploads면 절대경로로만
+            const raw = toAbs(p.url);
+            const src = raw.startsWith("http") ? cdnThumb(raw, 320, 320) : raw;
+            const srcV = src ? `${src}${src.includes("?") ? "&" : "?"}v=${ver}` : src;
+            return (
+              <li key={p._id} className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={srcV}
+                  alt={p.originalName || ""}
+                  className="h-44 w-full rounded-lg object-cover"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "/img/placeholder.png";
+                  }}
+                />
+                <div className="mt-2 truncate text-sm">{p.originalName || "이미지"}</div>
+                {!!p.size && (
+                  <div className="text-xs text-slate-500">{Math.round(p.size / 1024)} KB</div>
+                )}
+                <button
+                  className="mt-2 w-full rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
+                  onClick={() => remove(p._id)}
+                >
+                  삭제
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
