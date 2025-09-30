@@ -399,12 +399,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
-                          <Link
-                            href={`/pets/${p._id}`}
-                            className="rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
-                          >
-                            프로필
-                          </Link>
+                          <Link href={`/pets?selected=${p._id}`}>프로필</Link>
                         </li>
                       );
                     })}
