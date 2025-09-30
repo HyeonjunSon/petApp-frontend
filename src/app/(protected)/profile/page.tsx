@@ -19,17 +19,23 @@ const INTERESTS = [
 ] as const;
 
 /* ---- 절대 URL & Cloudinary 썸네일/캐시버스트 ---- */
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
 const ORIGIN = API_BASE.replace(/\/api$/, "");
-const toAbs = (u?: string) => (!u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`);
+const toAbs = (u?: string) =>
+  !u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`;
 // Cloudinary 썸네일: /upload/ → /upload/c_fill,w_*,h_*/
 const cdnThumb = (url: string, w = 480, h = 360) =>
-  url?.includes("/upload/") ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`) : url;
-const withV = (url: string, v: number) => (url ? `${url}${url.includes("?") ? "&" : "?"}v=${v}` : "");
+  url?.includes("/upload/")
+    ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`)
+    : url;
+const withV = (url: string, v: number) =>
+  url ? `${url}${url.includes("?") ? "&" : "?"}v=${v}` : "";
 
 /* ---- 파일 가드 ---- */
 const isAllowedImage = (file: File) =>
-  /^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/.test(file.type) && file.size <= 10 * 1024 * 1024;
+  /^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/.test(file.type) &&
+  file.size <= 10 * 1024 * 1024;
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
@@ -51,8 +57,15 @@ export default function ProfilePage() {
     if (!user) return;
     if (user.name) setName(user.name);
     if ((user as any).about) setBio((user as any).about);
-    setGoal(GOALS.includes((user as any).goal as Goal) ? ((user as any).goal as Goal) : "둘 다");
-    if (Array.isArray((user as any).interests) && (user as any).interests.length > 0) {
+    setGoal(
+      GOALS.includes((user as any).goal as Goal)
+        ? ((user as any).goal as Goal)
+        : "둘 다"
+    );
+    if (
+      Array.isArray((user as any).interests) &&
+      (user as any).interests.length > 0
+    ) {
       setSelected((user as any).interests);
     }
   }, [user]);
@@ -60,7 +73,9 @@ export default function ProfilePage() {
   /* 최신 사진 선택 (type 우선) */
   const pickLastByType = (u: any, type: string) => {
     const list = Array.isArray(u?.photos) ? u.photos : [];
-    const last = [...list].reverse().find((p: any) => p.type === type) || list[list.length - 1];
+    const last =
+      [...list].reverse().find((p: any) => p.type === type) ||
+      list[list.length - 1];
     return last?.url ? toAbs(last.url) : "";
   };
 
@@ -76,13 +91,35 @@ export default function ProfilePage() {
   }, [user, photoVersion]);
 
   /* 로컬 미리보기 */
-  const mePreview = useMemo(() => (meFile ? URL.createObjectURL(meFile) : ""), [meFile]);
-  const petPreview = useMemo(() => (petFile ? URL.createObjectURL(petFile) : ""), [petFile]);
-  useEffect(() => () => { if (mePreview) URL.revokeObjectURL(mePreview); }, [mePreview]);
-  useEffect(() => () => { if (petPreview) URL.revokeObjectURL(petPreview); }, [petPreview]);
+  const mePreview = useMemo(
+    () => (meFile ? URL.createObjectURL(meFile) : ""),
+    [meFile]
+  );
+  const petPreview = useMemo(
+    () => (petFile ? URL.createObjectURL(petFile) : ""),
+    [petFile]
+  );
+  useEffect(
+    () => () => {
+      if (mePreview) URL.revokeObjectURL(mePreview);
+    },
+    [mePreview]
+  );
+  useEffect(
+    () => () => {
+      if (petPreview) URL.revokeObjectURL(petPreview);
+    },
+    [petPreview]
+  );
 
   const toggleInterest = (k: string) =>
-    setSelected((prev) => (prev.includes(k) ? prev.filter((v) => v !== k) : prev.length < 5 ? [...prev, k] : prev));
+    setSelected((prev) =>
+      prev.includes(k)
+        ? prev.filter((v) => v !== k)
+        : prev.length < 5
+        ? [...prev, k]
+        : prev
+    );
 
   /* 저장 */
   const onSave = async () => {
@@ -110,10 +147,16 @@ export default function ProfilePage() {
           headers: { "Content-Type": "multipart/form-data" },
         });
         // 서버 응답: { url, publicId, type }
-        return data?.url ? { url: data.url, publicId: data.publicId, type } : null;
+        return data?.url
+          ? { url: data.url, publicId: data.publicId, type }
+          : null;
       };
 
-      const uploaded: Array<{ url: string; publicId?: string; type: "owner_face" | "pet" }> = [];
+      const uploaded: Array<{
+        url: string;
+        publicId?: string;
+        type: "owner_face" | "pet";
+      }> = [];
       if (meFile) {
         const up = await uploadOnce(meFile, "owner_face");
         if (up) uploaded.push(up);
@@ -124,9 +167,12 @@ export default function ProfilePage() {
       }
 
       // 3) 같은 type은 교체
-      const basePhotos = (Array.isArray(updated?.photos) ? updated.photos : user?.photos) ?? [];
+      const basePhotos =
+        (Array.isArray(updated?.photos) ? updated.photos : user?.photos) ?? [];
       const nextPhotos = [
-        ...basePhotos.filter((p: any) => !uploaded.some((u) => u.type === p.type)),
+        ...basePhotos.filter(
+          (p: any) => !uploaded.some((u) => u.type === p.type)
+        ),
         ...uploaded, // 최신 업로드를 뒤에
       ];
 
@@ -147,7 +193,10 @@ export default function ProfilePage() {
       alert("프로필을 저장했어요 ✅");
     } catch (e: any) {
       console.error(e);
-      alert(e?.response?.data?.message || "저장에 실패했어요. 잠시 후 다시 시도해주세요.");
+      alert(
+        e?.response?.data?.message ||
+          "저장에 실패했어요. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setSaving(false);
     }
@@ -189,7 +238,9 @@ export default function ProfilePage() {
                     className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
                     placeholder="나를 한 문장으로 소개해요"
                   />
-                  <p className="mt-1 text-xs text-slate-500">예: 주 3회 산책, 고양이 레크터와 살아요</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    예: 주 3회 산책, 고양이 레크터와 살아요
+                  </p>
                 </Field>
               </div>
             </Card>
@@ -201,7 +252,11 @@ export default function ProfilePage() {
                     key={g}
                     onClick={() => setGoal(g)}
                     className={`rounded-full border px-4 py-2 text-sm transition
-                      ${goal === g ? "border-emerald-600 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white hover:border-slate-300"}`}
+                      ${
+                        goal === g
+                          ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                          : "border-slate-200 bg-white hover:border-slate-300"
+                      }`}
                     type="button"
                   >
                     {g}
@@ -221,7 +276,13 @@ export default function ProfilePage() {
                       onClick={() => toggleInterest(k)}
                       disabled={disabled}
                       className={`rounded-full px-3 py-1.5 text-sm transition
-                        ${on ? "bg-slate-900 text-white hover:bg-slate-800" : disabled ? "bg-slate-100 text-slate-400" : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300"}`}
+                        ${
+                          on
+                            ? "bg-slate-900 text-white hover:bg-slate-800"
+                            : disabled
+                            ? "bg-slate-100 text-slate-400"
+                            : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300"
+                        }`}
                       type="button"
                     >
                       {k}
@@ -229,7 +290,9 @@ export default function ProfilePage() {
                   );
                 })}
               </div>
-              <p className="mt-2 text-xs text-slate-500">{selected.length}/5 선택됨</p>
+              <p className="mt-2 text-xs text-slate-500">
+                {selected.length}/5 선택됨
+              </p>
             </Card>
           </section>
 
@@ -263,7 +326,9 @@ export default function ProfilePage() {
               >
                 {saving ? "저장 중..." : "저장하기"}
               </button>
-              <p className="mt-2 text-xs text-slate-500">저장하면 가이드라인에 따라 검토 후 공개돼요.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                저장하면 가이드라인에 따라 검토 후 공개돼요.
+              </p>
             </div>
           </aside>
         </div>
@@ -274,7 +339,13 @@ export default function ProfilePage() {
 
 /* ---------- 작은 UI 컴포넌트들 ---------- */
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
@@ -285,7 +356,15 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function Field({ label, full, children }: { label: string; full?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  full,
+  children,
+}: {
+  label: string;
+  full?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <label className={`${full ? "md:col-span-2" : ""} block`}>
       <div className="mb-1 text-sm font-medium text-slate-700">{label}</div>
@@ -321,11 +400,18 @@ function UploadCard({
               src={preview}
               className="h-full w-full object-cover"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = "/img/placeholder.png";
+                const img = e.currentTarget as HTMLImageElement;
+                if (img.dataset.fallback === "1") return; // 루프 방지
+                img.dataset.fallback = "1";
+                img.onerror = null;
+                img.src =
+                  "https://res.cloudinary.com/<cloud>/image/upload/f_auto,q_auto/app/placeholders/pet-placeholder.png";
               }}
             />
           ) : (
-            <div className="grid h-full w-full place-items-center text-xs text-slate-500">미리보기</div>
+            <div className="grid h-full w-full place-items-center text-xs text-slate-500">
+              미리보기
+            </div>
           )}
         </div>
       </div>

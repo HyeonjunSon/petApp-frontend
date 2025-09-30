@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 
 type Photo = {
   _id: string;
-  url: string;          // Cloudinary secure_url (또는 과거 /uploads/상대경로가 섞여 있을 수 있음)
+  url: string; // Cloudinary secure_url (또는 과거 /uploads/상대경로가 섞여 있을 수 있음)
   originalName?: string;
   size?: number;
   createdAt: string;
@@ -19,11 +19,15 @@ const ORIGIN = API_BASE.replace(/\/api\/?$/, "");
 // Cloudinary 썸네일 변환: /upload/ → /upload/c_fill,w_320,h_320/
 const cdnThumb = (url: string, w = 320, h = 320) =>
   url?.includes("/upload/")
-    ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`)
+    ? url.replace(
+        "/upload/",
+        `/upload/c_fill,w_${w},h_${h},f_auto,q_auto,d_app:placeholders:pet-placeholder.png/`
+      )
     : url;
 
 // 상대경로(/uploads/...) 대비용 안전 가드
-const toAbs = (u?: string) => (!u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`);
+const toAbs = (u?: string) =>
+  !u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`;
 
 // 파일 업로드 클라이언트 가드
 const ALLOWED = /^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/;
@@ -130,12 +134,16 @@ export default function PhotosPage() {
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
             className={`flex-1 cursor-pointer rounded-xl border px-4 py-3 text-slate-600 ${
-              dragOver ? "border-emerald-500 ring-2 ring-emerald-200" : "border-slate-300"
+              dragOver
+                ? "border-emerald-500 ring-2 ring-emerald-200"
+                : "border-slate-300"
             }`}
           >
             <div className="flex items-center justify-between gap-3">
               <span className="truncate">
-                {file ? `선택됨: ${file.name}` : "여기로 파일을 드래그하거나, 오른쪽 버튼으로 선택하세요."}
+                {file
+                  ? `선택됨: ${file.name}`
+                  : "여기로 파일을 드래그하거나, 오른쪽 버튼으로 선택하세요."}
               </span>
               <button
                 type="button"
@@ -174,7 +182,11 @@ export default function PhotosPage() {
             <div className="w-64 rounded-xl border border-slate-200 bg-slate-50 p-3">
               {/* 로컬 blob URL → 미리보기는 절대경로 변환 불필요 */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="preview" className="h-40 w-full rounded-md object-cover" />
+              <img
+                src={preview}
+                alt="preview"
+                className="h-40 w-full rounded-md object-cover"
+              />
               <div className="mt-2 truncate text-sm">{file?.name}</div>
               <div className="text-xs text-slate-500">
                 {file ? Math.round(file.size / 1024) : 0} KB
@@ -195,21 +207,35 @@ export default function PhotosPage() {
             // Cloudinary면 그대로 썸네일 변환, 과거 /uploads면 절대경로로만
             const raw = toAbs(p.url);
             const src = raw.startsWith("http") ? cdnThumb(raw, 320, 320) : raw;
-            const srcV = src ? `${src}${src.includes("?") ? "&" : "?"}v=${ver}` : src;
+            const srcV = src
+              ? `${src}${src.includes("?") ? "&" : "?"}v=${ver}`
+              : src;
             return (
-              <li key={p._id} className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+              <li
+                key={p._id}
+                className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={srcV}
                   alt={p.originalName || ""}
                   className="h-44 w-full rounded-lg object-cover"
                   onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "/img/placeholder.png";
+                    const img = e.currentTarget as HTMLImageElement;
+                    if (img.dataset.fallback === "1") return; // 루프 방지
+                    img.dataset.fallback = "1";
+                    img.onerror = null;
+                    img.src =
+                      "https://res.cloudinary.com/<cloud_name>/image/upload/f_auto,q_auto/app/placeholders/pet-placeholder.png";
                   }}
                 />
-                <div className="mt-2 truncate text-sm">{p.originalName || "이미지"}</div>
+                <div className="mt-2 truncate text-sm">
+                  {p.originalName || "이미지"}
+                </div>
                 {!!p.size && (
-                  <div className="text-xs text-slate-500">{Math.round(p.size / 1024)} KB</div>
+                  <div className="text-xs text-slate-500">
+                    {Math.round(p.size / 1024)} KB
+                  </div>
                 )}
                 <button
                   className="mt-2 w-full rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"

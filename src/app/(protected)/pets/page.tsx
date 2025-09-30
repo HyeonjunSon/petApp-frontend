@@ -305,19 +305,21 @@ export default function PetsPage() {
                       </span>
                     </div>
                     <div className="mt-1 truncate text-xs text-slate-500">
-                      {(p.breed || "품종 미상")} · {labelSize(p.size)} ·{" "}
+                      {p.breed || "품종 미상"} · {labelSize(p.size)} ·{" "}
                       {labelSex(p.sex)} {p.age ? `· ${p.age}살` : ""}
                     </div>
                     {!!p.temperament?.length && (
                       <div className="mt-2 flex flex-wrap gap-1">
-                        {p.temperament.slice(0, 5).map((t: string, i: number) => (
-                          <span
-                            key={i}
-                            className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700"
-                          >
-                            {t}
-                          </span>
-                        ))}
+                        {p.temperament
+                          .slice(0, 5)
+                          .map((t: string, i: number) => (
+                            <span
+                              key={i}
+                              className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-slate-700"
+                            >
+                              {t}
+                            </span>
+                          ))}
                       </div>
                     )}
                   </div>
@@ -354,8 +356,12 @@ export default function PetsPage() {
                           alt=""
                           className="h-24 w-full rounded-lg border object-cover"
                           onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "/img/placeholder.png";
+                            const img = e.currentTarget as HTMLImageElement;
+                            if (img.dataset.fallback === "1") return; // 루프 방지
+                            img.dataset.fallback = "1";
+                            img.onerror = null;
+                            img.src =
+                              "https://res.cloudinary.com/<cloud_name>/image/upload/f_auto,q_auto/app/placeholders/pet-placeholder.png";
                           }}
                         />
                       );
