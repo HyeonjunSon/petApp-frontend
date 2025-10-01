@@ -2,6 +2,9 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+/**
+ * Home - redirects to /dashboard immediately.
+ */
 export default function Home() {
   const router = useRouter();
 
@@ -9,5 +12,5 @@ export default function Home() {
     router.replace("/dashboard");
   }, [router]);
 
-  return null; // 화면에 아무것도 안 보이게
+  return null;
 }

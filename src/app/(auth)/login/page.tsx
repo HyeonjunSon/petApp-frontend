@@ -6,18 +6,21 @@ import { useAuth } from "@/store/auth";
 
 type Mode = "login" | "register";
 
+/**
+ * AuthPage - Login and registration page
+ */
 export default function AuthPage() {
   const router = useRouter();
   const { user, setUser } = useAuth();
-
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");        // 회원가입용
+  const [name, setName] = useState("");
   const [pw, setPw] = useState("");
-  const [pw2, setPw2] = useState("");          // 회원가입용 확인
+  const [pw2, setPw2] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
   useEffect(() => {
     if (user) router.replace("/dashboard");
   }, [user, router]);
@@ -30,9 +33,13 @@ export default function AuthPage() {
   };
 
   const handleRegister = async () => {
-    if (!email || !pw) throw new Error("이메일과 비밀번호를 입력해 주세요.");
-    if (pw !== pw2) throw new Error("비밀번호가 일치하지 않습니다.");
-    const { data } = await api.post("/auth/register", { email, password: pw, name });
+    if (!email || !pw) throw new Error("Please enter email and password.");
+    if (pw !== pw2) throw new Error("Passwords do not match.");
+    const { data } = await api.post("/auth/register", {
+      email,
+      password: pw,
+      name,
+    });
     localStorage.setItem("token", data.token);
     setUser(data.user);
     router.replace("/dashboard");
@@ -46,9 +53,8 @@ export default function AuthPage() {
       if (mode === "login") await handleLogin();
       else await handleRegister();
     } catch (e: any) {
-      // 서버는 { msg }로 내려보내므로 msg 우선
       const apiMsg = e?.response?.data?.msg || e?.response?.data?.message;
-      setErr(apiMsg || e?.message || "처리 중 오류가 발생했습니다.");
+      setErr(apiMsg || e?.message || "An error occurred during processing.");
     } finally {
       setLoading(false);
     }
@@ -63,29 +69,33 @@ export default function AuthPage() {
         }}
         className="mx-auto mt-16 w-full max-w-xl rounded-2xl border border-slate-300 bg-white p-8 shadow-sm"
       >
-        {/* 탭 전환 */}
+        {/* Mode switch tabs */}
         <div className="mb-6 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setMode("login")}
             className={`rounded-xl border px-4 py-2 font-semibold ${
-              mode === "login" ? "border-slate-800" : "border-slate-300 text-slate-500"
+              mode === "login"
+                ? "border-slate-800"
+                : "border-slate-300 text-slate-500"
             }`}
           >
-            로그인
+            Login
           </button>
           <button
             type="button"
             onClick={() => setMode("register")}
             className={`rounded-xl border px-4 py-2 font-semibold ${
-              mode === "register" ? "border-slate-800" : "border-slate-300 text-slate-500"
+              mode === "register"
+                ? "border-slate-800"
+                : "border-slate-300 text-slate-500"
             }`}
           >
-            회원가입
+            Sign Up
           </button>
         </div>
 
-        {/* 공통 입력 */}
+        {/* Common inputs */}
         <div className="space-y-4">
           <input
             type="email"
@@ -100,7 +110,7 @@ export default function AuthPage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="이름(선택)"
+              placeholder="Name (optional)"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
             />
           )}
@@ -119,7 +129,7 @@ export default function AuthPage() {
               type="password"
               value={pw2}
               onChange={(e) => setPw2(e.target.value)}
-              placeholder="Password 확인"
+              placeholder="Confirm Password"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none"
               required
             />
@@ -132,22 +142,36 @@ export default function AuthPage() {
             disabled={loading}
             className="w-full rounded-xl border border-slate-700 px-4 py-3 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
           >
-            {loading ? (mode === "login" ? "로그인 중..." : "가입 중...") : mode === "login" ? "로그인" : "회원가입"}
+            {loading
+              ? mode === "login"
+                ? "Logging in..."
+                : "Signing up..."
+              : mode === "login"
+              ? "Login"
+              : "Sign Up"}
           </button>
 
           <p className="text-center text-sm text-slate-500">
             {mode === "login" ? (
               <>
-                아직 계정이 없나요?{" "}
-                <button type="button" onClick={() => setMode("register")} className="underline">
-                  회원가입
+                Don’t have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("register")}
+                  className="underline"
+                >
+                  Sign Up
                 </button>
               </>
             ) : (
               <>
-                이미 계정이 있나요?{" "}
-                <button type="button" onClick={() => setMode("login")} className="underline">
-                  로그인
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="underline"
+                >
+                  Login
                 </button>
               </>
             )}

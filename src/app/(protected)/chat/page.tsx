@@ -12,7 +12,7 @@ type Match = {
   _id: string;
   users: User[];
   lastMessage?: { text?: string; createdAt?: string; from?: string };
-  unreadCount?: number; // ✅ 추가: 나 기준 안읽음 개수
+  unreadCount?: number;
 };
 
 type Message = {
@@ -22,9 +22,15 @@ type Message = {
   createdAt?: string;
   match?: string;
   clientTempId?: string;
-  seenBy?: string[]; // ✅ 추가: 읽은 사용자 id 목록
+  seenBy?: string[];
 };
 
+/**
+ * ChatPage - real-time chat between matched users
+ * - Loads matches and messages
+ * - Socket join per selected match
+ * - Optimistic send, ack replace, read receipts
+ */
 export default function ChatPage() {
   const [myId, setMyId] = useState<string>("");
   const [matches, setMatches] = useState<Match[]>([]);
@@ -35,7 +41,7 @@ export default function ChatPage() {
 
   const listRef = useRef<HTMLDivElement>(null);
 
-  // 내 유저 id
+  // load self
   useEffect(() => {
     (async () => {
       try {
@@ -45,7 +51,7 @@ export default function ChatPage() {
     })();
   }, []);
 
-  // 매치 목록
+  // load matches
   useEffect(() => {
     (async () => {
       try {
@@ -58,7 +64,7 @@ export default function ChatPage() {
     })();
   }, []);
 
- 
+  //socket connection
   useEffect(() => {
     if (!myId) return;
 
@@ -70,13 +76,10 @@ export default function ChatPage() {
       socket.disconnect();
     };
   }, [myId]);
- 
-  // =========================
-  // (A) 메시지 수신 (이벤트명: "message:new")
-  // =========================
+
+  // receive new messages
   useEffect(() => {
     const onNew = (m: Message) => {
-      // 다른 방의 메시지면 -> 해당 매치 안읽음 +1, 마지막 메시지 갱신만 하고 종료
       if (m.match !== current) {
         if (!m.match) return;
         setMatches((prev) => {
@@ -94,7 +97,7 @@ export default function ChatPage() {
               from: m.from,
             },
           };
-          // 최신 정렬(선택)
+           // sort by latest
           copy.sort((a, b) => {
             const at = a.lastMessage?.createdAt
               ? Date.parse(a.lastMessage.createdAt)
@@ -109,7 +112,7 @@ export default function ChatPage() {
         return;
       }
 
-      // 현재 방 메시지면 리스트 갱신 + 본문 추가
+      // current room: update list + message body
       setMatches((prev) => {
         const i = prev.findIndex((x) => x._id === current);
         if (i < 0) return prev;
@@ -122,18 +125,18 @@ export default function ChatPage() {
       });
 
       setMessages((prev) => {
-        // 1) 서버가 clientTempId를 돌려줬다면, 임시 메시지 치환
+        // 1) replace optimistic item by clientTempId
         if (m.clientTempId) {
           const i = prev.findIndex(
             (x) => x._id === m.clientTempId || x.clientTempId === m.clientTempId
           );
           if (i >= 0) {
             const copy = prev.slice();
-            copy[i] = { ...m }; // 서버 메시지로 대체
+            copy[i] = { ...m };
             return copy;
           }
         }
-        // 2) _id 기준 중복 차단
+        // de-dup by _id
         if (m._id && prev.some((x) => x._id === m._id)) return prev;
 
         return [...prev, m];
@@ -146,12 +149,12 @@ export default function ChatPage() {
     };
   }, [current]);
 
-  // 방 변경 시: 과거 메시지 로드 + join
+  // on room change: load history + join
   useEffect(() => {
     (async () => {
       if (!current) return;
 
-      // 서버 방 합류
+      // join server room
       socket.emit("join", { matchId: current });
 
       try {
@@ -160,9 +163,9 @@ export default function ChatPage() {
         );
         setMessages(data);
 
-        // ✅ 들어오자마자 읽음 처리
+        // mark as read immediately
         await markAsRead(current, data);
-        // 리스트의 배지도 0으로
+        // reset badge to 0
         setMatches((prev) =>
           prev.map((m) => (m._id === current ? { ...m, unreadCount: 0 } : m))
         );
@@ -172,7 +175,7 @@ export default function ChatPage() {
     })();
   }, [current]);
 
-  // ➊ 재연결 시 현재 방 재조인
+  // rejoin on reconnect
   useEffect(() => {
     const onConnect = () => {
       if (current) socket.emit("join", { matchId: current });
@@ -183,12 +186,12 @@ export default function ChatPage() {
     };
   }, [current]);
 
-  // ➋ 탭 포커스 복귀 시 재조인 + 최신 동기화(선택)
+  // rejoin + resync on tab visibility back
   useEffect(() => {
     const onVisible = () => {
       if (document.visibilityState === "visible" && current) {
         socket.emit("join", { matchId: current });
-        // 최신 동기화
+      
         api
           .get<Message[]>(`/matches/${current}/messages`)
           .then(async ({ data }) => {
@@ -201,6 +204,7 @@ export default function ChatPage() {
             );
           })
           .catch(() => {});
+          // refresh match list
         api
           .get<Match[]>("/matches")
           .then(({ data }) => setMatches(data))
@@ -211,7 +215,7 @@ export default function ChatPage() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [current]);
 
-  // 매치 목록 실시간 갱신 (서버의 match:updated 수신)
+  // match list update (match:updated)
   useEffect(() => {
     const onMatchUpdated = (p: {
       matchId: string;
@@ -226,7 +230,7 @@ export default function ChatPage() {
         const wasActive = p.matchId === current;
         const prevUnread = copy[i].unreadCount || 0;
 
-        // ✅ 내가 보낸 메시지는 배지 증가 금지
+        // do not increase unread for my own outgoing
         const shouldIncrease = !wasActive && p.from !== myId;
 
         copy[i] = {
@@ -258,7 +262,7 @@ export default function ChatPage() {
     };
   }, [current]);
 
-  // ✅ 읽음 이벤트 수신: 상대가 내 메시지를 읽었을 때
+  // read receipts listener
   useEffect(() => {
     const onRead = ({
       matchId,
@@ -287,7 +291,7 @@ export default function ChatPage() {
     };
   }, [current]);
 
-  // 메시지 변경 시 (하단 근접 시) 자동 스크롤
+  // auto-scroll when near bottom on new messages
   useEffect(() => {
     const el = listRef.current;
     if (!el) return;
@@ -297,7 +301,7 @@ export default function ChatPage() {
     }
   }, [messages.length]);
 
-  // ✅ 상대 이름만
+  // partner info
   const partner = useMemo(() => {
     const m = matches.find((x) => x._id === current);
     if (!m) return undefined;
@@ -315,7 +319,7 @@ export default function ChatPage() {
       .join(", ");
   }, [partner]);
 
-  // (B) 전송(ACK로 tempId 치환) + from 포함
+  // send message (optimistic + ack replace)
   const send = async () => {
     const value = text.trim();
     if (!value || !current || sending) return;
@@ -329,7 +333,7 @@ export default function ChatPage() {
       text: value,
       createdAt: new Date().toISOString(),
       match: current,
-      seenBy: [myId], // 내가 보낸 건 나 자신은 읽은 상태로
+      seenBy: [myId], // mark my own message as read by me
     };
 
     setMessages((prev) => [...prev, optimistic]);
@@ -347,13 +351,13 @@ export default function ChatPage() {
       }) => {
         setSending(false);
         if (!ack?.ok) {
-          // 실패 시 임시 메시지 롤백
+          // rollback optimistic item and restore input
           setMessages((prev) => prev.filter((m) => m._id !== tempId));
           setText(value);
           console.error("send failed:", ack?.error);
           return;
         }
-        // ACK만 오고 브로드캐스트가 늦을 경우 대비
+        // replace temp id when only ack arrives first
         setMessages((prev) => {
           const byServer = prev.some((m) => m._id === ack.serverId);
           if (byServer) return prev;
@@ -376,7 +380,7 @@ export default function ChatPage() {
       }
     );
 
-    // 리스트 상단 미리 갱신
+    // update last message in list immediately
     setMatches((prev) =>
       prev
         .map((m) =>
@@ -403,7 +407,7 @@ export default function ChatPage() {
     );
   };
 
-  // ✅ 읽음 처리 함수: 현재 방에서 내가 안 읽은 메시지들을 읽음으로 표시
+  //  mark messages as read in current room
   const markAsRead = async (matchId: string, list: Message[]) => {
     if (!myId) return;
     const unreadMine = list
@@ -414,7 +418,7 @@ export default function ChatPage() {
 
     if (unreadMine.length === 0) return;
 
-    // 클라 즉시 반영
+    // optimistic UI
     setMessages((prev) =>
       prev.map((m) =>
         m._id && unreadMine.includes(m._id)
@@ -423,7 +427,7 @@ export default function ChatPage() {
       )
     );
 
-    // 서버/소켓 통지
+    // notify server/socket
     socket.emit("message:read", { matchId, messageIds: unreadMine });
     try {
       await api.post(`/matches/${matchId}/read`, { messageIds: unreadMine });
@@ -432,20 +436,20 @@ export default function ChatPage() {
 
   return (
     <div className="mx-auto grid min-h-[calc(100vh-56px)] w-full max-w-[1200px] grid-cols-12 gap-4 px-6 py-6">
-      {/* 사이드바 */}
+      {/* Sidebar */}
       <aside className="col-span-12 h-[70vh] rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-4 lg:col-span-3">
         <div className="border-b px-4 py-3">
-          <h3 className="text-base font-semibold">매치</h3>
+          <h3 className="text-base font-semibold">Matches</h3>
         </div>
         <div className="h-[calc(70vh-48px)] overflow-y-auto px-2 py-2">
           {matches.length === 0 && (
             <div className="px-3 py-2 text-sm text-slate-500">
-              아직 매칭된 상대가 없어요.
+               No matches yet.
             </div>
           )}
           {matches.map((m) => {
             const peer = m.users.find((u) => u._id !== myId);
-            const name = peer?.name || "상대";
+            const name = peer?.name || "Partner";
             const petList =
               (peer?.ownedPets?.length ? peer.ownedPets : peer?.pets) || [];
             const pets = petList
@@ -485,11 +489,11 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      {/* 채팅 룸 */}
+      {/* Chat room */}
       <section className="col-span-12 flex h-[70vh] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm md:col-span-8 lg:col-span-9">
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="truncate text-base font-semibold">
-            채팅{" "}
+            Chat{" "}
             {partnerName && (
               <span className="text-slate-500">
                 · {partnerName}
@@ -506,13 +510,13 @@ export default function ChatPage() {
           ref={listRef}
           className="flex-1 space-y-2 overflow-y-auto px-4 py-3"
           onScroll={() => {
-            // 스크롤 시에도 자연스럽게 읽음 반영 (옵션)
+            // mark as read while scrollin
             markAsRead(current, messages);
           }}
         >
           {messages.length === 0 && (
             <div className="grid h-full place-items-center text-sm text-slate-500">
-              대화를 시작해 보세요.
+               Start the conversation.
             </div>
           )}
           {messages.map((m, i) => {
@@ -528,13 +532,13 @@ export default function ChatPage() {
                 minute: "2-digit",
               });
 
-            // ✅ '내 마지막 메시지'인지 판단
+            // show "Read" on my last message if the partner has seen it
             const isLastMine =
               mine &&
               (i === messages.length - 1 ||
                 (messages[i + 1]?.from && messages[i + 1].from !== myId));
 
-            // ✅ 상대가 읽었는지: seenBy에 "상대 id"가 포함
+            
             const partnerId = partner?._id;
             const peerRead =
               isLastMine && partnerId && (m.seenBy || []).includes(partnerId);
@@ -560,7 +564,7 @@ export default function ChatPage() {
                     }`}
                   >
                     <span>{hhmm}</span>
-                    {peerRead && mine && <span>· 읽음</span>}
+                    {peerRead && mine && <span>· Read</span>}
                   </div>
                 </div>
               </div>
@@ -574,7 +578,7 @@ export default function ChatPage() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="메시지 입력"
+              placeholder="Type a message"
               className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
             />
             <button
@@ -582,7 +586,7 @@ export default function ChatPage() {
               disabled={!text.trim() || !current || sending}
               className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow_sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              전송
+              send
             </button>
           </div>
         </div>
