@@ -11,7 +11,7 @@ type Walk = {
   startedAt: string;
 };
 
-// 공통 카드 스타일
+// Common card style classes
 const card =
   "rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden";
 const cardPadded = `${card} p-5`;
@@ -20,12 +20,12 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, setUser } = useAuth();
 
-  // ✅ 보호 페이지 상태
+  // Authentication state
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // ✅ 로그아웃 핸들러
+  // Logout handler
   const onLogout = async () => {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -39,23 +39,21 @@ export default function DashboardPage() {
     }
   };
 
-  // 오늘 집계
   const [walkCount, setWalkCount] = useState<number>(0);
   const [sumKm, setSumKm] = useState<number>(0);
   const [sumMin, setSumMin] = useState<number>(0);
 
-  // 누적 집계
   const [totalWalks, setTotalWalks] = useState<number>(0);
   const [totalKm, setTotalKm] = useState<number>(0);
   const [loadingWalks, setLoadingWalks] = useState<boolean>(true);
 
-  // ✅ 1) 인증 확인 → 통과 시 사용자 상태 세팅
+  // 1) Auth check -> if success, set user state
   useEffect(() => {
     let alive = true;
 
     (async () => {
       try {
-        // 토큰이 없으면 바로 로그인으로
+        // If no token, redirect to login immediately
         if (typeof window !== "undefined" && !localStorage.getItem("token")) {
           router.replace("/login");
           return;
@@ -64,7 +62,7 @@ export default function DashboardPage() {
         const me = await api.get("/users/me");
         if (!alive) return;
 
-        // 서버에서 최소한 _id 가 오면 성공으로 간주
+        // Consider success if server returns at least _id
         if (!me?.data?._id) throw new Error("Invalid user payload");
         setUser(me.data);
         setAuthChecked(true);
@@ -73,7 +71,7 @@ export default function DashboardPage() {
         if (status === 401) {
           router.replace("/login");
         } else {
-          setAuthError("사용자 정보를 불러오지 못했습니다.");
+          setAuthError("Failed to load user info.");
         }
       }
     })();
@@ -83,7 +81,7 @@ export default function DashboardPage() {
     };
   }, [router, setUser]);
 
-  // ✅ 2) 인증이 확인된 뒤에만 산책 집계 호출
+  // 2) After auth confirmed, fetch walk aggregates
   useEffect(() => {
     if (!authChecked) return;
     let alive = true;
@@ -95,7 +93,7 @@ export default function DashboardPage() {
         const end = new Date();
         end.setHours(23, 59, 59, 999);
 
-        // ✅ 오늘 + 누적 동시에 가져오기
+        //✅ Fetch today + lifetime in parallel
         const [todayRes, allRes] = await Promise.all([
           api.get<Walk[]>("/walks", {
             params: { from: start.toISOString(), to: end.toISOString() },
@@ -104,7 +102,7 @@ export default function DashboardPage() {
         ]);
         if (!alive) return;
 
-        // 오늘
+        // Today
         const today = todayRes.data;
         const todayKm = today.reduce((a, w) => a + (w.distanceKm || 0), 0);
         const todayMin = today.reduce((a, w) => a + (w.durationMin || 0), 0);
@@ -112,7 +110,7 @@ export default function DashboardPage() {
         setSumKm(Number(todayKm.toFixed(1)));
         setSumMin(todayMin);
 
-        // 누적
+        // LifeTime
         const all = allRes.data;
         const allKm = all.reduce((a, w) => a + (w.distanceKm || 0), 0);
         setTotalWalks(all.length);
@@ -135,22 +133,22 @@ export default function DashboardPage() {
   type PetDoc = {
     _id: string;
     name: string;
-    type: string; // 서버 스키마: type만 있음 (breed 없음)
+    type: string;
     age?: number;
     bio?: string;
-    // breed?: string;  // 만약 나중에 스키마에 추가하면 사용
   };
 
   type Match = {
     _id: string;
     users: { _id: string; name?: string }[];
     lastMessage?: { text?: string; createdAt?: string; from?: string };
-    unreadCount?: number; // 나 기준
+    unreadCount?: number;
   };
 
   const [unreadTotal, setUnreadTotal] = useState<number>(0);
   const [loadingMsgs, setLoadingMsgs] = useState<boolean>(true);
 
+  // Fetch total unread messages from matches
   useEffect(() => {
     if (!authChecked) return;
     let alive = true;
@@ -160,10 +158,11 @@ export default function DashboardPage() {
       try {
         const { data } = await api.get<Match[]>("/matches");
 
-        // 서버가 match.unreadCount를 준다고 가정 (없으면 간단한 fallback)
+        // Assume server returns match.unreadCount; otherwise use a simple fallback.
         const total = data.reduce((acc, m) => {
           if (typeof m.unreadCount === "number") return acc + m.unreadCount;
-          // fallback: 마지막 메시지가 나에게서 온 게 아니면 1로 간주
+
+          // fallback: if the last message is not from me, count it as 1
           if (
             m.lastMessage &&
             m.lastMessage.from &&
@@ -191,10 +190,11 @@ export default function DashboardPage() {
   const [pets, setPets] = useState<PetDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
+  //Load my pets (server filters by owner=req.user._id)
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get<PetDoc[]>("/pets"); // 서버에서 owner=req.user._id 로 필터된 목록 리턴
+        const { data } = await api.get<PetDoc[]>("/pets");
         setPets(data);
       } catch (e) {
         console.error(e);
@@ -204,11 +204,11 @@ export default function DashboardPage() {
     })();
   }, []);
 
-  // HERO 상단 KPI
+  // HERO Top KPIs
   const heroKpis = useMemo(
     () => [
-      { label: "오늘 산책", v: loadingWalks ? "—" : `${walkCount}회` },
-      { label: "안 읽은 메시지", v: loadingMsgs ? "—" : `${unreadTotal}` },
+      { label: "Today's Walks", v: loadingWalks ? "—" : `${walkCount}회` },
+      { label: "Unread Message", v: loadingMsgs ? "—" : `${unreadTotal}` },
     ],
     [loadingWalks, walkCount, loadingMsgs, unreadTotal]
   );
@@ -216,25 +216,25 @@ export default function DashboardPage() {
   const mainKpis = useMemo(
     () => [
       {
-        label: "총 산책기록",
+        label: "All Walk Records",
         v1: loadingWalks ? "—" : `${totalWalks}회`,
-        v2: loadingWalks ? "집계 중…" : `총 ${totalKm}km`,
+        v2: loadingWalks ? "Aggregating.." : `총 ${totalKm}km`,
       },
       {
-        label: "안 읽은 메시지",
+        label: "Unread Messages",
         v1: loadingMsgs ? "—" : `${unreadTotal}`,
-        v2: "안 읽은 대화",
+        v2: "Conversations with unread",
       },
-      { label: "프로필", v1: "80%", v2: "완료도" },
+      { label: "Profile", v1: "80%", v2: "comletion" },
     ],
     [loadingWalks, totalWalks, totalKm, loadingMsgs, unreadTotal]
   );
 
-  // ✅ 인증 대기/에러 화면
+  // Auth loading / error screens
   if (!authChecked && !authError) {
     return (
       <div className="min-h-dvh grid place-items-center text-slate-700">
-        <div className="text-sm">인증 확인 중…</div>
+        <div className="text-sm">Checking authentication…</div>
       </div>
     );
   }
@@ -242,13 +242,13 @@ export default function DashboardPage() {
     return (
       <div className="min-h-dvh grid place-items-center text-slate-700">
         <div className="rounded-xl border p-5">
-          <div className="font-semibold mb-1">문제가 발생했어요</div>
+          <div className="font-semibold mb-1">Something went wrong</div>
           <div className="text-sm text-slate-500">{authError}</div>
           <button
             onClick={() => router.replace("/login")}
             className="mt-4 rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
           >
-            로그인으로 이동
+            Go to Login
           </button>
         </div>
       </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-dvh w-full bg-50 text-slate-900">
-      {/* 헤더 */}
+      {/* Header */}
       <header className="sticky top-0 z-30 w-full bg-slate-50">
         <div className="mx-auto max-w-[1208px] px-5">
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-3 flex items-center justify-between">
@@ -266,17 +266,17 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-slate-500">
-                안녕하세요,{" "}
-                <b className="text-slate-800">{user?.name || "사용자"}</b> 님 👋
+                Hello,{" "}
+                <b className="text-slate-800">{user?.name || "User"}</b> 👋
               </span>
               <button
                 onClick={onLogout}
                 disabled={loggingOut}
-                aria-label="로그아웃"
+                aria-label="Logout"
                 className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition disabled:opacity-60"
-                title="로그아웃"
+                title="Logout"
               >
-                로그아웃
+                {loggingOut ? "Logging out…" : "Logout"}
               </button>
             </div>
           </div>
@@ -288,20 +288,18 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-[1208px] px-5 py-6">
           <div className={`${card} p-5`}>
             <div className="grid grid-cols-12 gap-6">
-              {/* 좌측 배너 */}
+              {/* Left Banner */}
               <div className="col-span-12 lg:col-span-7">
                 <div className="rounded-xl ring-1 ring-emerald-100 bg-emerald-50/60 p-6">
                   <h1 className="text-[28px] font-extrabold tracking-tight">
-                    반려견 등록은 의무입니다.
+                    Welcome to Pet Date
                   </h1>
                   <p className="mt-1 text-sm text-slate-600">
-                    내 펫 현황을 한눈에: 산책 / 메시지 / 일정
+                    See everything at a glance: Walks / Messages / Schedule
                   </p>
 
-                  {/* 미니 KPI 3개 */}
+                  {/* Mini KPIs */}
                   <div className="mt-6 grid grid-cols-2 gap-4">
-                    {" "}
-                    {/* ← 3 → 2 */}
                     {heroKpis.map((k) => (
                       <div key={k.label} className={`${card} p-4 text-center`}>
                         <div className="text-xs text-slate-500">{k.label}</div>
@@ -312,16 +310,16 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* 우측 아이콘 3x2 */}
+              {/* Right quick links 3x2 */}
               <div className="col-span-12 lg:col-span-5">
                 <div className="grid grid-cols-3 gap-4">
                   {[
-                    { t: "내 펫", href: "/pets" },
-                    { t: "채팅", href: "/chat" },
-                    { t: "산책기록", href: "/walks" },
-                    { t: "산책기록 추가", href: "/walks/new" },
-                    { t: "사진 업로드", href: "/photos" },
-                    { t: "설정", href: "/settings" },
+                    { t: "My Pets", href: "/pets" },
+                    { t: "Chat", href: "/chat" },
+                    { t: "Walk Logs", href: "/walks" },
+                    { t: "Add Walk", href: "/walks/new" },
+                    { t: "Photo Upload", href: "/photos" },
+                    { t: "Settings", href: "/settings" },
                   ].map((m) => (
                     <Link
                       key={m.t}
@@ -343,11 +341,11 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* 본문 */}
+      {/* Main */}
       <main className="w-full bg-slate-50">
         <div className="mx-auto max-w-[1208px] px-5 py-6">
           <div className={`${card} p-5`}>
-            {/* KPI 4개 */}
+            {/* KPIs */}
             <section className="grid grid-cols-12 gap-6">
               {mainKpis.map((k) => (
                 <div
@@ -361,27 +359,27 @@ export default function DashboardPage() {
               ))}
             </section>
 
-            {/* 내 펫 + 퀵 액션 */}
+            {/*  My Pets + Quick Actions */}
             <section className="mt-6 grid grid-cols-12 gap-6">
-              {/* 내 펫 */}
+              {/* My pets */}
               <div className={`col-span-12 2xl:col-span-6 ${card}`}>
                 <div className="px-5 py-3 font-semibold border-b border-slate-200">
-                  내 펫
+                  My Pets
                 </div>
 
                 {loading ? (
                   <div className="px-5 py-6 text-sm text-slate-500">
-                    불러오는 중…
+                    Loading..
                   </div>
                 ) : pets.length === 0 ? (
                   <div className="px-5 py-6 text-sm text-slate-500">
-                    등록된 펫이 없어요.
+                    No pets registered
                   </div>
                 ) : (
                   <ul className="m-0 list-none divide-y divide-slate-200">
                     {pets.map((p) => {
-                      const sub = `${p.type ?? "기타"} · ${
-                        p.age != null ? `${p.age}살` : "나이 미상"
+                      const sub = `${p.type ?? "Other"} · ${
+                        p.age != null ? `${p.age}yrs` : "Age unknown"
                       }`;
                       return (
                         <li
@@ -399,7 +397,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
-                          <Link href={`/pets?selected=${p._id}`}>프로필</Link>
+                          <Link href={`/pets?selected=${p._id}`}>Profile</Link>
                         </li>
                       );
                     })}
