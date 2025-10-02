@@ -21,11 +21,14 @@ export default function AuthPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Hero image (Cloudinary). Move to .env if you want.
-  const HERO =
-    process.env.NEXT_PUBLIC_LOGIN_HERO_URL ||
-    "https://res.cloudinary.com/dsedtbco3/image/upload/q_100,dpr_auto/download_oszuzq.jpg";
+  const BASE = "https://res.cloudinary.com/dsedtbco3/image/upload";
+  const PUBLIC_ID =
+    process.env.NEXT_PUBLIC_LOGIN_HERO_ID || "download_oszuzq.jpg";
 
+  const src1x = `${BASE}/q_100,dpr_1.0/${PUBLIC_ID}`;
+  const src15x = `${BASE}/q_100,dpr_1.5/${PUBLIC_ID}`;
+  const src2x = `${BASE}/q_100,dpr_2.0/${PUBLIC_ID}`;
+  const src3x = `${BASE}/q_100,dpr_3.0/${PUBLIC_ID}`;
   // Redirect if already logged in
   useEffect(() => {
     if (user) router.replace("/dashboard");
@@ -72,7 +75,9 @@ export default function AuthPage() {
       <div className="mx-auto mt-10 mb-4 w-full max-w-xl">
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <img
-            src={HERO}
+            src={src1x}
+            srcSet={`${src1x} 1x, ${src15x} 1.5x, ${src2x} 2x, ${src3x} 3x`}
+            sizes="(min-width: 768px) 576px, 100vw" // 컨테이너가 max 576px이라면 이렇게
             alt="Dog and cat hero"
             className="h-56 w-full object-cover md:h-64"
             loading="lazy"
