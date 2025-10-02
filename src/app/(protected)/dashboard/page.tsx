@@ -217,7 +217,7 @@ export default function DashboardPage() {
     () => [
       {
         label: "All Walk Records",
-        v1: loadingWalks ? "—" : `${totalWalks}times`,
+        v1: loadingWalks ? "—" : `${totalWalks}`,
         v2: loadingWalks ? "Aggregating.." : `Total ${totalKm}km`,
       },
       {
