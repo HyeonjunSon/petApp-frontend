@@ -8,6 +8,7 @@ type Mode = "login" | "register";
 
 /**
  * AuthPage - Login and registration page
+ * - Shows a hero image above the form
  */
 export default function AuthPage() {
   const router = useRouter();
@@ -19,6 +20,11 @@ export default function AuthPage() {
   const [pw2, setPw2] = useState("");
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Hero image (Cloudinary). Move to .env if you want.
+  const HERO =
+    process.env.NEXT_PUBLIC_LOGIN_HERO_URL ||
+    "https://res.cloudinary.com/dsedtbco3/image/upload/download_oszuzq.jpg";
 
   // Redirect if already logged in
   useEffect(() => {
@@ -62,14 +68,27 @@ export default function AuthPage() {
 
   return (
     <div className="mx-auto max-w-[1208px] px-5">
+      {/* Hero image above the card */}
+      <div className="mx-auto mt-10 mb-4 w-full max-w-xl">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          <img
+            src={HERO}
+            alt="Dog and cat hero"
+            className="h-56 w-full object-cover md:h-64"
+            loading="lazy"
+          />
+        </div>
+      </div>
+
+      {/* Auth card */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
         }}
-        className="mx-auto mt-16 w-full max-w-xl rounded-2xl border border-slate-300 bg-white p-8 shadow-sm"
+        className="mx-auto mt-4 w-full max-w-xl rounded-2xl border border-slate-300 bg-white p-8 shadow-sm"
       >
-        {/* Mode switch tabs */}
+        {/* Tabs */}
         <div className="mb-6 grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -95,7 +114,7 @@ export default function AuthPage() {
           </button>
         </div>
 
-        {/* Common inputs */}
+        {/* Inputs */}
         <div className="space-y-4">
           <input
             type="email"
