@@ -23,12 +23,20 @@ export default function AuthPage() {
 
   const BASE = "https://res.cloudinary.com/dsedtbco3/image/upload";
   const PUBLIC_ID =
-    process.env.NEXT_PUBLIC_LOGIN_HERO_ID || "download_oszuzq.jpg";
+    process.env.NEXT_PUBLIC_LOGIN_HERO_ID ||
+    "goyang-i-wa-gae-ga-chingu-ga-doeneun-gwanjeom_boljtw.jpg";
 
-  const src1x = `${BASE}/q_100,dpr_1.0/${PUBLIC_ID}`;
-  const src15x = `${BASE}/q_100,dpr_1.5/${PUBLIC_ID}`;
-  const src2x = `${BASE}/q_100,dpr_2.0/${PUBLIC_ID}`;
-  const src3x = `${BASE}/q_100,dpr_3.0/${PUBLIC_ID}`;
+  const W = 576;
+  const H = 224;
+
+  const hero1x = `${BASE}/c_fill,g_auto,w_${W},h_${H},q_90/${PUBLIC_ID}`;
+  const hero2x = `${BASE}/c_fill,g_auto,w_${W * 2},h_${
+    H * 2
+  },q_90/${PUBLIC_ID}`;
+  const hero3x = `${BASE}/c_fill,g_auto,w_${W * 3},h_${
+    H * 3
+  },q_90/${PUBLIC_ID}`;
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) router.replace("/dashboard");
@@ -75,9 +83,9 @@ export default function AuthPage() {
       <div className="mx-auto mt-10 mb-4 w-full max-w-xl">
         <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <img
-            src={src1x}
-            srcSet={`${src1x} 1x, ${src15x} 1.5x, ${src2x} 2x, ${src3x} 3x`}
-            sizes="(min-width: 768px) 576px, 100vw" // 컨테이너가 max 576px이라면 이렇게
+            src={hero1x}
+            srcSet={`${hero1x} 1x, ${hero2x} 2x, ${hero3x} 3x`}
+            sizes="(min-width: 640px) 576px, 100vw"
             alt="Dog and cat hero"
             className="h-56 w-full object-cover md:h-64"
             loading="lazy"
