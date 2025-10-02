@@ -74,7 +74,7 @@ export default function AuthPage() {
             src={ORIGINAL}
             alt="Dog and cat hero"
             className="block w-full h-auto object-contain"
-            style={{ maxHeight: "16rem" }} // 필요 시 높이 제한(삭제해도 됨)
+            style={{ maxHeight: "16rem" }}
             loading="lazy"
           />
         </div>
