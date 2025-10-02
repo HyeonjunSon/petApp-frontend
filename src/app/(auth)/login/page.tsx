@@ -24,7 +24,7 @@ export default function AuthPage() {
   // Hero image (Cloudinary). Move to .env if you want.
   const HERO =
     process.env.NEXT_PUBLIC_LOGIN_HERO_URL ||
-    "https://res.cloudinary.com/dsedtbco3/image/upload/download_oszuzq.jpg";
+    "https://res.cloudinary.com/dsedtbco3/image/upload/q_100,dpr_auto/download_oszuzq.jpg";
 
   // Redirect if already logged in
   useEffect(() => {
