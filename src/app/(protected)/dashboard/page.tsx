@@ -217,8 +217,8 @@ export default function DashboardPage() {
     () => [
       {
         label: "All Walk Records",
-        v1: loadingWalks ? "—" : `${totalWalks}회`,
-        v2: loadingWalks ? "Aggregating.." : `총 ${totalKm}km`,
+        v1: loadingWalks ? "—" : `${totalWalks}times`,
+        v2: loadingWalks ? "Aggregating.." : `Total ${totalKm}km`,
       },
       {
         label: "Unread Messages",
