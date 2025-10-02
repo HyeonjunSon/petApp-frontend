@@ -21,21 +21,9 @@ export default function AuthPage() {
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const BASE = "https://res.cloudinary.com/dsedtbco3/image/upload";
-  const PUBLIC_ID =
-    process.env.NEXT_PUBLIC_LOGIN_HERO_ID ||
-    "goyang-i-wa-gae-ga-chingu-ga-doeneun-gwanjeom_boljtw.jpg";
-
-  const W = 576;
-  const H = 224;
-
-  const hero1x = `${BASE}/c_fill,g_auto,w_${W},h_${H},q_90/${PUBLIC_ID}`;
-  const hero2x = `${BASE}/c_fill,g_auto,w_${W * 2},h_${
-    H * 2
-  },q_90/${PUBLIC_ID}`;
-  const hero3x = `${BASE}/c_fill,g_auto,w_${W * 3},h_${
-    H * 3
-  },q_90/${PUBLIC_ID}`;
+  const ORIGINAL =
+    process.env.NEXT_PUBLIC_LOGIN_HERO_ORIGINAL_URL ||
+    "https://res.cloudinary.com/dsedtbco3/image/upload/goyang-i-wa-gae-ga-chingu-ga-doeneun-gwanjeom_boljtw.jpg";
 
   // Redirect if already logged in
   useEffect(() => {
@@ -81,13 +69,12 @@ export default function AuthPage() {
     <div className="mx-auto max-w-[1208px] px-5">
       {/* Hero image above the card */}
       <div className="mx-auto mt-10 mb-4 w-full max-w-xl">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
           <img
-            src={hero1x}
-            srcSet={`${hero1x} 1x, ${hero2x} 2x, ${hero3x} 3x`}
-            sizes="(min-width: 640px) 576px, 100vw"
+            src={ORIGINAL}
             alt="Dog and cat hero"
-            className="h-56 w-full object-cover md:h-64"
+            className="block w-full h-auto object-contain"
+            style={{ maxHeight: "16rem" }} // 필요 시 높이 제한(삭제해도 됨)
             loading="lazy"
           />
         </div>
