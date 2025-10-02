@@ -405,37 +405,37 @@ export default function DashboardPage() {
                 )}
               </div>
 
-              {/* 퀵 액션 1 */}
+              {/* Quick Action 1 */}
               <div
                 className={`col-span-12 sm:col-span-6 xl:col-span-3 ${cardPadded}`}
               >
                 <div className="mb-3 h-10 w-10 rounded-lg bg-indigo-50" />
-                <div className="mb-1 font-semibold">산책 기록 추가</div>
+                <div className="mb-1 font-semibold">Add Walk Record</div>
                 <div className="mb-3 text-sm text-slate-500">
-                  거리·시간을 기록해요
+                 Log distance & time
                 </div>
                 <Link
                   href="/walks/new"
                   className="inline-flex rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
                 >
-                  기록하기
+                  Add Record
                 </Link>
               </div>
 
-              {/* 퀵 액션 2 */}
+              {/* Quick Action 2 */}
               <div
                 className={`col-span-12 sm:col-span-6 xl:col-span-3 ${cardPadded}`}
               >
                 <div className="mb-3 h-10 w-10 rounded-lg bg-indigo-50" />
-                <div className="mb-1 font-semibold">사진 업로드</div>
+                <div className="mb-1 font-semibold">Upload Photos</div>
                 <div className="mb-3 text-sm text-slate-500">
-                  귀여운 순간 저장
+                  Save cute moments
                 </div>
                 <Link
                   href="/photos"
                   className="inline-flex rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
                 >
-                  업로드
+                  Upload
                 </Link>
               </div>
             </section>
