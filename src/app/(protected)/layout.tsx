@@ -34,7 +34,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     })();
   }, [path, router, setUser, user]);
 
-  if (loading) return <div>인증 확인 중...</div>;
+  if (loading) return <div>Loading..</div>;
 
   return (
     <>
