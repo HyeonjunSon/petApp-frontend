@@ -207,7 +207,17 @@ export default function DashboardPage() {
   // HERO Top KPIs
   const heroKpis = useMemo(
     () => [
-      { label: "Today's Walks", v: loadingWalks ? "—" : `${walkCount}회` },
+      {
+        label: "Today's Walks",
+        v: loadingWalks ? (
+          "—"
+        ) : (
+          <>
+            {walkCount}
+            <span style={{ fontSize: "0.7em", marginLeft: "2px" }}>times</span>
+          </>
+        ),
+      },
       { label: "Unread Message", v: loadingMsgs ? "—" : `${unreadTotal}` },
     ],
     [loadingWalks, walkCount, loadingMsgs, unreadTotal]
@@ -266,8 +276,8 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-slate-500">
-                Hello,{" "}
-                <b className="text-slate-800">{user?.name || "User"}</b> 👋
+                Hello, <b className="text-slate-800">{user?.name || "User"}</b>{" "}
+                👋
               </span>
               <button
                 onClick={onLogout}
@@ -295,7 +305,7 @@ export default function DashboardPage() {
                     Welcome to Pet Date
                   </h1>
                   <p className="mt-1 text-sm text-slate-600">
-                    See everything at a glance: Walks / Messages / Schedule
+                    Find the perfect match for your pet anytime, anywhere
                   </p>
 
                   {/* Mini KPIs */}
@@ -412,7 +422,7 @@ export default function DashboardPage() {
                 <div className="mb-3 h-10 w-10 rounded-lg bg-indigo-50" />
                 <div className="mb-1 font-semibold">Add Walk Record</div>
                 <div className="mb-3 text-sm text-slate-500">
-                 Log distance & time
+                  Log distance & time
                 </div>
                 <Link
                   href="/walks/new"
