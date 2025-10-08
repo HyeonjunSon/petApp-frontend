@@ -214,7 +214,7 @@ export default function DashboardPage() {
         ) : (
           <>
             {walkCount}
-            <span style={{ fontSize: "0.7em", marginLeft: "2px" }}>times</span>
+            <span style={{ fontSize: "0.4em", marginLeft: "2px" }}>times</span>
           </>
         ),
       },
