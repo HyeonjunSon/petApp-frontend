@@ -4,25 +4,28 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/store/auth";
 import { api } from "@/lib/api";
 import InitAuth from "@/components/InitAuth";
+import AppSidebar from "@/components/AppSidebar";
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, setUser } = useAuth();
   const router = useRouter();
   const path = usePathname();
   const [loading, setLoading] = useState(true);
-  const didFetch = useRef(false); // dev 모드에서 useEffect 두 번 방지
+  const didFetch = useRef(false); // prevent double useEffect in dev mode
 
   useEffect(() => {
     if (didFetch.current) return;
     didFetch.current = true;
 
     (async () => {
-      // 이미 InitAuth가 user를 채워줬다면 추가 호출 불필요
       if (user) {
         setLoading(false);
         return;
       }
-
       try {
         const { data } = await api.get("/users/me"); // baseURL=/api
         setUser(data);
@@ -34,13 +37,21 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     })();
   }, [path, router, setUser, user]);
 
-  if (loading) return <div>Loading..</div>;
+  if (loading) {
+    return (
+      <div className="grid min-h-dvh place-items-center text-sm text-slate-500">
+        Loading…
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* 전역 초기화: 토큰이 있고 user가 비어있을 때 /users/me 호출 */}
+    <div className="flex min-h-dvh bg-slate-50">
       <InitAuth />
-      {children}
-    </>
+      <AppSidebar />
+      <main className="pd-scroll min-w-0 flex-1 overflow-x-hidden">
+        {children}
+      </main>
+    </div>
   );
 }

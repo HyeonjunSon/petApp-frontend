@@ -1,8 +1,137 @@
 @import "tailwindcss";
 
+/* PetDate brand font — Pretendard (CDN, dynamic subset).
+   Loads only the Hangul glyphs actually used, so it's light. */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css");
+
+:root {
+  /* emerald brand — matches Tailwind emerald-600/700/100/50 */
+  --brand: #059669;
+  --brand-strong: #047857;
+  --brand-soft: #d1fae5;
+  --brand-tint: #ecfdf5;
+
+  /* Semantic vars kept so legacy ui.tsx components still render correctly */
+  --bg: #ffffff;
+  --bg-subtle: #f8fafc;
+  --ink: #0f172a;
+  --ink-soft: #64748b;
+  --ink-faint: #94a3b8;
+  --like: #059669;
+  --pass: #94a3b8;
+  --danger: #dc2626;
+  --danger-soft: #fef2f2;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --surface-2: #f1f5f9;
+  --on-brand: #ffffff;
+  --overlay: rgba(15, 23, 42, 0.45);
+
+  --r-card: 16px;
+  --r-btn: 12px;
+  --r-input: 12px;
+  --r-chip: 999px;
+
+  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-pop: 0 12px 40px rgba(15, 23, 42, 0.14);
+  --sh-swipe: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --sh-fab: 0 6px 18px rgba(5, 150, 105, 0.32);
+}
+
 @layer base {
-  html, body {
-    background:#f8fafc; /* slate-50 */
-    color:#0f172a;      /* slate-900 */
+  html,
+  body {
+    background: #f8fafc; /* slate-50 */
+    color: #0f172a; /* slate-900 */
+    font-family: "Pretendard Variable", Pretendard, -apple-system,
+      "Apple SD Gothic Neo", system-ui, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+  /* tighter Korean headings, matching the design system */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* thin / hidden scrollbars inside app panels */
+.pd-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+.pd-scroll {
+  scrollbar-width: none;
+}
+
+/* Utilities reused by legacy ui.tsx components */
+@layer utilities {
+  .surface {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    box-shadow: var(--sh-card);
+  }
+  .pd-spinner {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid currentColor;
+    border-top-color: transparent;
+    animation: pd-spin 0.7s linear infinite;
+    display: inline-block;
+    opacity: 0.8;
+  }
+  .pd-line2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pd-line1 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 9999px;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes pd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pd-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pd-sheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes pd-pop {
+  0% { transform: scale(.85); opacity: 0; }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pd-spin {
+  to { transform: rotate(360deg); }
 }

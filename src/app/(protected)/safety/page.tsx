@@ -1,8 +1,8 @@
-// frontend/app/report-block/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { Card, CardHeader, Button, Field, Input, Select, Textarea, Badge, cx } from "@/components/ui";
 
 type Block = { _id: string; targetId: string; createdAt: string };
 type Report = {
@@ -15,382 +15,203 @@ type Report = {
   createdAt: string;
 };
 
-const CATEGORIES = [
-  "스팸/광고",
-  "혐오/비하",
-  "성적 불쾌감/음란",
-  "사기/금전 요구",
-  "스토킹/위협",
-  "기타",
-] as const;
-
-/** ---- 증거 파일 클라이언트 가드 ---- */
+const CATEGORIES = ["Spam/Ads", "Hate/Harassment", "Sexual/Explicit", "Scam/Money request", "Stalking/Threats", "Other"] as const;
 const MAX_FILES = 20;
-const MAX_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_SIZE = 25 * 1024 * 1024;
 const ALLOWED = /^(image|video|audio)\//;
 
-export default function ReportBlockPage() {
-  // 공통 상태
-  const [toast, setToast] = useState<string>("");
+export default function SafetyPage() {
+  const [toast, setToast] = useState("");
 
-  // ── 차단 ──────────────────────────────────────────────────────────────
+  // blocks
   const [blockId, setBlockId] = useState("");
   const [blocks, setBlocks] = useState<Block[]>([]);
   const loadBlocks = async () => {
-    try {
-      const { data } = await api.get<Block[]>("/blocks");
-      setBlocks(data);
-    } catch (e) {
-      console.error("GET /blocks failed", e);
-    }
+    try { const { data } = await api.get<Block[]>("/blocks"); setBlocks(data); } catch {}
   };
-
   const addBlock = async () => {
     const id = blockId.trim();
     if (!id) return;
-    if (!confirm(`정말 ${id} 사용자를 차단할까요?`)) return;
+    if (!confirm(`Block user ${id}?`)) return;
     try {
       await api.post("/blocks", { targetId: id });
-      setBlockId("");
-      setToast("차단이 완료되었습니다.");
-      loadBlocks();
-    } catch (e) {
-      console.error("POST /blocks failed", e);
-      setToast("차단 중 문제가 발생했어요.");
-    }
+      setBlockId(""); setToast("User blocked."); loadBlocks();
+    } catch { setToast("Something went wrong while blocking."); }
   };
-
   const removeBlock = async (b: Block) => {
-    if (!confirm("차단을 해제할까요?")) return;
-    try {
-      await api.delete(`/blocks/${b._id}`);
-      setToast("차단이 해제되었습니다.");
-      loadBlocks();
-    } catch (e) {
-      console.error("DELETE /blocks/:id failed", e);
-      setToast("해제 중 문제가 발생했어요.");
-    }
+    if (!confirm("Unblock this user?")) return;
+    try { await api.delete(`/blocks/${b._id}`); setToast("User unblocked."); loadBlocks(); }
+    catch { setToast("Something went wrong while unblocking."); }
   };
 
-  // ── 신고 ──────────────────────────────────────────────────────────────
+  // reports
   const [reportId, setReportId] = useState("");
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [reason, setReason] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
-
   const [reports, setReports] = useState<Report[]>([]);
+
   const loadReports = async () => {
-    try {
-      const { data } = await api.get<Report[]>("/reports?limit=20");
-      setReports(data);
-    } catch (e) {
-      console.error("GET /reports failed", e);
-    }
+    try { const { data } = await api.get<Report[]>("/reports?limit=20"); setReports(data); } catch {}
   };
 
   const onPickFiles = (picked: FileList | null) => {
     const arr = Array.from(picked || []);
-    // 타입/크기/개수 가드
-    const badType = arr.find((f) => !ALLOWED.test(f.type));
-    if (badType) {
-      setToast("이미지/영상/음성 파일만 업로드 가능합니다.");
-      return;
-    }
-    const tooBig = arr.find((f) => f.size > MAX_SIZE);
-    if (tooBig) {
-      setToast("파일당 최대 25MB 까지 업로드할 수 있어요.");
-      return;
-    }
-    const next = [...files, ...arr].slice(0, MAX_FILES);
-    setFiles(next);
+    if (arr.find((f) => !ALLOWED.test(f.type))) return setToast("Only image/video/audio files are allowed.");
+    if (arr.find((f) => f.size > MAX_SIZE)) return setToast("Each file can be up to 25MB.");
+    setFiles([...files, ...arr].slice(0, MAX_FILES));
   };
 
   const submitReport = async () => {
-    const id = reportId.trim();
-    const why = reason.trim();
-    if (!id) return setToast("상대 사용자 ID를 입력해 주세요.");
-    if (!why) return setToast("신고 사유를 입력해 주세요.");
-
-    if (!confirm("사실과 다를 경우 제재될 수 있습니다. 신고를 접수할까요?")) return;
-
+    const id = reportId.trim(), why = reason.trim();
+    if (!id) return setToast("Please enter the user ID.");
+    if (!why) return setToast("Please enter a reason.");
+    if (!confirm("False reports may lead to penalties. Submit this report?")) return;
     setSending(true);
     try {
       let evidenceUrls: string[] | undefined;
-
       if (files.length) {
         const fd = new FormData();
         files.forEach((f) => fd.append("evidences", f));
-        // ✅ Cloudinary 업로드 라우트(서버 구현 필요): resource_type:auto 로 이미지/영상/오디오 허용
-        const up = await api.post<{ urls: string[] }>("/reports/evidences", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        const up = await api.post<{ urls: string[] }>("/reports/evidences", fd, { headers: { "Content-Type": "multipart/form-data" } });
         evidenceUrls = up.data.urls;
       }
-
-      await api.post("/reports", {
-        targetId: id,
-        category,
-        reason: why,
-        evidenceUrls,
-      });
-
-      // 폼 리셋
-      setReportId("");
-      setCategory(CATEGORIES[0]);
-      setReason("");
-      setFiles([]);
-
-      setToast("신고가 접수되었습니다.");
-      loadReports();
-    } catch (e) {
-      console.error("POST /reports failed", e);
-      setToast("신고 접수 중 문제가 발생했어요.");
-    } finally {
-      setSending(false);
-    }
+      await api.post("/reports", { targetId: id, category, reason: why, evidenceUrls });
+      setReportId(""); setCategory(CATEGORIES[0]); setReason(""); setFiles([]);
+      setToast("Report submitted."); loadReports();
+    } catch { setToast("Something went wrong while submitting."); }
+    finally { setSending(false); }
   };
 
-  useEffect(() => {
-    loadBlocks();
-    loadReports();
-  }, []);
-
-  // 작은 토스트
+  useEffect(() => { loadBlocks(); loadReports(); }, []);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(""), 2200);
+    const t = setTimeout(() => setToast(""), 2400);
     return () => clearTimeout(t);
   }, [toast]);
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-6 py-8">
-      {/* 헤더 */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">신고 / 차단</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Report / Block</h1>
+        <p className="mt-1 text-sm text-slate-500">Block or report users who make you uncomfortable.</p>
       </div>
 
-      {/* 알림 */}
-      {!!toast && (
-        <div className="mb-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">
           {toast}
         </div>
       )}
 
       <div className="grid grid-cols-12 gap-6">
-        {/* 차단 카드 */}
-        <section className="col-span-12 lg:col-span-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-base font-semibold">차단 관리</h2>
-
+        {/* 차단 */}
+        <div className="col-span-12 lg:col-span-5">
+          <Card>
+            <CardHeader title="Blocking" subtitle="Blocked users won't appear in profiles, chat, or matching." />
             <div className="flex items-center gap-2">
-              <input
-                className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-rose-500"
-                placeholder="상대 사용자 ID"
-                value={blockId}
-                onChange={(e) => setBlockId(e.target.value)}
-              />
-              <button
-                onClick={addBlock}
-                className="rounded-lg bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-700"
-              >
-                차단
-              </button>
+              <Input placeholder="User ID" value={blockId} onChange={(e) => setBlockId(e.target.value)} />
+              <Button variant="danger" onClick={addBlock} className="shrink-0">Block</Button>
             </div>
-
-            <p className="mt-3 text-xs text-slate-500">
-              차단 시 서로의 프로필/채팅/매칭에서 보이지 않으며, 기존 대화 알림도 차단됩니다.
-            </p>
-
-            <div className="mt-4">
-              <div className="mb-2 text-sm font-medium text-slate-700">차단 목록</div>
-              <div className="space-y-2">
-                {blocks.length === 0 && (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                    아직 차단한 사용자가 없습니다.
+            <div className="mt-4 space-y-2">
+              {blocks.length === 0 && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                  No blocked users yet.
+                </div>
+              )}
+              {blocks.map((b) => (
+                <div key={b._id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
+                  <div className="text-sm">
+                    <span className="font-medium">{b.targetId}</span>
+                    <span className="ml-2 text-slate-400">{new Date(b.createdAt).toLocaleDateString()}</span>
                   </div>
-                )}
-                {blocks.map((b) => (
-                  <div
-                    key={b._id}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2"
-                  >
-                    <div className="text-sm">
-                      <span className="font-medium">{b.targetId}</span>
-                      <span className="ml-2 text-slate-400">
-                        {new Date(b.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => removeBlock(b)}
-                      className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
-                    >
-                      해제
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  <Button variant="secondary" size="sm" onClick={() => removeBlock(b)}>Unblock</Button>
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
+          </Card>
+        </div>
 
-        {/* 신고 카드 */}
-        <section className="col-span-12 lg:col-span-7">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="mb-3 text-base font-semibold">신고 접수</h2>
-
+        {/* 신고 */}
+        <div className="col-span-12 lg:col-span-7">
+          <Card>
+            <CardHeader title="Submit a report" subtitle="False reports may lead to account restrictions." />
             <div className="grid grid-cols-12 gap-3">
-              <div className="col-span-12 md:col-span-6">
-                <Label>상대 사용자 ID</Label>
+              <Field label="User ID" className="col-span-12 md:col-span-6">
+                <Input value={reportId} onChange={(e) => setReportId(e.target.value)} placeholder="e.g. 64fa...c8" />
+              </Field>
+              <Field label="Report type" className="col-span-12 md:col-span-6">
+                <Select value={category} onChange={(e) => setCategory(e.target.value)}>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </Select>
+              </Field>
+              <Field label="Reason" className="col-span-12">
+                <Textarea rows={4} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Describe what happened, what they sent, when, etc." />
+              </Field>
+              <Field label="Evidence (optional)" hint="Image/video/audio, up to 20 files · 25MB each" className="col-span-12">
                 <input
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
-                  value={reportId}
-                  onChange={(e) => setReportId(e.target.value)}
-                  placeholder="예: 64fa...c8"
-                />
-              </div>
-
-              <div className="col-span-12 md:col-span-6">
-                <Label>신고 유형</Label>
-                <select
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-span-12">
-                <Label>신고 사유</Label>
-                <textarea
-                  rows={4}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="발생한 일/상대가 보낸 내용/일시 등 구체적으로 작성해 주세요."
-                />
-                <p className="mt-1 text-xs text-slate-500">
-                  허위 신고는 서비스 이용 제한의 사유가 됩니다.
-                </p>
-              </div>
-
-              <div className="col-span-12">
-                <Label>
-                  증거 파일(선택) <span className="text-slate-400">(이미지/영상/녹음 등, 최대 20개/개당 25MB)</span>
-                </Label>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,video/*,audio/*"
+                  type="file" multiple accept="image/*,video/*,audio/*"
                   onChange={(e) => onPickFiles(e.target.files)}
-                  className="w-full cursor-pointer rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:border-slate-400"
+                  className="w-full cursor-pointer rounded-[10px] border border-slate-200 bg-white px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:border-slate-300"
                 />
                 {files.length > 0 && (
                   <div className="mt-2 text-xs text-slate-500">
-                    {files.length}개 선택됨 (
-                    {Math.round(files.reduce((a, f) => a + f.size, 0) / 1024)}KB)
+                    {files.length} selected ({Math.round(files.reduce((a, f) => a + f.size, 0) / 1024)}KB)
                   </div>
                 )}
-              </div>
+              </Field>
             </div>
-
             <div className="mt-4 flex justify-end">
-              <button
-                onClick={submitReport}
-                disabled={sending}
-                className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {sending && (
-                  <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white" />
-                )}
-                신고
-              </button>
+              <Button onClick={submitReport} loading={sending}>Report</Button>
             </div>
-          </div>
-        </section>
+          </Card>
+        </div>
 
-        {/* 최근 신고 목록 */}
-        <section className="col-span-12">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-semibold">최근 신고</h2>
-              <span className="text-xs text-slate-500">{reports.length}건</span>
+        {/* 최근 신고 */}
+        <div className="col-span-12">
+          <Card padded={false}>
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="text-base font-semibold">Recent reports</h2>
+              <span className="text-xs text-slate-500">{reports.length}</span>
             </div>
-
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b bg-slate-50 text-slate-600">
-                    <th className="px-3 py-2">대상</th>
-                    <th className="px-3 py-2">유형</th>
-                    <th className="px-3 py-2">상태</th>
-                    <th className="px-3 py-2">증거</th>
-                    <th className="px-3 py-2">일시</th>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-500">
+                    <th className="px-5 py-2.5 font-medium">Target</th>
+                    <th className="px-3 py-2.5 font-medium">Type</th>
+                    <th className="px-3 py-2.5 font-medium">Status</th>
+                    <th className="px-3 py-2.5 font-medium">Evidence</th>
+                    <th className="px-3 py-2.5 font-medium">Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {reports.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                        접수된 신고가 없습니다.
-                      </td>
-                    </tr>
+                    <tr><td colSpan={5} className="px-5 py-8 text-center text-slate-500">No reports submitted.</td></tr>
                   )}
                   {reports.map((r) => (
-                    <tr key={r._id} className="border-b last:border-0">
-                      <td className="px-3 py-2 font-medium">{r.targetId}</td>
-                      <td className="px-3 py-2">{r.category}</td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${
-                            r.status === "resolved"
-                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : r.status === "reviewing"
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-slate-50 text-slate-700 border border-slate-200"
-                          }`}
-                        >
-                          {r.status || "접수"}
-                        </span>
+                    <tr key={r._id} className="border-b border-slate-50 last:border-0">
+                      <td className="px-5 py-3 font-medium">{r.targetId}</td>
+                      <td className="px-3 py-3">{r.category}</td>
+                      <td className="px-3 py-3">
+                        <Badge tone={r.status === "resolved" ? "brand" : r.status === "reviewing" ? "amber" : "neutral"}>
+                          {r.status === "resolved" ? "Resolved" : r.status === "reviewing" ? "Reviewing" : "Received"}
+                        </Badge>
                       </td>
-                      <td className="px-3 py-2">
+                      <td className="px-3 py-3">
                         {r.evidenceUrls?.length ? (
-                          <a
-                            href={r.evidenceUrls[0]}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-emerald-700 underline underline-offset-2"
-                          >
-                            {r.evidenceUrls.length}개
-                          </a>
-                        ) : (
-                          "-"
-                        )}
+                          <a href={r.evidenceUrls[0]} target="_blank" rel="noreferrer" className="text-brand-700 underline">{r.evidenceUrls.length}</a>
+                        ) : "-"}
                       </td>
-                      <td className="px-3 py-2 text-slate-500">
-                        {new Date(r.createdAt).toLocaleString()}
-                      </td>
+                      <td className="px-3 py-3 text-slate-500">{new Date(r.createdAt).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            <p className="mt-3 text-xs text-slate-500">
-              ※ 실제 운영 시, 신고 유형·증거 업로드 → 자동 알림/관리자 검토 플로우를 추가하는 것을 권장합니다.
-            </p>
-          </div>
-        </section>
+          </Card>
+        </div>
       </div>
     </div>
   );
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return <div className="mb-1 text-sm font-medium text-slate-700">{children}</div>;
 }

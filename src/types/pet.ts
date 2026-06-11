@@ -1,9 +1,23 @@
+export type Sex = "male" | "female" | "unknown";
+export type Size = "s" | "m" | "l";
+export type PetType = "dog" | "cat" | "other";
+
+export type PetPhoto = {
+  _id?: string;
+  url: string;
+  publicId?: string;
+};
+
 export type Pet = {
   _id: string;
   name: string;
-  species?: string;
+  type: string;
   breed?: string;
-  ageYears?: number;
+  age?: number;
+  sex?: Sex;
+  size?: Size;
+  temperament?: string[];
   about?: string;
-  photos?: { url: string }[];
+  bio?: string;
+  photos?: PetPhoto[];
 };

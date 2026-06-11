@@ -1,432 +1,350 @@
-// frontend/app/profile/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
+import {
+  Avatar, Badge, Button, Card, CardHeader, Chip, Icon, SectionTitle, Textarea, Toast, cx, type ToastData,
+} from "@/components/ui";
+import type { Pet } from "@/types/pet";
 
-type Goal = "데이트" | "친구" | "둘 다";
-const GOALS: Goal[] = ["데이트", "친구", "둘 다"];
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
+const ORIGIN = API_BASE.replace(/\/api$/, "");
+const toAbs = (u?: string) => (!u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`);
+
+type Goal = "Dating" | "Friends" | "Both";
+const GOALS: Goal[] = ["Dating", "Friends", "Both"];
 const INTERESTS = [
-  "산책",
-  "카페",
-  "훈련",
-  "사진",
-  "미용",
-  "캠핑",
-  "실내놀이",
-  "사회화",
+  "Walks", "Cafés", "Training", "Photos", "Grooming", "Camping", "Indoor play", "Socializing",
 ] as const;
 
-/* ---- 절대 URL & Cloudinary 썸네일/캐시버스트 ---- */
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5050/api";
-const ORIGIN = API_BASE.replace(/\/api$/, "");
-const toAbs = (u?: string) =>
-  !u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`;
-// Cloudinary 썸네일: /upload/ → /upload/c_fill,w_*,h_*/
-const cdnThumb = (url: string, w = 480, h = 360) =>
-  url?.includes("/upload/")
-    ? url.replace("/upload/", `/upload/c_fill,w_${w},h_${h}/`)
-    : url;
-const withV = (url: string, v: number) =>
-  url ? `${url}${url.includes("?") ? "&" : "?"}v=${v}` : "";
-
-/* ---- 파일 가드 ---- */
 const isAllowedImage = (file: File) =>
   /^image\/(png|jpe?g|webp|gif|bmp|svg\+xml)$/.test(file.type) &&
   file.size <= 10 * 1024 * 1024;
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { user, setUser } = useAuth();
+  const faceInput = useRef<HTMLInputElement | null>(null);
+  const [toast, setToast] = useState<ToastData>(null);
 
-  const [name, setName] = useState("");
-  const [bio, setBio] = useState("");
-  const [goal, setGoal] = useState<Goal>("둘 다");
-  const [selected, setSelected] = useState<string[]>([]);
-
-  const [meFile, setMeFile] = useState<File | null>(null);
-  const [petFile, setPetFile] = useState<File | null>(null);
+  // editable fields
+  const [about, setAbout] = useState("");
+  const [goal, setGoal] = useState<Goal>("Both");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 업로드 후 캐시 무효화용
-  const [photoVersion, setPhotoVersion] = useState(0);
+  // pets
+  const [pets, setPets] = useState<Pet[]>([]);
 
-  /* user → 폼 주입 */
   useEffect(() => {
     if (!user) return;
-    if (user.name) setName(user.name);
-    if ((user as any).about) setBio((user as any).about);
-    setGoal(
-      GOALS.includes((user as any).goal as Goal)
-        ? ((user as any).goal as Goal)
-        : "둘 다"
-    );
-    if (
-      Array.isArray((user as any).interests) &&
-      (user as any).interests.length > 0
-    ) {
-      setSelected((user as any).interests);
-    }
+    setAbout(((user as any).about as string) || "");
+    setGoal(GOALS.includes((user as any).goal as Goal) ? ((user as any).goal as Goal) : "Both");
+    setInterests(Array.isArray((user as any).interests) ? (user as any).interests : []);
+    setDirty(false);
+  }, [user?._id]);
+
+  useEffect(() => {
+    api.get<Pet[]>("/pets").then(({ data }) => setPets(data || [])).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2400);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const facePhoto = useMemo(() => {
+    const list = Array.isArray(user?.photos) ? user!.photos! : [];
+    const last = [...list].reverse().find((p: any) => p?.type === "owner_face");
+    return last?.url ? toAbs(last.url) : "";
   }, [user]);
 
-  /* 최신 사진 선택 (type 우선) */
-  const pickLastByType = (u: any, type: string) => {
-    const list = Array.isArray(u?.photos) ? u.photos : [];
-    const last =
-      [...list].reverse().find((p: any) => p.type === type) ||
-      list[list.length - 1];
-    return last?.url ? toAbs(last.url) : "";
+  const toggleInterest = (k: string) => {
+    setInterests((prev) =>
+      prev.includes(k) ? prev.filter((v) => v !== k) : prev.length >= 5 ? prev : [...prev, k]
+    );
+    setDirty(true);
   };
 
-  /* 서버 저장본 URL (썸네일 + 캐시버스터) */
-  const meServerUrl = useMemo(() => {
-    const raw = pickLastByType(user, "owner_face");
-    return withV(cdnThumb(raw, 480, 360), photoVersion);
-  }, [user, photoVersion]);
-
-  const petServerUrl = useMemo(() => {
-    const raw = pickLastByType(user, "pet");
-    return withV(cdnThumb(raw, 480, 360), photoVersion);
-  }, [user, photoVersion]);
-
-  /* 로컬 미리보기 */
-  const mePreview = useMemo(
-    () => (meFile ? URL.createObjectURL(meFile) : ""),
-    [meFile]
-  );
-  const petPreview = useMemo(
-    () => (petFile ? URL.createObjectURL(petFile) : ""),
-    [petFile]
-  );
-  useEffect(
-    () => () => {
-      if (mePreview) URL.revokeObjectURL(mePreview);
-    },
-    [mePreview]
-  );
-  useEffect(
-    () => () => {
-      if (petPreview) URL.revokeObjectURL(petPreview);
-    },
-    [petPreview]
-  );
-
-  const toggleInterest = (k: string) =>
-    setSelected((prev) =>
-      prev.includes(k)
-        ? prev.filter((v) => v !== k)
-        : prev.length < 5
-        ? [...prev, k]
-        : prev
-    );
-
-  /* 저장 */
-  const onSave = async () => {
-    if (saving) return;
+  const save = async () => {
     setSaving(true);
     try {
-      // 1) 텍스트 저장
-      const { data: updated } = await api.put("/users/me", {
-        name,
-        about: bio,
-        goal,
-        interests: selected,
-      });
-
-      // 2) 업로드 함수 (Cloudinary 라우트로 전송)
-      const uploadOnce = async (file: File, type: "owner_face" | "pet") => {
-        if (!isAllowedImage(file)) {
-          alert("이미지 파일만(최대 10MB) 업로드 가능합니다.");
-          return null;
-        }
-        const fd = new FormData();
-        fd.append("photo", file);
-        fd.append("type", type);
-        const { data } = await api.post("/users/me/photo", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        // 서버 응답: { url, publicId, type }
-        return data?.url
-          ? { url: data.url, publicId: data.publicId, type }
-          : null;
-      };
-
-      const uploaded: Array<{
-        url: string;
-        publicId?: string;
-        type: "owner_face" | "pet";
-      }> = [];
-      if (meFile) {
-        const up = await uploadOnce(meFile, "owner_face");
-        if (up) uploaded.push(up);
-      }
-      if (petFile) {
-        const up = await uploadOnce(petFile, "pet");
-        if (up) uploaded.push(up);
-      }
-
-      // 3) 같은 type은 교체
-      const basePhotos =
-        (Array.isArray(updated?.photos) ? updated.photos : user?.photos) ?? [];
-      const nextPhotos = [
-        ...basePhotos.filter(
-          (p: any) => !uploaded.some((u) => u.type === p.type)
-        ),
-        ...uploaded, // 최신 업로드를 뒤에
-      ];
-
-      // 4) 최종 setUser (서버 최신 + 로컬 보정)
-      setUser({ ...(updated || user), photos: nextPhotos });
-
-      // 5) 서버에서 한 번 더 freshest 받아 동기화(선택)
-      try {
-        const { data: fresh } = await api.get("/users/me");
-        if (fresh) setUser(fresh);
-      } catch {}
-
-      // 6) 입력값/미리보기 정리 + 캐시버스터 증가
-      setMeFile(null);
-      setPetFile(null);
-      setPhotoVersion((v) => v + 1);
-
-      alert("프로필을 저장했어요 ✅");
+      const { data } = await api.put("/users/me", { about, goal, interests });
+      setUser({ ...(data || user) } as any);
+      setDirty(false);
+      setToast({ msg: "Profile saved", type: "ok" });
     } catch (e: any) {
-      console.error(e);
-      alert(
-        e?.response?.data?.message ||
-          "저장에 실패했어요. 잠시 후 다시 시도해주세요."
-      );
+      setToast({ msg: e?.response?.data?.message || "Save failed", type: "error" });
     } finally {
       setSaving(false);
     }
   };
 
+  const onFacePick = async (file?: File) => {
+    if (!file) return;
+    if (!isAllowedImage(file)) {
+      setToast({ msg: "Only images up to 10MB", type: "error" });
+      return;
+    }
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      fd.append("type", "owner_face");
+      const { data } = await api.post("/users/me/photo", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      const { data: fresh } = await api.get("/users/me");
+      setUser(fresh);
+      setToast({ msg: "Photo updated", type: "ok" });
+      void data;
+    } catch (e: any) {
+      setToast({ msg: e?.response?.data?.message || "Upload failed", type: "error" });
+    }
+  };
+
+  const onLogout = async () => {
+    try { await api.post("/auth/logout").catch(() => {}); } finally {
+      if (typeof window !== "undefined") localStorage.removeItem("token");
+      setUser(null);
+      router.replace("/login");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Page header */}
-      <section className="border-b bg-white">
-        <div className="mx-auto max-w-[1200px] px-6 py-8">
-          <h1 className="text-2xl font-semibold tracking-tight">프로필</h1>
-          <p className="mt-1 text-sm text-slate-600">
-            간단합니다—이름, 한줄소개, 목적만 정리하고 사진만 올리면 끝!
-          </p>
-        </div>
-      </section>
-
-      {/* Content */}
-      <main className="mx-auto max-w-[1200px] px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
-          {/* 좌측: 기본 정보 */}
-          <section className="col-span-12 xl:col-span-7 space-y-6">
-            <Card title="기본 정보">
-              <div className="grid gap-5 md:grid-cols-2">
-                <Field label="이름">
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none ring-0 placeholder:text-slate-400 focus:border-emerald-500"
-                    placeholder="닉네임 또는 실명"
-                  />
-                </Field>
-                <div />
-                <Field label="한줄소개" full>
-                  <textarea
-                    rows={3}
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-500"
-                    placeholder="나를 한 문장으로 소개해요"
-                  />
-                  <p className="mt-1 text-xs text-slate-500">
-                    예: 주 3회 산책, 고양이 레크터와 살아요
-                  </p>
-                </Field>
-              </div>
-            </Card>
-
-            <Card title="목적">
-              <div className="flex flex-wrap gap-2">
-                {GOALS.map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGoal(g)}
-                    className={`rounded-full border px-4 py-2 text-sm transition
-                      ${
-                        goal === g
-                          ? "border-emerald-600 bg-emerald-50 text-emerald-700"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    type="button"
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </Card>
-
-            <Card title="관심사 (최대 5개)">
-              <div className="flex flex-wrap gap-2">
-                {INTERESTS.map((k) => {
-                  const on = selected.includes(k);
-                  const disabled = !on && selected.length >= 5;
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => toggleInterest(k)}
-                      disabled={disabled}
-                      className={`rounded-full px-3 py-1.5 text-sm transition
-                        ${
-                          on
-                            ? "bg-slate-900 text-white hover:bg-slate-800"
-                            : disabled
-                            ? "bg-slate-100 text-slate-400"
-                            : "bg-white text-slate-700 border border-slate-200 hover:border-slate-300"
-                        }`}
-                      type="button"
-                    >
-                      {k}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-2 text-xs text-slate-500">
-                {selected.length}/5 선택됨
-              </p>
-            </Card>
-          </section>
-
-          {/* 우측: 사진 업로드 + 저장 */}
-          <aside className="col-span-12 xl:col-span-5 space-y-6">
-            <Card title="사진">
-              <div className="grid gap-4 md:grid-cols-2">
-                <UploadCard
-                  label="내 얼굴"
-                  help="첫인상을 좌우해요. 밝은 사진 추천!"
-                  file={meFile}
-                  // 로컬 미리보기가 있으면 우선, 없으면 서버 저장본(썸네일+캐시버스트)
-                  preview={mePreview || meServerUrl}
-                  onChange={(f) => setMeFile(f)}
-                />
-                <UploadCard
-                  label="펫"
-                  help="대표 1~3장—너무 많으면 매칭 카드가 복잡해져요."
-                  file={petFile}
-                  preview={petPreview || petServerUrl}
-                  onChange={(f) => setPetFile(f)}
-                />
-              </div>
-            </Card>
-
-            <div className="sticky bottom-6">
-              <button
-                onClick={onSave}
-                disabled={saving}
-                className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-60"
-              >
-                {saving ? "저장 중..." : "저장하기"}
-              </button>
-              <p className="mt-2 text-xs text-slate-500">
-                저장하면 가이드라인에 따라 검토 후 공개돼요.
-              </p>
-            </div>
-          </aside>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-/* ---------- 작은 UI 컴포넌트들 ---------- */
-
-function Card({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold">{title}</h2>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  full,
-  children,
-}: {
-  label: string;
-  full?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={`${full ? "md:col-span-2" : ""} block`}>
-      <div className="mb-1 text-sm font-medium text-slate-700">{label}</div>
-      {children}
-    </label>
-  );
-}
-
-function UploadCard({
-  label,
-  help,
-  file,
-  preview,
-  onChange,
-}: {
-  label: string;
-  help: string;
-  file: File | null;
-  preview: string;
-  onChange: (f: File | null) => void;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 p-4">
-      <div className="mb-2 text-sm font-medium">{label}</div>
-
-      {/* 미리보기 */}
-      <div className="relative mb-3 overflow-hidden rounded-xl bg-slate-100">
-        <div className="aspect-[4/3] w-full">
-          {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              alt="preview"
-              src={preview}
-              className="h-full w-full object-cover"
-              onError={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                if (img.dataset.fallback === "1") return; // 루프 방지
-                img.dataset.fallback = "1";
-                img.onerror = null;
-                img.src =
-                  "https://res.cloudinary.com/<cloud>/image/upload/f_auto,q_auto/app/placeholders/pet-placeholder.png";
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => faceInput.current?.click()}
+            aria-label="Change profile photo"
+            style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer", position: "relative" }}
+          >
+            <Avatar src={facePhoto} size={96} ring />
+            <span
+              style={{
+                position: "absolute",
+                right: -2,
+                bottom: -2,
+                background: "var(--brand)",
+                borderRadius: "50%",
+                width: 28,
+                height: 28,
+                display: "grid",
+                placeItems: "center",
+                color: "#fff",
+                boxShadow: "0 0 0 3px var(--bg)",
               }}
-            />
-          ) : (
-            <div className="grid h-full w-full place-items-center text-xs text-slate-500">
-              미리보기
+            >
+              <Icon name="camera" size={14} />
+            </span>
+          </button>
+          <input
+            ref={faceInput}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => { onFacePick(e.target.files?.[0]); if (e.currentTarget) e.currentTarget.value = ""; }}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-xl font-extrabold" style={{ color: "var(--ink)" }}>
+              {user?.name || "User"}
+            </div>
+            <div className="mt-0.5 text-sm" style={{ color: "var(--ink-soft)" }}>
+              {(user as any)?.locationName || user?.email}
+            </div>
+            <div className="mt-2 inline-flex">
+              <Badge tone="brand">{goal}</Badge>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* My info */}
+      <Card>
+        <CardHeader title="About me" subtitle="A short line + interests" />
+        <div className="space-y-4">
+          <Textarea
+            rows={3}
+            value={about}
+            onChange={(e) => { setAbout(e.target.value); setDirty(true); }}
+            placeholder="Introduce yourself in one sentence"
+            maxLength={200}
+          />
+
+          <div>
+            <div className="mb-2 text-sm font-medium" style={{ color: "var(--ink)" }}>
+              Goal
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {GOALS.map((g) => (
+                <Chip key={g} active={goal === g} onClick={() => { setGoal(g); setDirty(true); }}>
+                  {g}
+                </Chip>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-2 text-sm font-medium" style={{ color: "var(--ink)" }}>
+              Interests <span className="text-xs font-normal" style={{ color: "var(--ink-soft)" }}>(up to 5 · {interests.length}/5)</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {INTERESTS.map((k) => {
+                const on = interests.includes(k);
+                const disabled = !on && interests.length >= 5;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => !disabled && toggleInterest(k)}
+                    disabled={disabled}
+                    style={{
+                      height: 34,
+                      padding: "0 14px",
+                      borderRadius: 999,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: disabled ? "not-allowed" : "pointer",
+                      background: on ? "var(--ink)" : "var(--bg)",
+                      color: on ? "var(--bg)" : disabled ? "var(--ink-faint)" : "var(--ink)",
+                      border: "1px solid",
+                      borderColor: on ? "var(--ink)" : "var(--border)",
+                    }}
+                  >
+                    {k}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {dirty && (
+            <div className="flex justify-end">
+              <Button onClick={save} loading={saving}>Save changes</Button>
             </div>
           )}
         </div>
-      </div>
+      </Card>
 
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium hover:border-slate-300">
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-        />
-        <span>{file ? "다시 선택하기" : "사진 선택하기"}</span>
-      </label>
+      {/* My pets */}
+      <Card padded={false}>
+        <div
+          className="flex items-center justify-between border-b px-5 py-4"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <h2 className="text-base font-bold" style={{ color: "var(--ink)" }}>My pets</h2>
+          <Link href="/pets" className="text-sm font-semibold" style={{ color: "var(--brand)" }}>
+            Manage →
+          </Link>
+        </div>
+        {pets.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+            No pets yet.{" "}
+            <Link href="/pets" className="underline" style={{ color: "var(--brand-strong)" }}>
+              Add a pet
+            </Link>
+          </div>
+        ) : (
+          <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
+            {pets.slice(0, 5).map((p) => {
+              const cover = p.photos?.[0]?.url;
+              return (
+                <li key={p._id} className="flex items-center justify-between px-5 py-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar src={cover ? toAbs(cover) : undefined} size={44} />
+                    <div className="min-w-0">
+                      <div className="font-semibold" style={{ color: "var(--ink)" }}>{p.name}</div>
+                      <div className="truncate text-xs" style={{ color: "var(--ink-soft)" }}>
+                        {labelType(p.type)}{p.breed ? ` · ${p.breed}` : ""}{p.age != null ? ` · ${p.age}y` : ""}
+                      </div>
+                    </div>
+                  </div>
+                  <Link href="/pets" className="text-sm" style={{ color: "var(--brand-strong)" }}>
+                    Edit
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
-      <p className="mt-2 text-xs text-slate-500">{help}</p>
+      {/* Link list */}
+      <Card padded={false}>
+        <ul>
+          <LinkItem icon="camera" label="Photos" href="/photos" />
+          <LinkItem icon="shield" label="Report / Block" href="/safety" />
+          <LinkItem icon="cog" label="Settings" href="/settings" />
+          <LinkItem icon="logout" label="Log out" danger onClick={onLogout} />
+        </ul>
+      </Card>
+
+      <Toast toast={toast} />
     </div>
   );
+}
+
+function LinkItem({
+  icon, label, href, danger, onClick,
+}: {
+  icon: any;
+  label: string;
+  href?: string;
+  danger?: boolean;
+  onClick?: () => void;
+}) {
+  const content = (
+    <div
+      className="flex items-center justify-between px-5 py-3.5"
+      style={{ color: danger ? "var(--danger)" : "var(--ink)" }}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="grid h-8 w-8 place-items-center rounded-lg"
+          style={{ background: "var(--surface-2)" }}
+        >
+          <Icon name={icon} size={18} />
+        </span>
+        <span className="text-sm font-semibold">{label}</span>
+      </div>
+      {!onClick && <Icon name="fwd" size={18} color="var(--ink-faint)" />}
+    </div>
+  );
+  if (onClick) {
+    return (
+      <li
+        className="border-b last:border-0"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <button
+          type="button"
+          onClick={onClick}
+          style={{ background: "transparent", border: "none", width: "100%", textAlign: "left", cursor: "pointer", padding: 0, fontFamily: "inherit" }}
+        >
+          {content}
+        </button>
+      </li>
+    );
+  }
+  return (
+    <li
+      className="border-b last:border-0"
+      style={{ borderColor: "var(--border)" }}
+    >
+      <Link href={href!}>{content}</Link>
+    </li>
+  );
+}
+
+function labelType(s?: string) {
+  if (s === "dog") return "Dog";
+  if (s === "cat") return "Cat";
+  return "Pet";
 }

@@ -11,77 +11,50 @@ type Walk = {
   startedAt: string;
 };
 
-// Common card style classes
 const card =
   "rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden";
-const cardPadded = `${card} p-5`;
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, setUser } = useAuth();
 
-  // Authentication state
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [loggingOut, setLoggingOut] = useState(false);
 
-  // Logout handler
-  const onLogout = async () => {
-    if (loggingOut) return;
-    setLoggingOut(true);
-    try {
-      await api.post("/auth/logout").catch(() => {});
-    } finally {
-      if (typeof window !== "undefined") localStorage.removeItem("token");
-      setUser(null);
-      setLoggingOut(false);
-      router.replace("/login");
-    }
-  };
-
-  const [walkCount, setWalkCount] = useState<number>(0);
   const [sumKm, setSumKm] = useState<number>(0);
-  const [sumMin, setSumMin] = useState<number>(0);
+  const [, setSumMin] = useState<number>(0);
+  const [, setWalkCount] = useState<number>(0);
 
-  const [totalWalks, setTotalWalks] = useState<number>(0);
   const [totalKm, setTotalKm] = useState<number>(0);
+  const [, setTotalWalks] = useState<number>(0);
   const [loadingWalks, setLoadingWalks] = useState<boolean>(true);
 
-  // 1) Auth check -> if success, set user state
+  // 1) Auth check
   useEffect(() => {
     let alive = true;
-
     (async () => {
       try {
-        // If no token, redirect to login immediately
         if (typeof window !== "undefined" && !localStorage.getItem("token")) {
           router.replace("/login");
           return;
         }
-
         const me = await api.get("/users/me");
         if (!alive) return;
-
-        // Consider success if server returns at least _id
         if (!me?.data?._id) throw new Error("Invalid user payload");
         setUser(me.data);
         setAuthChecked(true);
       } catch (e: any) {
         const status = e?.response?.status;
-        if (status === 401) {
-          router.replace("/login");
-        } else {
-          setAuthError("Failed to load user info.");
-        }
+        if (status === 401) router.replace("/login");
+        else setAuthError("Couldn't load user info.");
       }
     })();
-
     return () => {
       alive = false;
     };
   }, [router, setUser]);
 
-  // 2) After auth confirmed, fetch walk aggregates
+  // 2) Walk aggregates
   useEffect(() => {
     if (!authChecked) return;
     let alive = true;
@@ -93,7 +66,6 @@ export default function DashboardPage() {
         const end = new Date();
         end.setHours(23, 59, 59, 999);
 
-        //✅ Fetch today + lifetime in parallel
         const [todayRes, allRes] = await Promise.all([
           api.get<Walk[]>("/walks", {
             params: { from: start.toISOString(), to: end.toISOString() },
@@ -102,7 +74,6 @@ export default function DashboardPage() {
         ]);
         if (!alive) return;
 
-        // Today
         const today = todayRes.data;
         const todayKm = today.reduce((a, w) => a + (w.distanceKm || 0), 0);
         const todayMin = today.reduce((a, w) => a + (w.durationMin || 0), 0);
@@ -110,7 +81,6 @@ export default function DashboardPage() {
         setSumKm(Number(todayKm.toFixed(1)));
         setSumMin(todayMin);
 
-        // LifeTime
         const all = allRes.data;
         const allKm = all.reduce((a, w) => a + (w.distanceKm || 0), 0);
         setTotalWalks(all.length);
@@ -148,21 +118,16 @@ export default function DashboardPage() {
   const [unreadTotal, setUnreadTotal] = useState<number>(0);
   const [loadingMsgs, setLoadingMsgs] = useState<boolean>(true);
 
-  // Fetch total unread messages from matches
+  // Unread messages
   useEffect(() => {
     if (!authChecked) return;
     let alive = true;
-
     (async () => {
       setLoadingMsgs(true);
       try {
         const { data } = await api.get<Match[]>("/matches");
-
-        // Assume server returns match.unreadCount; otherwise use a simple fallback.
         const total = data.reduce((acc, m) => {
           if (typeof m.unreadCount === "number") return acc + m.unreadCount;
-
-          // fallback: if the last message is not from me, count it as 1
           if (
             m.lastMessage &&
             m.lastMessage.from &&
@@ -171,7 +136,6 @@ export default function DashboardPage() {
             return acc + 1;
           return acc;
         }, 0);
-
         if (!alive) return;
         setUnreadTotal(total);
       } catch {
@@ -181,7 +145,6 @@ export default function DashboardPage() {
         if (alive) setLoadingMsgs(false);
       }
     })();
-
     return () => {
       alive = false;
     };
@@ -190,7 +153,7 @@ export default function DashboardPage() {
   const [pets, setPets] = useState<PetDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
-  //Load my pets (server filters by owner=req.user._id)
+  // My pets
   useEffect(() => {
     (async () => {
       try {
@@ -204,61 +167,66 @@ export default function DashboardPage() {
     })();
   }, []);
 
-  // HERO Top KPIs
-  const heroKpis = useMemo(
-    () => [
-      {
-        label: "Today's Walks",
-        v: loadingWalks ? (
-          "—"
-        ) : (
-          <>
-            {walkCount}
-            <span style={{ fontSize: "0.4em", marginLeft: "2px" }}>times</span>
-          </>
-        ),
-      },
-      { label: "Unread Message", v: loadingMsgs ? "—" : `${unreadTotal}` },
-    ],
-    [loadingWalks, walkCount, loadingMsgs, unreadTotal]
-  );
+  // Profile completion
+  const completion = useMemo(() => {
+    if (!user) return 0;
+    const checks = [
+      !!user.heroUrl || !!(user.photos && user.photos.length),
+      !!user.about,
+      !!user.goal,
+      !!(user.interests && user.interests.length),
+      pets.length > 0,
+    ];
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }, [user, pets.length]);
 
-  const mainKpis = useMemo(
-    () => [
-      {
-        label: "All Walk Records",
-        v1: loadingWalks ? "—" : `${totalWalks}`,
-        v2: loadingWalks ? "Aggregating.." : `Total ${totalKm}km`,
-      },
-      {
-        label: "Unread Messages",
-        v1: loadingMsgs ? "—" : `${unreadTotal}`,
-        v2: "Conversations with unread",
-      },
-      { label: "Profile", v1: "80%", v2: "comletion" },
-    ],
-    [loadingWalks, totalWalks, totalKm, loadingMsgs, unreadTotal]
-  );
+  const kpis = [
+    {
+      emoji: "🐾",
+      v: loadingWalks ? "—" : sumKm,
+      unit: "km",
+      label: "Today's walks",
+    },
+    {
+      emoji: "🗺",
+      v: loadingWalks ? "—" : totalKm,
+      unit: "km",
+      label: "Total distance",
+    },
+    {
+      emoji: "💬",
+      v: loadingMsgs ? "—" : unreadTotal,
+      unit: "",
+      label: "Unread messages",
+    },
+  ];
 
-  // Auth loading / error screens
+  const quick = [
+    { emoji: "🐾", label: "Start matching", sub: "Find new friends", href: "/match" },
+    { emoji: "💬", label: "Chat", sub: "Continue chatting", href: "/chat" },
+    { emoji: "📷", label: "Upload photos", sub: "Save memories", href: "/photos" },
+    { emoji: "🐶", label: "My pets", sub: "Manage profile", href: "/pets" },
+    { emoji: "⚙️", label: "Settings", sub: "Matching · Alerts", href: "/settings" },
+  ];
+
   if (!authChecked && !authError) {
     return (
-      <div className="min-h-dvh grid place-items-center text-slate-700">
-        <div className="text-sm">Checking authentication…</div>
+      <div className="grid min-h-dvh place-items-center text-sm text-slate-500">
+        Checking authentication…
       </div>
     );
   }
   if (authError) {
     return (
-      <div className="min-h-dvh grid place-items-center text-slate-700">
-        <div className="rounded-xl border p-5">
-          <div className="font-semibold mb-1">Something went wrong</div>
+      <div className="grid min-h-dvh place-items-center text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-1 font-semibold">Something went wrong</div>
           <div className="text-sm text-slate-500">{authError}</div>
           <button
             onClick={() => router.replace("/login")}
-            className="mt-4 rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50"
+            className="mt-4 rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-50"
           >
-            Go to Login
+            Go to login
           </button>
         </div>
       </div>
@@ -266,192 +234,132 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-dvh w-full bg-50 text-slate-900">
-      {/* Header */}
-      <header className="sticky top-0 z-30 w-full bg-slate-50">
-        <div className="mx-auto max-w-[1208px] px-5">
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-sm px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl"></span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-500">
-                Hello, <b className="text-slate-800">{user?.name || "User"}</b>{" "}
-                👋
-              </span>
-              <button
-                onClick={onLogout}
-                disabled={loggingOut}
-                aria-label="Logout"
-                className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 active:scale-[0.98] transition disabled:opacity-60"
-                title="Logout"
-              >
-                {loggingOut ? "Logging out…" : "Logout"}
-              </button>
-            </div>
+    <div className="mx-auto w-full max-w-[1120px] px-6 py-7">
+      {/* greeting hero */}
+      <section
+        className="rounded-2xl p-7 text-white shadow-sm"
+        style={{
+          background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+        }}
+      >
+        <h1 className="text-[26px] font-extrabold">
+          Hello, {user?.name || "User"} 👋
+        </h1>
+        <p className="mt-1.5 text-[15px] text-emerald-50/90">
+          Have a happy day with your pet.
+        </p>
+
+        {/* profile completion */}
+        <div className="mt-5 max-w-md">
+          <div className="mb-1.5 flex items-center justify-between text-[13px] font-semibold text-emerald-50/90">
+            <span>Profile completion</span>
+            <span>{completion}%</span>
           </div>
-        </div>
-      </header>
-
-      {/* HERO */}
-      <section className="relative w-full bg-slate-50">
-        <div className="mx-auto max-w-[1208px] px-5 py-6">
-          <div className={`${card} p-5`}>
-            <div className="grid grid-cols-12 gap-6">
-              {/* Left Banner */}
-              <div className="col-span-12 lg:col-span-7">
-                <div className="rounded-xl ring-1 ring-emerald-100 bg-emerald-50/60 p-6">
-                  <h1 className="text-[28px] font-extrabold tracking-tight">
-                    Welcome to Pet Date
-                  </h1>
-                  <p className="mt-1 text-sm text-slate-600">
-                    Find the perfect match for your pet anytime, anywhere
-                  </p>
-
-                  {/* Mini KPIs */}
-                  <div className="mt-6 grid grid-cols-2 gap-4">
-                    {heroKpis.map((k) => (
-                      <div key={k.label} className={`${card} p-4 text-center`}>
-                        <div className="text-xs text-slate-500">{k.label}</div>
-                        <div className="mt-1 text-2xl font-semibold">{k.v}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right quick links 3x2 */}
-              <div className="col-span-12 lg:col-span-5">
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { t: "My Pets", href: "/pets" },
-                    { t: "Chat", href: "/chat" },
-                    { t: "Walk Logs", href: "/walks" },
-                    { t: "Add Walk", href: "/walks/new" },
-                    { t: "Photo Upload", href: "/photos" },
-                    { t: "Settings", href: "/settings" },
-                  ].map((m) => (
-                    <Link
-                      key={m.t}
-                      href={m.href}
-                      className={`${card} p-4 group flex flex-col items-center gap-2 text-center text-sm transition hover:-translate-y-0.5`}
-                    >
-                      <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-2xl">
-                        🐾
-                      </div>
-                      <span className="text-slate-700 group-hover:text-emerald-700">
-                        {m.t}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
+          <div className="h-2 overflow-hidden rounded-full bg-white/25">
+            <div
+              className="h-full rounded-full bg-white transition-all duration-500"
+              style={{ width: `${completion}%` }}
+            />
           </div>
         </div>
       </section>
 
-      {/* Main */}
-      <main className="w-full bg-slate-50">
-        <div className="mx-auto max-w-[1208px] px-5 py-6">
-          <div className={`${card} p-5`}>
-            {/* KPIs */}
-            <section className="grid grid-cols-12 gap-6">
-              {mainKpis.map((k) => (
-                <div
-                  key={k.label}
-                  className={`col-span-12 sm:col-span-6 xl:col-span-3 ${cardPadded}`}
-                >
-                  <div className="text-xs text-slate-500">{k.label}</div>
-                  <div className="mt-1 text-3xl font-semibold">{k.v1}</div>
-                  <div className="mt-1 text-xs text-slate-500">{k.v2}</div>
-                </div>
-              ))}
-            </section>
-
-            {/*  My Pets + Quick Actions */}
-            <section className="mt-6 grid grid-cols-12 gap-6">
-              {/* My pets */}
-              <div className={`col-span-12 2xl:col-span-6 ${card}`}>
-                <div className="px-5 py-3 font-semibold border-b border-slate-200">
-                  My Pets
-                </div>
-
-                {loading ? (
-                  <div className="px-5 py-6 text-sm text-slate-500">
-                    Loading..
-                  </div>
-                ) : pets.length === 0 ? (
-                  <div className="px-5 py-6 text-sm text-slate-500">
-                    No pets registered
-                  </div>
-                ) : (
-                  <ul className="m-0 list-none divide-y divide-slate-200">
-                    {pets.map((p) => {
-                      const sub = `${p.type ?? "Other"} · ${
-                        p.age != null ? `${p.age}yrs` : "Age unknown"
-                      }`;
-                      return (
-                        <li
-                          key={p._id}
-                          className="flex items-center justify-between px-5 py-4"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="grid h-10 w-10 place-items-center rounded-full bg-indigo-600 text-sm font-bold text-white">
-                              {p.name?.charAt(0)?.toUpperCase() ?? "?"}
-                            </div>
-                            <div>
-                              <div className="font-medium">{p.name}</div>
-                              <div className="text-xs text-slate-500">
-                                {sub}
-                              </div>
-                            </div>
-                          </div>
-                          <Link href={`/pets?selected=${p._id}`}>Profile</Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-
-              {/* Quick Action 1 */}
-              <div
-                className={`col-span-12 sm:col-span-6 xl:col-span-3 ${cardPadded}`}
-              >
-                <div className="mb-3 h-10 w-10 rounded-lg bg-indigo-50" />
-                <div className="mb-1 font-semibold">Add Walk Record</div>
-                <div className="mb-3 text-sm text-slate-500">
-                  Log distance & time
-                </div>
-                <Link
-                  href="/walks/new"
-                  className="inline-flex rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                >
-                  Add Record
-                </Link>
-              </div>
-
-              {/* Quick Action 2 */}
-              <div
-                className={`col-span-12 sm:col-span-6 xl:col-span-3 ${cardPadded}`}
-              >
-                <div className="mb-3 h-10 w-10 rounded-lg bg-indigo-50" />
-                <div className="mb-1 font-semibold">Upload Photos</div>
-                <div className="mb-3 text-sm text-slate-500">
-                  Save cute moments
-                </div>
-                <Link
-                  href="/photos"
-                  className="inline-flex rounded-md border border-emerald-600 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                >
-                  Upload
-                </Link>
-              </div>
-            </section>
+      {/* KPI cards */}
+      <section className="mt-5 grid grid-cols-3 gap-4">
+        {kpis.map((k) => (
+          <div key={k.label} className={`${card} p-4 text-center`}>
+            <div className="mx-auto mb-2 grid h-9 w-9 place-items-center rounded-[10px] bg-emerald-50 text-lg">
+              {k.emoji}
+            </div>
+            <div className="text-2xl font-extrabold">
+              {k.v}
+              {k.unit && (
+                <span className="ml-0.5 text-xs font-semibold text-slate-400">
+                  {k.unit}
+                </span>
+              )}
+            </div>
+            <div className="mt-0.5 text-xs text-slate-500">{k.label}</div>
           </div>
-        </div>
-      </main>
+        ))}
+      </section>
+
+      {/* quick actions */}
+      <h2 className="mb-3 mt-7 text-base font-bold">Quick actions</h2>
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {quick.map((q) => (
+          <Link
+            key={q.label}
+            href={q.href}
+            className={`${card} group flex flex-col items-center gap-2 px-3 py-5 text-center transition hover:-translate-y-0.5`}
+          >
+            <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-50 text-2xl">
+              {q.emoji}
+            </div>
+            <div className="whitespace-nowrap text-sm font-bold">{q.label}</div>
+            <div className="whitespace-nowrap text-xs text-slate-400">
+              {q.sub}
+            </div>
+          </Link>
+        ))}
+      </section>
+
+      {/* my pets */}
+      <div className="mb-3 mt-7 flex items-center justify-between">
+        <h2 className="text-base font-bold">My pets</h2>
+        <Link href="/pets" className="text-sm font-semibold text-emerald-700">
+          View all ›
+        </Link>
+      </div>
+      <section className={card}>
+        {loading ? (
+          <div className="px-5 py-8 text-center text-sm text-slate-500">
+            Loading…
+          </div>
+        ) : pets.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
+            <div className="grid h-20 w-20 place-items-center rounded-full bg-emerald-50 text-4xl">
+              🐾
+            </div>
+            <div className="mt-1 font-bold">No pets yet</div>
+            <div className="max-w-xs text-sm text-slate-500">
+              Register your pet to start matching.
+            </div>
+            <Link
+              href="/pets"
+              className="mt-3 inline-flex h-10 items-center rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              Add a pet
+            </Link>
+          </div>
+        ) : (
+          <ul className="m-0 grid list-none grid-cols-2 gap-0 sm:grid-cols-3 lg:grid-cols-4">
+            {pets.map((p) => {
+              const sub = `${p.type ?? "Other"} · ${
+                p.age != null ? `${p.age}y` : "Age unknown"
+              }`;
+              return (
+                <li key={p._id} className="border-b border-slate-100 p-3">
+                  <Link
+                    href={`/pets?selected=${p._id}`}
+                    className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-50"
+                  >
+                    <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-emerald-600 text-base font-bold text-white">
+                      {p.name?.charAt(0)?.toUpperCase() ?? "?"}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold">{p.name}</span>
+                      <span className="block truncate text-xs text-slate-500">
+                        {sub}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

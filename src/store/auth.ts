@@ -10,6 +10,7 @@ export type User = {
   about?: string;
   goal?: string;
   interests?: string[];
+  locationName?: string;
   heroUrl?: string;
   profileRev?: number;
 };
