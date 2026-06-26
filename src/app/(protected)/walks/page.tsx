@@ -1,240 +1,292 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { api } from "@/lib/api";
-import { Card, Button, Field, Select, Input, Banner, Icon, Badge } from "@/components/ui";
 
-type Pet = { _id: string; name: string; breed?: string };
-type Walk = {
+/** 산책 약속 — meetup (walk-invite) list. */
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { api } from "@/lib/api";
+import { useAuth } from "@/store/auth";
+import { Page } from "@/components/shell/Page";
+import { Card as UICard, Button, Select, Badge, Spinner, EmptyState } from "@/components/ui";
+import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
+
+const STATUS: Record<string, string> = {
+  proposed: "대기 중",
+  confirmed: "수락됨",
+  declined: "거절됨",
+  cancelled: "취소됨",
+};
+
+type WalkRec = {
   _id: string;
-  pet: Pet | string;
+  pet: string;
   distanceKm: number;
   durationMin: number;
   startedAt: string;
-  endedAt: string;
-  notes?: string;
 };
 
 export default function WalksPage() {
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [petId, setPetId] = useState("");
-  const [from, setFrom] = useState<string>(() => {
-    const d = new Date(); d.setHours(0, 0, 0, 0);
-    return d.toISOString().slice(0, 10);
-  });
-  const [to, setTo] = useState<string>(() => {
-    const d = new Date(); d.setHours(23, 59, 59, 999);
-    return d.toISOString().slice(0, 10);
-  });
+  const router = useRouter();
+  const { user } = useAuth();
+  const myId = (user as any)?._id || "";
 
-  const [walks, setWalks] = useState<Walk[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState("");
-  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
-
-  type WalkInvite = {
-    _id: string; date: string; time: string; place?: string; note?: string;
-    status: "proposed" | "confirmed" | "declined" | "cancelled";
-  };
-  const [upcoming, setUpcoming] = useState<WalkInvite[]>([]);
+  const [invites, setInvites] = useState<WalkInvite[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [walks, setWalks] = useState<WalkRec[]>([]);
+  const [pets, setPets] = useState<{ _id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("all");
+  const [sort, setSort] = useState("date");
 
   useEffect(() => {
-    api
-      .get<WalkInvite[]>("/walk-invites", { params: { scope: "upcoming" } })
-      .then(({ data }) => {
-        const sorted = (data || [])
-          .filter((i) => i.status === "confirmed")
-          .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-        setUpcoming(sorted);
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get<Pet[]>("/pets");
-        setPets(data || []);
-      } catch (e: any) {
-        setMsg(e?.response?.data?.message || "Failed to load pets");
-      }
-    })();
-  }, []);
-
-  const load = async () => {
-    try {
-      setLoading(true);
-      setMsg("");
-      const params: any = {};
-      if (from) params.from = new Date(from + "T00:00:00").toISOString();
-      if (to) params.to = new Date(to + "T23:59:59").toISOString();
-      if (petId) params.petId = petId;
-      const { data } = await api.get<Walk[]>("/walks", { params });
-      setWalks(data);
-    } catch (e: any) {
-      setMsg(e?.response?.data?.message || "Failed to load walks");
-    } finally {
+    const today = new Date();
+    const from = new Date(today);
+    from.setDate(from.getDate() - 90);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    Promise.allSettled([
+      api.get<WalkInvite[]>("/walk-invites"),
+      api.get<Match[]>("/matches"),
+      api.get<WalkRec[]>("/walks", { params: { from: iso(from), to: iso(today) } }),
+      api.get<{ _id: string; name: string }[]>("/pets"),
+    ]).then(([inv, mt, wk, pt]) => {
+      if (inv.status === "fulfilled") setInvites(inv.value.data || []);
+      if (mt.status === "fulfilled") setMatches(mt.value.data || []);
+      if (wk.status === "fulfilled") setWalks(wk.value.data || []);
+      if (pt.status === "fulfilled") setPets(pt.value.data || []);
       setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
-
-  const grouped = useMemo(() => {
-    const g: Record<string, Walk[]> = {};
-    walks.forEach((w) => {
-      const day = new Date(w.startedAt).toISOString().slice(0, 10);
-      (g[day] = g[day] || []).push(w);
     });
-    return Object.entries(g).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [walks]);
+  }, []);
 
-  const totalToday = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    const dayList = walks.filter((w) => w.startedAt.slice(0, 10) === today);
-    return {
-      cnt: dayList.length,
-      km: +dayList.reduce((a, w) => a + (w.distanceKm || 0), 0).toFixed(1),
-      min: dayList.reduce((a, w) => a + (w.durationMin || 0), 0),
-    };
-  }, [walks]);
-
-  const deleteWalk = async (id: string) => {
-    if (!confirm("Delete this walk record?")) return;
-    try {
-      setMsg("");
-      setDeletingIds((prev) => new Set(prev).add(id));
-      await api.delete(`/walks/${id}`);
-      setWalks((prev) => prev.filter((w) => w._id !== id));
-    } catch (e: any) {
-      setMsg(e?.response?.data?.message || "Failed to delete.");
-    } finally {
-      setDeletingIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
-    }
+  const peerName = (matchId: string) => {
+    const m = matches.find((x) => x._id === matchId);
+    const peer = m ? peerOf(m, myId) : undefined;
+    const pet = pickPet(peer);
+    return { owner: peer?.name || "상대", pet: pet?.name || "반려동물" };
   };
+  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "반려동물";
+
+  const upcoming = useMemo(
+    () =>
+      invites
+        .filter((i) => i.status === "proposed" || i.status === "confirmed")
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+        .slice(0, 4),
+    [invites]
+  );
+
+  const listRows = useMemo(() => {
+    let l = invites.slice();
+    if (status !== "all") l = l.filter((i) => i.status === status);
+    if (sort === "date") l.sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
+    return l;
+  }, [invites, status, sort]);
 
   return (
-    <div className="mx-auto max-w-[980px] space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Walks</h1>
-          <p className="mt-1 text-sm text-slate-500">Track walks with your pet.</p>
-        </div>
-        <Link href="/walks/new"><Button size="sm">+ New walk</Button></Link>
-      </div>
-
-      {upcoming.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-bold" style={{ color: "var(--ink-soft)" }}>Upcoming walks</h2>
-            <span className="text-xs" style={{ color: "var(--ink-faint)" }}>{upcoming.length}</span>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
-            {upcoming.map((u) => (
-              <div
-                key={u._id}
-                className="surface flex shrink-0 flex-col gap-1 rounded-2xl p-4"
-                style={{ minWidth: 220 }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    className="grid h-8 w-8 place-items-center rounded-lg"
-                    style={{ background: "var(--brand)", color: "#fff" }}
-                  >
-                    <Icon name="walk" size={16} />
-                  </span>
-                  <Badge tone="brand">Confirmed</Badge>
-                </div>
-                <div className="mt-1 text-sm font-bold" style={{ color: "var(--ink)" }}>
-                  {u.date} · {u.time}
-                </div>
-                {u.place && (
-                  <div className="text-xs" style={{ color: "var(--ink-soft)" }}>
-                    📍 {u.place}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-3 gap-4">
-        <Card><div className="text-xs text-slate-500">Walks today</div><div className="mt-1 text-2xl font-bold">{totalToday.cnt}</div></Card>
-        <Card><div className="text-xs text-slate-500">Distance today</div><div className="mt-1 text-2xl font-bold">{totalToday.km}km</div></Card>
-        <Card><div className="text-xs text-slate-500">Time today</div><div className="mt-1 text-2xl font-bold">{totalToday.min}min</div></Card>
-      </div>
-
-      <Card>
-        <div className="grid grid-cols-12 items-end gap-3">
-          <Field label="Pet" className="col-span-12 sm:col-span-4">
-            <Select value={petId} onChange={(e) => setPetId(e.target.value)}>
-              <option value="">All</option>
-              {pets.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-            </Select>
-          </Field>
-          <Field label="From" className="col-span-6 sm:col-span-3">
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </Field>
-          <Field label="To" className="col-span-6 sm:col-span-3">
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </Field>
-          <div className="col-span-12 sm:col-span-2">
-            <Button onClick={load} fullWidth loading={loading}>Search</Button>
-          </div>
-        </div>
-      </Card>
-
+    <Page
+      title="산책 약속"
+      right={
+        <>
+          <Button variant="ghost" onClick={() => router.push("/walks/records")}>
+            산책 기록 보기
+          </Button>
+          <Button onClick={() => router.push("/walks/new")}>새 약속 만들기</Button>
+        </>
+      }
+    >
       {loading ? (
-        <Card><div className="text-sm text-slate-500">Loading…</div></Card>
-      ) : grouped.length === 0 ? (
-        <Card>
-          <div className="text-sm text-slate-500">
-            No walks yet. <Link href="/walks/new" className="text-brand-700 underline">Add your first record</Link>!
-          </div>
-        </Card>
-      ) : (
-        <div className="space-y-5">
-          {grouped.map(([day, items]) => (
-            <Card key={day} padded={false}>
-              <div className="border-b border-slate-100 px-5 py-3 font-semibold">{formatDay(day)}</div>
-              <ul className="divide-y divide-slate-100">
-                {items.map((w) => {
-                  const isDeleting = deletingIds.has(w._id);
-                  return (
-                    <li key={w._id} className="flex items-center justify-between px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-10 w-10 place-items-center rounded-full bg-brand-50 text-lg">🐾</span>
-                        <div>
-                          <div className="font-medium text-slate-900">
-                            {typeof w.pet === "string" ? "Pet" : (w.pet as Pet)?.name} · {w.distanceKm}km · {w.durationMin}min
-                          </div>
-                          <div className="text-xs text-slate-500">{formatTime(w.startedAt)} ~ {formatTime(w.endedAt)}</div>
-                          {w.notes && <div className="mt-1 text-xs text-slate-500">Note: {w.notes}</div>}
-                        </div>
-                      </div>
-                      <Button variant="danger" size="sm" onClick={() => deleteWalk(w._id)} disabled={isDeleting}>
-                        {isDeleting ? "Deleting…" : "Delete"}
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Card>
-          ))}
+        <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}>
+          <Spinner />
         </div>
+      ) : (
+        <>
+          {/* 다가오는 약속 */}
+          <h2 style={{ margin: "0 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
+            다가오는 약속
+          </h2>
+          {upcoming.length === 0 ? (
+            <UICard>
+              <p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>
+                예정된 산책 약속이 없어요.
+              </p>
+            </UICard>
+          ) : (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gap: 16,
+              }}
+            >
+              {upcoming.map((i) => {
+                const n = peerName(i.match);
+                return (
+                  <UICard key={i._id}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 52, height: 52, borderRadius: "50%",
+                          background: "var(--surface-2)", color: "var(--ink-faint)",
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 12, flexShrink: 0,
+                        }}
+                      >
+                        강아
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                          {n.pet} · {n.owner}
+                        </div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
+                          {i.date} {i.time}
+                        </div>
+                        {i.place && (
+                          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>
+                            {i.place}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
+                        <Badge tone={i.status === "confirmed" ? "brand" : "slate"}>
+                          {STATUS[i.status]}
+                        </Badge>
+                        <button
+                          type="button"
+                          onClick={() => router.push(`/walks/${i._id}`)}
+                          style={{
+                            background: "none", border: "none", cursor: "pointer",
+                            fontFamily: "inherit", fontSize: 13, color: "var(--brand-strong)",
+                            textDecoration: "underline", textUnderlineOffset: 3,
+                          }}
+                        >
+                          약속 상세
+                        </button>
+                      </div>
+                    </div>
+                  </UICard>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 약속 목록 */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              margin: "32px 0 14px",
+              gap: 16,
+              flexWrap: "wrap",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
+              약속 목록
+            </h2>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>상태</div>
+                <Select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 110, height: 38, fontSize: 13 }}>
+                  <option value="all">전체</option>
+                  <option value="proposed">대기 중</option>
+                  <option value="confirmed">수락됨</option>
+                  <option value="declined">거절됨</option>
+                  <option value="cancelled">취소됨</option>
+                </Select>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>정렬</div>
+                <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 130, height: 38, fontSize: 13 }}>
+                  <option value="date">날짜 최신순</option>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {listRows.length === 0 ? (
+            <UICard><p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>약속이 없어요.</p></UICard>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {listRows.map((i) => {
+                const n = peerName(i.match);
+                return (
+                  <button
+                    key={i._id}
+                    type="button"
+                    onClick={() => router.push(`/walks/${i._id}`)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 14, textAlign: "left",
+                      border: "1px solid var(--border)", borderRadius: "var(--r-card)",
+                      background: "var(--bg)", padding: 14, cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    <div style={{
+                      width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
+                      color: "var(--ink-faint)", display: "flex", alignItems: "center",
+                      justifyContent: "center", fontSize: 12, flexShrink: 0,
+                    }}>강아</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+                        {n.pet} · {n.owner}
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+                        {i.date} {i.time}{i.place ? ` · ${i.place}` : ""}
+                      </div>
+                    </div>
+                    <Badge tone={i.status === "confirmed" ? "brand" : i.status === "declined" || i.status === "cancelled" ? "rose" : "slate"}>
+                      {STATUS[i.status]}
+                    </Badge>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 지난 약속 기록 (완료된 산책) */}
+          {walks.length > 0 && (
+            <>
+              <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
+                지난 약속 기록
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {walks.slice(0, 5).map((w) => (
+                  <div
+                    key={w._id}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 14,
+                      border: "1px solid var(--border)", borderRadius: "var(--r-card)",
+                      background: "var(--bg)", padding: 14,
+                    }}
+                  >
+                    <div style={{
+                      width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
+                      color: "var(--ink-faint)", display: "flex", alignItems: "center",
+                      justifyContent: "center", fontSize: 12, flexShrink: 0,
+                    }}>강아</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+                        {petName(w.pet)}와의 산책
+                      </div>
+                      <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+                        {new Date(w.startedAt).toLocaleDateString("ko-KR")} · {w.distanceKm}km · {w.durationMin}분
+                      </div>
+                    </div>
+                    <Badge tone="brand">완료</Badge>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {invites.length === 0 && walks.length === 0 && (
+            <EmptyState
+              emoji="🐕"
+              title="아직 산책 약속이 없어요"
+              desc="매칭한 상대와 첫 산책 약속을 만들어 보세요."
+              action={<Button onClick={() => router.push("/walks/new")}>새 약속 만들기</Button>}
+            />
+          )}
+        </>
       )}
-
-      {!!msg && <Banner tone="rose">{msg}</Banner>}
-    </div>
+    </Page>
   );
-}
-
-function formatDay(yyyyMMdd: string) {
-  const d = new Date(yyyyMMdd + "T00:00:00");
-  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", weekday: "short" });
-}
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }

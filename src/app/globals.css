@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* PetDate brand font — Pretendard (CDN, dynamic subset).
    Loads only the Hangul glyphs actually used, so it's light. */
@@ -40,17 +41,41 @@
   --sh-fab: 0 6px 18px rgba(5, 150, 105, 0.32);
 }
 
+/* Dark mode — applied when <html class="dark"> */
+.dark {
+  --bg: #0f172a;
+  --bg-subtle: #0b1220;
+  --ink: #f1f5f9;
+  --ink-soft: #94a3b8;
+  --ink-faint: #64748b;
+  --brand: #10b981;
+  --brand-strong: #34d399;
+  --brand-soft: rgba(16, 185, 129, 0.2);
+  --brand-tint: rgba(16, 185, 129, 0.12);
+  --border: #1e293b;
+  --border-strong: #334155;
+  --surface-2: #1e293b;
+  --on-brand: #062b20;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --sh-pop: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+.dark body {
+  background: var(--bg-subtle);
+  color: var(--ink);
+}
+
 @layer base {
   html,
   body {
-    background: #f8fafc; /* slate-50 */
-    color: #0f172a; /* slate-900 */
+    background: var(--bg-subtle);
+    color: var(--ink);
     font-family: "Pretendard Variable", Pretendard, -apple-system,
       "Apple SD Gothic Neo", system-ui, "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  /* tighter Korean headings, matching the design system */
+  /* tighter Korean headings, per DESIGN.md §3 */
   h1,
   h2,
   h3 {
@@ -83,6 +108,18 @@
     animation: pd-spin 0.7s linear infinite;
     display: inline-block;
     opacity: 0.8;
+  }
+  /* Skeleton (DESIGN.md §7.12) — shimmer placeholder */
+  .pd-skel {
+    background: linear-gradient(
+      90deg,
+      var(--surface-2) 0%,
+      var(--border) 50%,
+      var(--surface-2) 100%
+    );
+    background-size: 200% 100%;
+    animation: pd-shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
   }
   .pd-line2 {
     display: -webkit-box;
@@ -134,4 +171,20 @@
 }
 @keyframes pd-spin {
   to { transform: rotate(360deg); }
+}
+@keyframes pd-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes pd-sheet-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Discover / detail two-column layouts collapse on narrow screens */
+@media (max-width: 900px) {
+  .pd-discover-grid,
+  .pd-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

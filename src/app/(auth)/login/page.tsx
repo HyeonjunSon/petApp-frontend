@@ -2,366 +2,208 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
-import { Button, Input, Field, Banner, Badge, cx } from "@/components/ui";
+import { Button, Input, Field, Banner, Icon } from "@/components/ui";
 
-type Mode = "login" | "register" | "forgot";
+const apiErr = (e: any) =>
+  e?.response?.data?.msg ||
+  e?.response?.data?.error ||
+  e?.response?.data?.message ||
+  e?.message ||
+  "문제가 발생했어요.";
 
-export default function AuthPage() {
+export default function LoginPage() {
   const router = useRouter();
-  const { user, setUser } = useAuth();
+  const { setUser } = useAuth();
 
-  const [mode, setMode] = useState<Mode>("login");
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [forgotStep, setForgotStep] = useState<1 | 2>(1);
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
   const [pw, setPw] = useState("");
-  const [pw2, setPw2] = useState("");
   const [code, setCode] = useState("");
+  const [newPw, setNewPw] = useState("");
 
-  const [codeSent, setCodeSent] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-
-  const [busy, setBusy] = useState<"" | "send" | "verify" | "submit">("");
-  const [err, setErr] = useState("");
-  const [info, setInfo] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) router.replace("/dashboard");
-  }, [user, router]);
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("token")) router.replace("/discover");
+  }, [router]);
 
-  const resetFlow = (next: Mode) => {
-    setMode(next);
-    setErr("");
-    setInfo("");
-    setCode("");
-    setPw("");
-    setPw2("");
-    setCodeSent(false);
-    setEmailVerified(false);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await fn();
+    } catch (e) {
+      setErr(apiErr(e));
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const errMsg = (e: any, fallback: string) =>
-    e?.response?.data?.msg || e?.response?.data?.message || fallback;
-
-  const doLogin = async () => {
-    setBusy("submit");
-    setErr("");
-    try {
+  const doLogin = () =>
+    run(async () => {
       const { data } = await api.post("/auth/login", { email, password: pw });
       localStorage.setItem("token", data.token);
-      setUser(data.user);
-      router.replace("/dashboard");
-    } catch (e) {
-      setErr(errMsg(e, "Incorrect email or password."));
-    } finally {
-      setBusy("");
-    }
-  };
+      setUser(data.user || null);
+      router.replace("/discover");
+    });
 
-  const sendCode = async () => {
-    setBusy("send");
-    setErr("");
-    setInfo("");
-    try {
-      await api.post("/auth/send-code", { email });
-      setCodeSent(true);
-      setInfo("We sent a verification code to your email. (valid for 10 min)");
-    } catch (e) {
-      setErr(errMsg(e, "Failed to send the verification code."));
-    } finally {
-      setBusy("");
-    }
-  };
-
-  const verifyCode = async () => {
-    setBusy("verify");
-    setErr("");
-    try {
-      await api.post("/auth/verify-code", { email, code });
-      setEmailVerified(true);
-      setInfo("Email verified ✓");
-    } catch (e) {
-      setErr(errMsg(e, "The verification code doesn't match."));
-    } finally {
-      setBusy("");
-    }
-  };
-
-  const doRegister = async () => {
-    if (!emailVerified) return setErr("Please verify your email first.");
-    if (!name.trim()) return setErr("Please enter your name.");
-    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
-    if (pw !== pw2) return setErr("Passwords do not match.");
-    setBusy("submit");
-    setErr("");
-    try {
-      const { data } = await api.post("/auth/register", { email, password: pw, name });
-      localStorage.setItem("token", data.token);
-      setUser(data.user);
-      router.replace("/onboarding");
-    } catch (e) {
-      setErr(errMsg(e, "Sign up failed."));
-    } finally {
-      setBusy("");
-    }
-  };
-
-  const sendResetCode = async () => {
-    setBusy("send");
-    setErr("");
-    setInfo("");
-    try {
+  const doForgotSend = () =>
+    run(async () => {
       await api.post("/auth/forgot-password", { email });
-      setCodeSent(true);
-      setInfo("If this email is registered, we sent a code. (valid for 10 min)");
-    } catch (e) {
-      setErr(errMsg(e, "Failed to send the code."));
-    } finally {
-      setBusy("");
-    }
-  };
+      setMsg("재설정 코드를 이메일로 보냈어요.");
+      setForgotStep(2);
+    });
 
-  const doReset = async () => {
-    if (!code.trim()) return setErr("Please enter the verification code.");
-    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
-    if (pw !== pw2) return setErr("Passwords do not match.");
-    setBusy("submit");
-    setErr("");
-    try {
-      await api.post("/auth/reset-password", { email, code, newPassword: pw });
-      resetFlow("login");
-      setInfo("Your password has been changed. Please log in with the new password.");
-    } catch (e) {
-      setErr(errMsg(e, "Failed to reset the password."));
-    } finally {
-      setBusy("");
-    }
-  };
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (busy) return;
-    if (mode === "login") return doLogin();
-    if (mode === "forgot") {
-      if (!codeSent) return sendResetCode();
-      return doReset();
-    }
-    // register: route Enter to the current step
-    if (!emailVerified) {
-      if (codeSent && code.length === 6) return verifyCode();
-      if (email) return sendCode();
-      return;
-    }
-    doRegister();
-  };
-
-  const title =
-    mode === "login" ? "Welcome back" : mode === "register" ? "Get started with PetDate" : "Reset password";
-  const subtitle =
-    mode === "login"
-      ? "Keep matching with fellow pet lovers."
-      : mode === "register"
-      ? "Verify your email and you're ready to go."
-      : "Get a code at your registered email and set a new password.";
+  const doReset = () =>
+    run(async () => {
+      await api.post("/auth/reset-password", { email, code, newPassword: newPw });
+      setMsg("비밀번호가 변경됐어요. 다시 로그인해 주세요.");
+      setMode("login");
+      setForgotStep(1);
+      setCode("");
+      setNewPw("");
+      setPw("");
+    });
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left: brand panel */}
-      <div className="relative hidden overflow-hidden bg-brand-600 lg:block">
-        <div className="absolute inset-0 bg-[radial-gradient(120%_120%_at_0%_0%,#34d399_0%,#059669_45%,#065f46_100%)]" />
-        <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <div className="flex items-center gap-2">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-white/15 text-xl backdrop-blur">
-              🐾
-            </span>
-            <span className="text-xl font-bold tracking-tight">PetDate</span>
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold leading-tight">
-              Find the perfect<br />friend for your pet
-            </h1>
-            <p className="mt-3 max-w-sm text-white/80">
-              Matching, chat, and walk tracking — every moment of pet life in one place.
-            </p>
-          </div>
-          <p className="text-sm text-white/60">© {new Date().getFullYear()} PetDate</p>
+    <div
+      className="flex min-h-dvh flex-col items-center justify-center px-5 py-10"
+      style={{ background: "var(--bg-subtle)", color: "var(--ink)" }}
+    >
+      <div className="mb-7 flex flex-col items-center text-center">
+        <div className="mb-3 flex items-center gap-2">
+          <Icon name="paw" size={28} fill color="var(--brand)" />
+          <span className="text-2xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
+            PetDate
+          </span>
         </div>
+        <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
+          PetDate에 오신 것을 환영합니다
+        </h1>
+        <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
+          반려동물의 새로운 친구를 찾아보세요
+        </p>
       </div>
 
-      {/* Right: form */}
-      <div className="flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-md">
-          <div className="mb-8 flex items-center gap-2 lg:hidden">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-lg">🐾</span>
-            <span className="text-lg font-bold tracking-tight">PetDate</span>
-          </div>
+      <div
+        className="w-full max-w-[440px] rounded-[20px] border p-7"
+        style={{ background: "var(--bg)", borderColor: "var(--border)", boxShadow: "var(--sh-card)" }}
+      >
+        <h2 className="mb-5 text-[17px] font-extrabold">
+          {mode === "login" ? "이메일로 로그인" : "비밀번호 재설정"}
+        </h2>
 
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h2>
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+        {err && <div className="mb-3"><Banner tone="rose">{err}</Banner></div>}
+        {msg && !err && <div className="mb-3"><Banner tone="brand">{msg}</Banner></div>}
 
-          {mode !== "forgot" && (
-            <div className="mt-6 grid grid-cols-2 gap-1 rounded-xl bg-slate-100 p-1">
-              <button
-                type="button"
-                onClick={() => resetFlow("login")}
-                className={cx(
-                  "rounded-lg py-2 text-sm font-semibold transition",
-                  mode === "login" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
-                )}
-              >
-                Log in
-              </button>
-              <button
-                type="button"
-                onClick={() => resetFlow("register")}
-                className={cx(
-                  "rounded-lg py-2 text-sm font-semibold transition",
-                  mode === "register" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
-                )}
-              >
-                Sign up
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={onSubmit} className="mt-6 space-y-4">
-            <Field label="Email" required>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                  disabled={mode === "register" && emailVerified}
-                />
-                {mode === "register" &&
-                  (emailVerified ? (
-                    <Badge tone="brand" className="h-11 shrink-0 px-3">Verified ✓</Badge>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={sendCode}
-                      loading={busy === "send"}
-                      disabled={!email}
-                      className="shrink-0 whitespace-nowrap"
-                    >
-                      {codeSent ? "Resend" : "Send code"}
-                    </Button>
-                  ))}
-              </div>
+        {mode === "login" ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!busy) doLogin();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <Field label="이메일 주소">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                placeholder="you@example.com"
+              />
             </Field>
+            <Field label="비밀번호">
+              <Input
+                type="password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                autoComplete="current-password"
+              />
+            </Field>
+            <Button type="submit" size="lg" fullWidth loading={busy}>
+              로그인
+            </Button>
 
-            {mode === "register" && codeSent && !emailVerified && (
-              <Field label="Verification code" hint="6-digit code from your email">
-                <div className="flex items-center gap-2">
-                  <Input
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                    placeholder="000000"
-                    className="tracking-[0.4em]"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={verifyCode}
-                    loading={busy === "verify"}
-                    disabled={code.length !== 6}
-                    className="shrink-0"
-                  >
-                    Verify
-                  </Button>
-                </div>
-              </Field>
-            )}
+            <p className="text-center text-sm" style={{ color: "var(--ink-soft)" }}>
+              계정이 없으신가요?{" "}
+              <Link href="/register" style={{ color: "var(--brand-strong)", fontWeight: 700 }}>
+                회원가입
+              </Link>
+            </p>
 
-            {mode === "register" && emailVerified && (
-              <>
-                <Field label="Name" required>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" />
-                </Field>
-                <Field label="Password" required hint="At least 6 characters">
-                  <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" />
-                </Field>
-                <Field label="Confirm password" required>
-                  <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" />
-                </Field>
-              </>
-            )}
-
-            {mode === "login" && (
-              <Field label="Password" required>
-                <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="current-password" required />
-              </Field>
-            )}
-
-            {mode === "forgot" && (
-              <>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={sendResetCode}
-                  loading={busy === "send"}
-                  disabled={!email}
-                  fullWidth
-                >
-                  {codeSent ? "Resend code" : "Send code"}
-                </Button>
-                {codeSent && (
-                  <>
-                    <Field label="Verification code">
-                      <Input
-                        inputMode="numeric"
-                        maxLength={6}
-                        value={code}
-                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                        placeholder="000000"
-                        className="tracking-[0.4em]"
-                      />
-                    </Field>
-                    <Field label="New password" hint="At least 6 characters">
-                      <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} />
-                    </Field>
-                    <Field label="Confirm new password">
-                      <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
-                    </Field>
-                  </>
-                )}
-              </>
-            )}
-
-            {err && <Banner tone="rose">{err}</Banner>}
-            {info && !err && <Banner tone="brand">{info}</Banner>}
-
-            {mode === "login" && (
-              <Button type="submit" loading={busy === "submit"} fullWidth size="lg">Log in</Button>
-            )}
-            {mode === "register" && emailVerified && (
-              <Button type="submit" loading={busy === "submit"} fullWidth size="lg">Create account</Button>
-            )}
-            {mode === "forgot" && codeSent && (
-              <Button type="submit" loading={busy === "submit"} fullWidth size="lg">Change password</Button>
-            )}
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => {
+                setMode("forgot");
+                setErr(null);
+                setMsg(null);
+              }}
+            >
+              비밀번호 재설정
+            </Button>
           </form>
-
-          <div className="mt-5 flex items-center justify-between text-sm">
-            {mode === "login" ? (
-              <button onClick={() => resetFlow("forgot")} className="text-slate-500 hover:text-slate-800 hover:underline">
-                Forgot your password?
-              </button>
-            ) : (
-              <button onClick={() => resetFlow("login")} className="text-slate-500 hover:text-slate-800 hover:underline">
-                ← Back to log in
-              </button>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (busy) return;
+              forgotStep === 1 ? doForgotSend() : doReset();
+            }}
+            className="flex flex-col gap-4"
+          >
+            <Field label="이메일 주소">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={forgotStep === 2}
+              />
+            </Field>
+            {forgotStep === 2 && (
+              <>
+                <Field label="인증 코드">
+                  <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
+                </Field>
+                <Field label="새 비밀번호" hint="6자 이상">
+                  <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+                </Field>
+              </>
             )}
-          </div>
-        </div>
+            <Button type="submit" size="lg" fullWidth loading={busy}>
+              {forgotStep === 1 ? "재설정 코드 받기" : "비밀번호 변경"}
+            </Button>
+            <Button
+              variant="ghost"
+              fullWidth
+              onClick={() => {
+                setMode("login");
+                setForgotStep(1);
+                setErr(null);
+                setMsg(null);
+              }}
+            >
+              로그인으로 돌아가기
+            </Button>
+          </form>
+        )}
+
+        <p className="mt-6 text-center text-xs" style={{ color: "var(--ink-faint)" }}>
+          가입 시{" "}
+          <Link href="/terms" style={{ color: "var(--ink-soft)" }}>이용약관</Link>
+          {" 및 "}
+          <Link href="/privacy" style={{ color: "var(--ink-soft)" }}>개인정보처리방침</Link>
+          에 동의하게 됩니다.
+        </p>
       </div>
     </div>
   );
