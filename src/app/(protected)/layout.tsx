@@ -27,13 +27,25 @@ export default function ProtectedLayout({
         setLoading(false);
         return;
       }
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        router.replace("/login");
+        return; // navigating away — keep the loading gate up
+      }
       try {
         const { data } = await api.get("/users/me"); // baseURL=/api
         setUser(data);
-      } catch {
-        if (path !== "/login") router.replace("/login");
-      } finally {
         setLoading(false);
+      } catch {
+        // Invalid/expired token or backend unreachable. Clear it so the
+        // /login page won't bounce us straight back here — otherwise the
+        // two pages redirect to each other forever (infinite reload loop).
+        try {
+          localStorage.removeItem("token");
+        } catch {}
+        setUser(null);
+        router.replace("/login");
       }
     })();
   }, [path, router, setUser, user]);
