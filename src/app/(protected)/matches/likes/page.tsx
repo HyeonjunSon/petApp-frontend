@@ -10,10 +10,10 @@ export default function LikesMePage() {
 
   return (
     <Page
-      title="나를 좋아요한 사람"
+      title="People who liked you"
       right={
         <Button variant="ghost" onClick={() => router.push("/matches")}>
-          매칭 목록으로
+          Back to Matches
         </Button>
       }
     >
@@ -28,9 +28,9 @@ export default function LikesMePage() {
           }}
         >
           <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-            프리미엄으로 업그레이드하면 나를 좋아요한 사람을 모두 확인할 수 있어요.
+            Upgrade to Premium to see everyone who liked you.
           </div>
-          <Button onClick={() => router.push("/subscription")}>전체 공개하기</Button>
+          <Button onClick={() => router.push("/subscription")}>Reveal all</Button>
         </div>
       </UICard>
 
@@ -46,18 +46,18 @@ export default function LikesMePage() {
           <UICard key={i}>
             <div style={{ position: "relative" }}>
               <div style={{ filter: "blur(8px)", pointerEvents: "none" }}>
-                <ImagePlaceholder label="반려동물 사진" height={180} />
+                <ImagePlaceholder label="Pet photo" height={180} />
               </div>
             </div>
             <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-                🔒 프리미엄 전용
+                🔒 Premium only
               </div>
               <p style={{ margin: "6px 0 14px", fontSize: 13, color: "var(--ink-soft)" }}>
-                구독하면 이 프로필을 확인할 수 있어요
+                Subscribe to view this profile
               </p>
               <Button fullWidth onClick={() => router.push("/subscription")}>
-                프리미엄 구독하기
+                Get Premium
               </Button>
             </div>
           </UICard>

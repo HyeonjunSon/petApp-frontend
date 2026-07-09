@@ -29,15 +29,15 @@ export const toAbs = (u?: string) =>
   !u ? "" : u.startsWith("http") ? u : `${ORIGIN}${u}`;
 
 export const SIZE_LABEL: Record<string, string> = {
-  s: "소형견",
-  m: "중형견",
-  l: "대형견",
+  s: "Small",
+  m: "Medium",
+  l: "Large",
 };
 
 export const GOAL_LABEL: Record<string, string> = {
-  dating: "데이트",
-  friends: "친구",
-  both: "친구·데이트",
+  dating: "Dating",
+  friends: "Friends",
+  both: "Friends & dating",
 };
 
 export function adapt(u: any): Card {

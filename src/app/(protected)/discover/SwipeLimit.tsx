@@ -3,9 +3,9 @@
 import { Card as UICard, Button } from "@/components/ui";
 
 const BENEFITS = [
-  { title: "무제한 스와이프", desc: "하루 종일 제한 없이 반려동물을 발견하세요" },
-  { title: "프리미엄 필터", desc: "나이, 크기, 산책 스타일로 정확하게 검색" },
-  { title: "우선 매칭", desc: "내 반려동물과 잘 맞는 상대를 먼저 만나기" },
+  { title: "Unlimited swipes", desc: "Discover pets all day, no limits" },
+  { title: "Premium filters", desc: "Search precisely by age, size, and walk style" },
+  { title: "Priority matching", desc: "Meet the best matches for your pet first" },
 ];
 
 export default function SwipeLimit({
@@ -32,10 +32,10 @@ export default function SwipeLimit({
         >
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-              오늘의 스와이프 한도
+              Today's swipe limit
             </div>
             <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 14 }}>
-              사용한 스와이프
+              Swipes used
             </div>
             <div
               style={{
@@ -49,7 +49,7 @@ export default function SwipeLimit({
             </div>
           </div>
           <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-            내일 자정에 초기화됩니다
+            Resets at midnight
           </div>
         </div>
       </UICard>
@@ -62,7 +62,7 @@ export default function SwipeLimit({
           color: "var(--ink)",
         }}
       >
-        프리미엄으로 업그레이드하세요
+        Upgrade to Premium
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -85,9 +85,9 @@ export default function SwipeLimit({
         }}
       >
         <Button variant="secondary" onClick={onLater}>
-          나중에
+          Later
         </Button>
-        <Button onClick={onUpgrade}>프리미엄 구독</Button>
+        <Button onClick={onUpgrade}>Get Premium</Button>
       </div>
     </div>
   );

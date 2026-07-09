@@ -2,7 +2,7 @@
 
 /**
  * SideNav — left menu rail (wireframe shell).
- * "메뉴" label + 5 text links. Active = bold + brand color.
+ * "Menu" label + 5 text links. Active = bold + brand color.
  * Desktop: fixed 232px column. Mobile: slide-in drawer.
  */
 
@@ -23,7 +23,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           padding: "0 4px 10px",
         }}
       >
-        메뉴
+        Menu
       </div>
       {NAV.map((n) => {
         const active = isCurrent(path, n.href);

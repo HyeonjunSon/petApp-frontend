@@ -11,7 +11,7 @@ export default function DiscoverCard({
   card: Card;
   onDetail: () => void;
 }) {
-  const ageText = card.age != null ? `${card.age}살` : "";
+  const ageText = card.age != null ? `${card.age} yrs` : "";
   const titleBits = [card.petName, card.breed, ageText].filter(Boolean);
   const chips = [
     ...(card.temperament || []),
@@ -23,7 +23,7 @@ export default function DiscoverCard({
       <div style={{ position: "relative" }}>
         <ImagePlaceholder
           src={card.photos[0]}
-          label="반려동물 사진"
+          label="Pet photo"
           height={360}
           radius={0}
         />
@@ -46,7 +46,7 @@ export default function DiscoverCard({
             boxShadow: "var(--sh-card)",
           }}
         >
-          상세보기
+          View details
         </button>
       </div>
 
@@ -59,7 +59,7 @@ export default function DiscoverCard({
             color: "var(--ink)",
           }}
         >
-          {titleBits.join(" · ") || "반려동물"}
+          {titleBits.join(" · ") || "Pet"}
         </h2>
 
         {chips.length > 0 && (
@@ -93,12 +93,12 @@ export default function DiscoverCard({
         >
           <Avatar
             src={card.ownerFace}
-            fallbackText="보호"
+            fallbackText="Owner"
             size={28}
             style={{ fontSize: 11 }}
           />
           <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-            보호자 {card.ownerName || "—"}
+            Owner {card.ownerName || "—"}
             {card.location ? ` · ${card.location}` : ""}
           </span>
         </div>

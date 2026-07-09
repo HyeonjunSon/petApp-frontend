@@ -39,9 +39,9 @@ export default function BillingPortalPage() {
     try {
       const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode: "premium_monthly" });
       if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "결제 기능을 준비 중이에요. 곧 오픈됩니다.", type: "error" });
+      else setToast({ msg: "Payments are coming soon.", type: "error" });
     } catch {
-      setToast({ msg: "결제 기능을 준비 중이에요. 곧 오픈됩니다.", type: "error" });
+      setToast({ msg: "Payments are coming soon.", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -51,69 +51,69 @@ export default function BillingPortalPage() {
     iso ? new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" }) : "—";
 
   return (
-    <Page title="결제 포털" maxWidth={880}>
-      <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>구독 현황</h2>
+    <Page title="Billing" maxWidth={880}>
+      <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Subscription status</h2>
       <UICard>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>현재 플랜</div>
+            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Current plan</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)", marginTop: 4 }}>
-              {premium ? "PetDate 프리미엄" : "무료 플랜"}
+              {premium ? "PetDate Premium" : "Free plan"}
             </div>
           </div>
-          <Badge tone={premium ? "brand" : "slate"}>{premium ? "활성" : "비활성"}</Badge>
+          <Badge tone={premium ? "brand" : "slate"}>{premium ? "Active" : "Inactive"}</Badge>
         </div>
         {premium && (
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, gap: 16, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>다음 결제일</div>
+              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Next billing date</div>
               <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>{fmtDate(nextDate)}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>결제 금액</div>
-              <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>₩9,900 / 월</div>
+              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Amount</div>
+              <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>₩9,900 / mo</div>
             </div>
           </div>
         )}
       </UICard>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>결제 수단</h2>
+      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Payment method</h2>
       <UICard>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-            등록된 결제 수단이 없어요.
+            No payment method on file.
           </div>
-          <Button variant="secondary" onClick={() => setToast({ msg: "결제 수단 관리는 준비 중이에요.", type: "error" })}>
-            카드 변경
+          <Button variant="secondary" onClick={() => setToast({ msg: "Card management is coming soon.", type: "error" })}>
+            Change card
           </Button>
         </div>
       </UICard>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>새 결제 수단 추가</h2>
+      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Add payment method</h2>
       <UICard>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="카드 번호"><Input value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" /></Field>
+          <Field label="Card number"><Input value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" /></Field>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="유효기간 (MM/YY)"><Input value={exp} onChange={(e) => setExp(e.target.value)} placeholder="MM/YY" style={{ width: 160 }} /></Field>
+            <Field label="Expiry (MM/YY)"><Input value={exp} onChange={(e) => setExp(e.target.value)} placeholder="MM/YY" style={{ width: 160 }} /></Field>
             <Field label="CVC"><Input value={cvc} onChange={(e) => setCvc(e.target.value)} inputMode="numeric" style={{ width: 120 }} /></Field>
           </div>
-          <Field label="카드 소유자 이름"><Input value={holder} onChange={(e) => setHolder(e.target.value)} /></Field>
-          <Button fullWidth size="lg" loading={busy} onClick={pay}>결제 진행</Button>
+          <Field label="Cardholder name"><Input value={holder} onChange={(e) => setHolder(e.target.value)} /></Field>
+          <Button fullWidth size="lg" loading={busy} onClick={pay}>Pay</Button>
         </div>
       </UICard>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>구독 관리</h2>
+      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Manage subscription</h2>
       <UICard>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-            구독을 취소하면 만료일까지 혜택이 유지됩니다.
+            If you cancel, benefits last until the expiry date.
           </div>
           <Button
             variant="dangerGhost"
             disabled={!premium}
-            onClick={() => setToast({ msg: "구독 취소는 준비 중이에요.", type: "error" })}
+            onClick={() => setToast({ msg: "Subscription cancellation is coming soon.", type: "error" })}
           >
-            구독 취소
+            Cancel subscription
           </Button>
         </div>
       </UICard>

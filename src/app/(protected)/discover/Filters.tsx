@@ -23,32 +23,32 @@ export default function Filters({ onApply }: { onApply: () => void }) {
 
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 10, flexWrap: "wrap" }}>
-      <Labeled label="지역·거리">
+      <Labeled label="Distance">
         <Select value={dist} onChange={(e) => setDist(e.target.value)} style={selStyle}>
-          <option value="500">500m 이내</option>
-          <option value="1000">1km 이내</option>
-          <option value="3000">3km 이내</option>
-          <option value="10000">10km 이내</option>
+          <option value="500">Within 500m</option>
+          <option value="1000">Within 1km</option>
+          <option value="3000">Within 3km</option>
+          <option value="10000">Within 10km</option>
         </Select>
       </Labeled>
-      <Labeled label="견종">
+      <Labeled label="Breed">
         <Select value={breed} onChange={(e) => setBreed(e.target.value)} style={selStyle}>
-          <option value="all">전체</option>
-          <option value="small">소형견</option>
-          <option value="medium">중형견</option>
-          <option value="large">대형견</option>
+          <option value="all">All</option>
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large">Large</option>
         </Select>
       </Labeled>
-      <Labeled label="성격">
+      <Labeled label="Temperament">
         <Select value={temper} onChange={(e) => setTemper(e.target.value)} style={selStyle}>
-          <option value="all">전체</option>
-          <option value="active">활발함</option>
-          <option value="calm">차분함</option>
-          <option value="social">사교적</option>
+          <option value="all">All</option>
+          <option value="active">Energetic</option>
+          <option value="calm">Calm</option>
+          <option value="social">Social</option>
         </Select>
       </Labeled>
       <Button size="sm" variant="secondary" onClick={onApply}>
-        필터 적용
+        Apply filters
       </Button>
     </div>
   );

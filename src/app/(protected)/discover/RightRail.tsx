@@ -21,11 +21,11 @@ export default function RightRail({
             color: "var(--ink)",
           }}
         >
-          다음 추천 펫
+          Up next
         </h3>
         {upcoming.length === 0 ? (
           <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)" }}>
-            추천할 펫이 더 없어요.
+            No more pets to recommend.
           </p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -46,7 +46,7 @@ export default function RightRail({
                     padding: 12,
                   }}
                 >
-                  <Avatar src={c.photos[0]} fallbackText="펫" size={44} />
+                  <Avatar src={c.photos[0]} fallbackText="Pet" size={44} />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div
                       style={{
@@ -55,7 +55,7 @@ export default function RightRail({
                         color: "var(--ink)",
                       }}
                     >
-                      {[c.petName, c.breed, c.age != null ? `${c.age}살` : ""]
+                      {[c.petName, c.breed, c.age != null ? `${c.age} yrs` : ""]
                         .filter(Boolean)
                         .join(" · ")}
                     </div>
@@ -93,13 +93,13 @@ export default function RightRail({
             color: "var(--ink)",
           }}
         >
-          💎 프리미엄으로 더 많은 만남을
+          💎 Meet more with Premium
         </h3>
         <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-soft)" }}>
-          무제한 스와이프 · 슈퍼 좋아요 · 부스트 3회 포함
+          Unlimited swipes · Super Likes · 3 Boosts
         </p>
         <Button fullWidth onClick={onPremium}>
-          프리미엄 시작하기
+          Get Premium
         </Button>
       </UICard>
     </div>

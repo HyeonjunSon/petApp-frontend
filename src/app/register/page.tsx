@@ -12,7 +12,7 @@ const apiErr = (e: any) =>
   e?.response?.data?.error ||
   e?.response?.data?.message ||
   e?.message ||
-  "문제가 발생했어요.";
+  "Something went wrong.";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -44,14 +44,14 @@ export default function RegisterPage() {
 
   const next = () => {
     setErr(null);
-    if (!email.trim()) return setErr("이메일을 입력해 주세요.");
-    if (pw.length < 6) return setErr("비밀번호는 6자 이상이어야 해요.");
-    if (pw !== pw2) return setErr("비밀번호가 일치하지 않아요.");
+    if (!email.trim()) return setErr("Please enter your email.");
+    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
+    if (pw !== pw2) return setErr("Passwords don't match.");
     if (!agreeTerms || !agreePrivacy)
-      return setErr("약관과 개인정보처리방침에 동의해 주세요.");
+      return setErr("Please agree to the Terms of Service and Privacy Policy.");
     run(async () => {
       await api.post("/auth/send-code", { email });
-      setMsg("인증 코드를 이메일로 보냈어요.");
+      setMsg("We've emailed you a verification code.");
       setStep("verify");
     });
   };
@@ -59,7 +59,7 @@ export default function RegisterPage() {
   const finish = () =>
     run(async () => {
       await api.post("/auth/verify-code", { email, code });
-      const name = email.split("@")[0] || "사용자";
+      const name = email.split("@")[0] || "User";
       const { data } = await api.post("/auth/register", { email, password: pw, name });
       localStorage.setItem("token", data.token);
       setUser(data.user || null);
@@ -82,44 +82,44 @@ export default function RegisterPage() {
         className="w-full max-w-[480px] rounded-[20px] border p-7"
         style={{ background: "var(--bg)", borderColor: "var(--border)", boxShadow: "var(--sh-card)" }}
       >
-        <h2 className="mb-5 text-[17px] font-extrabold">계정 만들기</h2>
+        <h2 className="mb-5 text-[17px] font-extrabold">Create account</h2>
 
         {err && <div className="mb-3"><Banner tone="rose">{err}</Banner></div>}
         {msg && !err && <div className="mb-3"><Banner tone="brand">{msg}</Banner></div>}
 
         {step === "form" ? (
           <div className="flex flex-col gap-4">
-            <Field label="이메일">
+            <Field label="Email">
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
             </Field>
-            <Field label="비밀번호" hint="6자 이상">
+            <Field label="Password" hint="At least 6 characters">
               <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} />
             </Field>
-            <Field label="비밀번호 확인">
+            <Field label="Confirm password">
               <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
             </Field>
 
             <div className="flex flex-col gap-3 pt-1">
               <div>
-                <Switch on={agreeTerms} onChange={setAgreeTerms} label="약관 동의" />
+                <Switch on={agreeTerms} onChange={setAgreeTerms} label="Agree to Terms" />
                 <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  PetDate 이용약관에 동의합니다
+                  I agree to the PetDate Terms of Service
                 </p>
               </div>
               <div>
-                <Switch on={agreePrivacy} onChange={setAgreePrivacy} label="개인정보처리방침 동의" />
+                <Switch on={agreePrivacy} onChange={setAgreePrivacy} label="Agree to Privacy Policy" />
                 <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  개인정보처리방침에 동의합니다
+                  I agree to the Privacy Policy
                 </p>
               </div>
             </div>
 
             <div className="mt-2 flex items-center justify-between">
               <Button variant="secondary" onClick={() => router.push("/login")}>
-                취소
+                Cancel
               </Button>
               <Button onClick={next} loading={busy}>
-                다음
+                Next
               </Button>
             </div>
           </div>
@@ -132,35 +132,35 @@ export default function RegisterPage() {
             className="flex flex-col gap-4"
           >
             <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-              <b style={{ color: "var(--ink)" }}>{email}</b> 로 보낸 인증 코드를 입력해 주세요.
+              Enter the verification code we sent to <b style={{ color: "var(--ink)" }}>{email}</b>.
             </p>
-            <Field label="인증 코드">
-              <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" placeholder="6자리" />
+            <Field label="Verification code">
+              <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" placeholder="6 digits" />
             </Field>
             <Button type="submit" size="lg" fullWidth loading={busy}>
-              가입 완료
+              Complete sign up
             </Button>
             <div className="flex items-center justify-between">
               <Button variant="ghost" onClick={() => setStep("form")}>
-                이전
+                Back
               </Button>
               <Button
                 variant="ghost"
                 onClick={() => run(async () => {
                   await api.post("/auth/send-code", { email });
-                  setMsg("인증 코드를 다시 보냈어요.");
+                  setMsg("We've resent the verification code.");
                 })}
               >
-                코드 재발송
+                Resend code
               </Button>
             </div>
           </form>
         )}
 
         <p className="mt-6 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
-          이미 계정이 있으신가요?{" "}
+          Already have an account?{" "}
           <Link href="/login" style={{ color: "var(--brand-strong)", fontWeight: 700 }}>
-            로그인
+            Sign in
           </Link>
         </p>
       </div>

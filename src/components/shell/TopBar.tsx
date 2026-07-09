@@ -44,7 +44,7 @@ export default function TopBar({
   const face =
     (user as any)?.faceUrl ||
     (user?.photos || []).find((p) => p.type === "owner_face")?.url;
-  const initial = ((user?.name || "프로필")[0] || "프").toString();
+  const initial = ((user?.name || "Profile")[0] || "P").toString();
 
   return (
     <header
@@ -63,7 +63,7 @@ export default function TopBar({
         <button
           type="button"
           onClick={onMenu}
-          aria-label="메뉴 열기"
+          aria-label="Open menu"
           className="md:hidden"
           style={iconBtn}
         >
@@ -117,8 +117,8 @@ export default function TopBar({
         <Icon name="filter" size={18} style={{ opacity: 0 }} />
         <SearchGlyph />
         <input
-          placeholder="검색"
-          aria-label="검색"
+          placeholder="Search"
+          aria-label="Search"
           style={{
             flex: 1,
             border: "none",
@@ -135,7 +135,7 @@ export default function TopBar({
         <button
           type="button"
           onClick={() => setMenu((m) => !m)}
-          aria-label="계정 메뉴"
+          aria-label="Account menu"
           style={{
             border: "none",
             background: "transparent",
@@ -168,7 +168,7 @@ export default function TopBar({
                 router.push("/settings");
               }}
               icon="cog"
-              label="설정"
+              label="Settings"
             />
             <MenuRow
               onClick={() => {
@@ -176,7 +176,7 @@ export default function TopBar({
                 router.push("/subscription");
               }}
               icon="info"
-              label="구독 관리"
+              label="Manage subscription"
             />
             <div
               style={{
@@ -195,7 +195,7 @@ export default function TopBar({
               }}
             >
               {busy ? <Spinner /> : <Icon name="logout" size={18} />}
-              로그아웃
+              Log out
             </button>
           </div>
         )}

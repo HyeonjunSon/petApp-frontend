@@ -17,20 +17,20 @@ type Plan = {
   features?: string[];
 };
 
-const FREE_FEATURES = ["스와이프 하루 5회", "매칭 메시지 하루 3건", "기본 필터 (거리·견종)", "광고 포함"];
+const FREE_FEATURES = ["5 swipes per day", "3 match messages per day", "Basic filters (distance·breed)", "With ads"];
 const PREMIUM_FEATURES = [
-  "스와이프 무제한",
-  "매칭 메시지 무제한",
-  "고급 필터 (성격·산책 스타일·나이)",
-  "좋아요 보낸 펫 목록 열람",
-  "광고 없음",
-  "프리미엄 배지 표시",
+  "Unlimited swipes",
+  "Unlimited match messages",
+  "Advanced filters (temperament·walk style·age)",
+  "See who liked you",
+  "No ads",
+  "Premium badge",
 ];
 
 const FAQ = [
-  ["구독은 언제든지 취소할 수 있나요?", "네, 구독 기간 중 언제든지 취소할 수 있으며 만료일까지 혜택이 유지됩니다."],
-  ["결제 수단은 무엇을 지원하나요?", "신용카드, 체크카드, 카카오페이, 네이버페이를 지원합니다."],
-  ["프리미엄 전환 후 즉시 적용되나요?", "네, 결제가 완료되면 즉시 프리미엄 혜택이 적용됩니다."],
+  ["Can I cancel anytime?", "Yes—cancel anytime; benefits last until the expiry date."],
+  ["What payment methods are supported?", "Credit/debit cards, KakaoPay, and NaverPay."],
+  ["Do benefits apply immediately?", "Yes—benefits apply as soon as payment completes."],
 ];
 
 export default function SubscriptionPage() {
@@ -62,10 +62,10 @@ export default function SubscriptionPage() {
     try {
       const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode });
       if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "결제 기능을 준비 중이에요. 곧 오픈됩니다.", type: "error" });
+      else setToast({ msg: "Payments are coming soon.", type: "error" });
     } catch (e: any) {
       setToast({
-        msg: e?.response?.data?.msg || "결제 기능을 준비 중이에요. 곧 오픈됩니다.",
+        msg: e?.response?.data?.msg || "Payments are coming soon.",
         type: "error",
       });
     } finally {
@@ -74,44 +74,44 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <Page title="프리미엄 구독" maxWidth={920}>
+    <Page title="Premium" maxWidth={920}>
       <UICard>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>현재 구독 상태</div>
+            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Current plan</div>
             <div style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)", marginTop: 4 }}>
-              {premium ? "PetDate 프리미엄" : "무료 플랜"}
+              {premium ? "PetDate Premium" : "Free plan"}
             </div>
             <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-              {premium ? "모든 프리미엄 혜택 이용 중" : "매일 스와이프 5회 · 매칭 메시지 제한 있음"}
+              {premium ? "All premium benefits active" : "5 swipes/day · limited match messages"}
             </div>
           </div>
           {premium ? (
-            <Button variant="secondary" onClick={() => router.push("/subscription/billing")}>구독 관리</Button>
+            <Button variant="secondary" onClick={() => router.push("/subscription/billing")}>Manage</Button>
           ) : (
-            <Button onClick={subscribe} loading={busy}>플랜 업그레이드</Button>
+            <Button onClick={subscribe} loading={busy}>Upgrade plan</Button>
           )}
         </div>
       </UICard>
 
-      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>플랜 비교</h2>
+      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>Compare plans</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
         <PlanCard
-          title="무료"
+          title="Free"
           price="₩0"
           features={FREE_FEATURES}
-          cta={<Button variant="secondary" fullWidth disabled>현재 플랜</Button>}
+          cta={<Button variant="secondary" fullWidth disabled>Current plan</Button>}
         />
         <PlanCard
-          title="프리미엄"
+          title="Premium"
           price="₩9,900"
           highlight
           features={PREMIUM_FEATURES}
-          cta={<Button fullWidth loading={busy} onClick={subscribe}>프리미엄 시작하기</Button>}
+          cta={<Button fullWidth loading={busy} onClick={subscribe}>Get Premium</Button>}
         />
       </div>
 
-      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>자주 묻는 질문</h2>
+      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>FAQ</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {FAQ.map(([q, a]) => (
           <UICard key={q}>
@@ -152,7 +152,7 @@ function PlanCard({
       <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>{title}</div>
       <div style={{ marginTop: 10, display: "flex", alignItems: "baseline", gap: 4 }}>
         <span style={{ fontSize: 32, fontWeight: 800, color: "var(--ink)" }}>{price}</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)" }}>/ 월</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)" }}>/ mo</span>
       </div>
       <ul style={{ listStyle: "none", padding: 0, margin: "18px 0", display: "flex", flexDirection: "column", gap: 10 }}>
         {features.map((f) => (

@@ -41,10 +41,10 @@ export default function MatchModal({
         }}
       >
         <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>
-          매칭 성공!
+          It's a match!
         </h2>
         <p style={{ margin: "8px 0 18px", fontSize: 15, color: "var(--ink-soft)" }}>
-          서로 좋아요를 눌렀어요
+          You both liked each other
         </p>
 
         <div
@@ -56,16 +56,16 @@ export default function MatchModal({
         >
           <ImagePlaceholder
             src={card.photos[0]}
-            label="반려동물"
+            label="Pet"
             height={200}
             radius={10}
           />
           <div style={{ marginTop: 12 }}>
             <span style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-              {card.petName || "반려동물"}
+              {card.petName || "Pet"}
             </span>
             <span style={{ fontSize: 14, color: "var(--ink-soft)", marginLeft: 8 }}>
-              {[card.breed, card.age != null ? `${card.age}살` : ""]
+              {[card.breed, card.age != null ? `${card.age} yrs` : ""]
                 .filter(Boolean)
                 .join(", ")}
             </span>
@@ -80,10 +80,10 @@ export default function MatchModal({
         </div>
 
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar src={card.ownerFace} fallbackText="사용" size={40} />
+          <Avatar src={card.ownerFace} fallbackText="User" size={40} />
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-              {card.ownerName || "사용자"}
+              {card.ownerName || "User"}
             </div>
             {card.location && (
               <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -102,9 +102,9 @@ export default function MatchModal({
           }}
         >
           <Button variant="secondary" onClick={onLater}>
-            나중에
+            Later
           </Button>
-          <Button onClick={onChat}>채팅하기</Button>
+          <Button onClick={onChat}>Chat</Button>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import { Page, ImagePlaceholder } from "@/components/shell/Page";
 import { Card as UICard, Button, Input, Textarea, Select, Field, Chip, Banner, Spinner, EmptyState, Toast, type ToastData } from "@/components/ui";
 import { toAbs } from "@/lib/card";
 
-const TEMPERAMENTS = ["활발해요", "온순해요", "낯가림 있어요", "친화적이에요", "독립적이에요"];
+const TEMPERAMENTS = ["Energetic", "Gentle", "Shy", "Friendly", "Independent"];
 
 type Pet = {
   _id: string;
@@ -76,9 +76,9 @@ export default function PetEditPage() {
       const fd = new FormData();
       fd.append("photo", f);
       await api.post(`/pets/${pet._id}/photo`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-      setToast({ msg: "사진을 업데이트했어요", type: "ok" });
+      setToast({ msg: "Photo updated", type: "ok" });
     } catch {
-      setToast({ msg: "사진 업로드 실패", type: "error" });
+      setToast({ msg: "Photo upload failed", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -101,7 +101,7 @@ export default function PetEditPage() {
       });
       router.push("/settings");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "저장하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Could not save.");
     } finally {
       setBusy(false);
     }
@@ -109,7 +109,7 @@ export default function PetEditPage() {
 
   if (loading) {
     return (
-      <Page title="펫 프로필 수정">
+      <Page title="Edit pet profile">
         <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}><Spinner /></div>
       </Page>
     );
@@ -117,52 +117,52 @@ export default function PetEditPage() {
 
   if (!pet) {
     return (
-      <Page title="펫 프로필 수정">
+      <Page title="Edit pet profile">
         <EmptyState
           emoji="🐶"
-          title="등록된 반려동물이 없어요"
-          desc="먼저 반려동물 프로필을 등록해 주세요."
-          action={<Button onClick={() => router.push("/onboarding")}>반려동물 등록하기</Button>}
+          title="No pet yet"
+          desc="Add a pet profile first."
+          action={<Button onClick={() => router.push("/onboarding")}>Add a pet</Button>}
         />
       </Page>
     );
   }
 
   return (
-    <Page title="펫 프로필 수정" maxWidth={860}>
+    <Page title="Edit pet profile" maxWidth={860}>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onPick(e.target.files?.[0] || null)} />
 
       <UICard>
-        <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>프로필 사진</h2>
-        <ImagePlaceholder src={preview} label="펫 사진" height={200} />
+        <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Profile photo</h2>
+        <ImagePlaceholder src={preview} label="Pet photo" height={200} />
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <Button variant="secondary" fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>사진 업로드</Button>
+          <Button variant="secondary" fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>Upload photo</Button>
         </div>
       </UICard>
 
       <div style={{ height: 16 }} />
 
       <UICard>
-        <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>기본 정보</h2>
+        <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Basics</h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="펫 이름"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="Pet name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="품종" className="flex-1"><Input value={breed} onChange={(e) => setBreed(e.target.value)} /></Field>
-            <Field label="나이 (살)"><Input value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" style={{ width: 120 }} /></Field>
+            <Field label="Breed" className="flex-1"><Input value={breed} onChange={(e) => setBreed(e.target.value)} /></Field>
+            <Field label="Age (yrs)"><Input value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" style={{ width: 120 }} /></Field>
           </div>
-          <Field label="성별">
+          <Field label="Gender">
             <Select value={sex} onChange={(e) => setSex(e.target.value)}>
-              <option value="male">수컷</option>
-              <option value="female">암컷</option>
-              <option value="unknown">모름</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
             </Select>
           </Field>
-          <Field label="크기">
+          <Field label="Size">
             <Select value={size} onChange={(e) => setSize(e.target.value)}>
-              <option value="s">소형 (7kg 이하)</option>
-              <option value="m">중형 (7~15kg)</option>
-              <option value="l">대형 (15kg 이상)</option>
+              <option value="s">Small (≤7kg)</option>
+              <option value="m">Medium (7–15kg)</option>
+              <option value="l">Large (≥15kg)</option>
             </Select>
           </Field>
         </div>
@@ -171,18 +171,18 @@ export default function PetEditPage() {
       <div style={{ height: 16 }} />
 
       <UICard>
-        <h2 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>성격 및 산책 스타일</h2>
+        <h2 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Temperament & walk style</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {TEMPERAMENTS.map((tp) => (
             <Chip key={tp} active={temper.includes(tp)} onClick={() => toggle(tp)}>{tp}</Chip>
           ))}
         </div>
-        <Field label="한 줄 소개"><Textarea value={about} onChange={(e) => setAbout(e.target.value)} /></Field>
+        <Field label="Short bio"><Textarea value={about} onChange={(e) => setAbout(e.target.value)} /></Field>
       </UICard>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-        <Button variant="secondary" onClick={() => router.push("/settings")}>취소</Button>
-        <Button onClick={save} loading={busy} icon="check">저장</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings")}>Cancel</Button>
+        <Button onClick={save} loading={busy} icon="check">Save</Button>
       </div>
 
       <Toast toast={toast} />

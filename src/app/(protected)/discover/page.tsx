@@ -50,7 +50,7 @@ export default function DiscoverPage() {
         .map(adapt);
       setDeck(mapped);
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "불러오지 못했어요.");
+      setError(e?.response?.data?.message || e?.message || "Failed to load.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export default function DiscoverPage() {
         if (data?.matchId) {
           setMatch(current);
         } else {
-          setToast({ msg: `${current.petName || current.ownerName || "상대"}님에게 좋아요를 보냈어요`, type: "ok" });
+          setToast({ msg: `Liked ${current.petName || current.ownerName || "them"}`, type: "ok" });
           next();
         }
       } else {
@@ -91,7 +91,7 @@ export default function DiscoverPage() {
         setShowLimit(true);
         setUsed(SWIPE_LIMIT);
       } else {
-        setToast({ msg: "처리하지 못했어요. 다시 시도해 주세요.", type: "error" });
+        setToast({ msg: "Something went wrong. Please try again.", type: "error" });
       }
     } finally {
       setActing(false);
@@ -102,7 +102,7 @@ export default function DiscoverPage() {
 
   return (
     <Page
-      title="디스커버"
+      title="Discover"
       right={!limitView ? <Filters onApply={fetchDeck} /> : undefined}
     >
       {limitView ? (
@@ -119,18 +119,18 @@ export default function DiscoverPage() {
       ) : error ? (
         <EmptyState
           emoji="⚠️"
-          title="문제가 생겼어요"
+          title="Something went wrong"
           desc={error}
-          action={<Button icon="refresh" onClick={fetchDeck}>다시 시도</Button>}
+          action={<Button icon="refresh" onClick={fetchDeck}>Retry</Button>}
         />
       ) : !current ? (
         <EmptyState
           emoji="🐾"
-          title="더 볼 반려동물이 없어요"
-          desc="필터를 넓히거나 잠시 후 다시 확인해 주세요."
+          title="No more pets to show"
+          desc="Widen your filters or check back soon."
           action={
             <Button icon="filter" variant="secondary" onClick={() => router.push("/settings/exposure")}>
-              필터 넓히기
+              Widen filters
             </Button>
           }
         />
@@ -163,10 +163,10 @@ export default function DiscoverPage() {
               }}
             >
               <Button variant="secondary" disabled={acting} onClick={() => act("pass")}>
-                패스 →
+                Pass →
               </Button>
               <Button disabled={acting} onClick={() => act("like")} icon="heart">
-                좋아요
+                Like
               </Button>
             </div>
             <div
@@ -179,10 +179,10 @@ export default function DiscoverPage() {
               }}
             >
               <Button size="sm" onClick={() => router.push("/subscription")}>
-                부스트 사용하기 ⚡
+                Use boost ⚡
               </Button>
               <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                오늘 남은 스와이프: {Math.max(0, SWIPE_LIMIT - used)} / {SWIPE_LIMIT}
+                Swipes left today: {Math.max(0, SWIPE_LIMIT - used)} / {SWIPE_LIMIT}
               </span>
             </div>
             <div style={{ textAlign: "center", marginTop: 12 }}>
@@ -200,7 +200,7 @@ export default function DiscoverPage() {
                   textUnderlineOffset: 3,
                 }}
               >
-                스와이프 한도 안내
+                Swipe limit info
               </button>
             </div>
           </div>
@@ -239,11 +239,11 @@ function ConditionBar() {
         marginBottom: 16,
       }}
     >
-      <Chip active>활발함</Chip>
-      <Chip active>산책 좋아요</Chip>
-      <Chip active>소형견</Chip>
+      <Chip active>Energetic</Chip>
+      <Chip active>Likes walks</Chip>
+      <Chip active>Small</Chip>
       <span style={{ fontSize: 13, color: "var(--ink-soft)", marginLeft: 4 }}>
-        현재 조건: 500m 이내 · 소형견 · 활발함
+        Current filters: Within 500m · Small · Energetic
       </span>
     </div>
   );

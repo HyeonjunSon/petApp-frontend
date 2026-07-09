@@ -2,11 +2,11 @@
 export type NavItem = { href: string; label: string };
 
 export const NAV: NavItem[] = [
-  { href: "/discover", label: "디스커버" },
-  { href: "/matches", label: "매칭" },
-  { href: "/walks", label: "산책약속" },
-  { href: "/settings", label: "설정" },
-  { href: "/subscription", label: "구독" },
+  { href: "/discover", label: "Discover" },
+  { href: "/matches", label: "Matches" },
+  { href: "/walks", label: "Walks" },
+  { href: "/settings", label: "Settings" },
+  { href: "/subscription", label: "Subscription" },
 ];
 
 export function isCurrent(path: string, href: string) {

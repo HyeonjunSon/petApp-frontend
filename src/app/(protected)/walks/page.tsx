@@ -1,6 +1,6 @@
 "use client";
 
-/** 산책 약속 — meetup (walk-invite) list. */
+/** Walk Plans — meetup (walk-invite) list. */
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,10 +11,10 @@ import { Card as UICard, Button, Select, Badge, Spinner, EmptyState } from "@/co
 import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
 
 const STATUS: Record<string, string> = {
-  proposed: "대기 중",
-  confirmed: "수락됨",
-  declined: "거절됨",
-  cancelled: "취소됨",
+  proposed: "Pending",
+  confirmed: "Accepted",
+  declined: "Declined",
+  cancelled: "Cancelled",
 };
 
 type WalkRec = {
@@ -61,9 +61,9 @@ export default function WalksPage() {
     const m = matches.find((x) => x._id === matchId);
     const peer = m ? peerOf(m, myId) : undefined;
     const pet = pickPet(peer);
-    return { owner: peer?.name || "상대", pet: pet?.name || "반려동물" };
+    return { owner: peer?.name || "Partner", pet: pet?.name || "Pet" };
   };
-  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "반려동물";
+  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "Pet";
 
   const upcoming = useMemo(
     () =>
@@ -83,13 +83,13 @@ export default function WalksPage() {
 
   return (
     <Page
-      title="산책 약속"
+      title="Walk Plans"
       right={
         <>
           <Button variant="ghost" onClick={() => router.push("/walks/records")}>
-            산책 기록 보기
+            View records
           </Button>
-          <Button onClick={() => router.push("/walks/new")}>새 약속 만들기</Button>
+          <Button onClick={() => router.push("/walks/new")}>New plan</Button>
         </>
       }
     >
@@ -99,14 +99,14 @@ export default function WalksPage() {
         </div>
       ) : (
         <>
-          {/* 다가오는 약속 */}
+          {/* Upcoming */}
           <h2 style={{ margin: "0 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-            다가오는 약속
+            Upcoming
           </h2>
           {upcoming.length === 0 ? (
             <UICard>
               <p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>
-                예정된 산책 약속이 없어요.
+                No upcoming walk plans.
               </p>
             </UICard>
           ) : (
@@ -130,7 +130,7 @@ export default function WalksPage() {
                           fontSize: 12, flexShrink: 0,
                         }}
                       >
-                        강아
+                        Dog
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -158,7 +158,7 @@ export default function WalksPage() {
                             textDecoration: "underline", textUnderlineOffset: 3,
                           }}
                         >
-                          약속 상세
+                          Plan details
                         </button>
                       </div>
                     </div>
@@ -168,7 +168,7 @@ export default function WalksPage() {
             </div>
           )}
 
-          {/* 약속 목록 */}
+          {/* All plans */}
           <div
             style={{
               display: "flex",
@@ -180,30 +180,30 @@ export default function WalksPage() {
             }}
           >
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-              약속 목록
+              All plans
             </h2>
             <div style={{ display: "flex", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>상태</div>
+                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>Status</div>
                 <Select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 110, height: 38, fontSize: 13 }}>
-                  <option value="all">전체</option>
-                  <option value="proposed">대기 중</option>
-                  <option value="confirmed">수락됨</option>
-                  <option value="declined">거절됨</option>
-                  <option value="cancelled">취소됨</option>
+                  <option value="all">All</option>
+                  <option value="proposed">Pending</option>
+                  <option value="confirmed">Accepted</option>
+                  <option value="declined">Declined</option>
+                  <option value="cancelled">Cancelled</option>
                 </Select>
               </div>
               <div>
-                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>정렬</div>
+                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>Sort</div>
                 <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 130, height: 38, fontSize: 13 }}>
-                  <option value="date">날짜 최신순</option>
+                  <option value="date">Newest first</option>
                 </Select>
               </div>
             </div>
           </div>
 
           {listRows.length === 0 ? (
-            <UICard><p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>약속이 없어요.</p></UICard>
+            <UICard><p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>No plans.</p></UICard>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {listRows.map((i) => {
@@ -223,7 +223,7 @@ export default function WalksPage() {
                       width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
                       color: "var(--ink-faint)", display: "flex", alignItems: "center",
                       justifyContent: "center", fontSize: 12, flexShrink: 0,
-                    }}>강아</div>
+                    }}>Dog</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
                         {n.pet} · {n.owner}
@@ -241,11 +241,11 @@ export default function WalksPage() {
             </div>
           )}
 
-          {/* 지난 약속 기록 (완료된 산책) */}
+          {/* Past plans (completed walks) */}
           {walks.length > 0 && (
             <>
               <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-                지난 약속 기록
+                Past plans
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {walks.slice(0, 5).map((w) => (
@@ -261,16 +261,16 @@ export default function WalksPage() {
                       width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
                       color: "var(--ink-faint)", display: "flex", alignItems: "center",
                       justifyContent: "center", fontSize: 12, flexShrink: 0,
-                    }}>강아</div>
+                    }}>Dog</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                        {petName(w.pet)}와의 산책
+                        Walk with {petName(w.pet)}
                       </div>
                       <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-                        {new Date(w.startedAt).toLocaleDateString("ko-KR")} · {w.distanceKm}km · {w.durationMin}분
+                        {new Date(w.startedAt).toLocaleDateString("en-US")} · {w.distanceKm}km · {w.durationMin} min
                       </div>
                     </div>
-                    <Badge tone="brand">완료</Badge>
+                    <Badge tone="brand">Completed</Badge>
                   </div>
                 ))}
               </div>
@@ -280,9 +280,9 @@ export default function WalksPage() {
           {invites.length === 0 && walks.length === 0 && (
             <EmptyState
               emoji="🐕"
-              title="아직 산책 약속이 없어요"
-              desc="매칭한 상대와 첫 산책 약속을 만들어 보세요."
-              action={<Button onClick={() => router.push("/walks/new")}>새 약속 만들기</Button>}
+              title="No walk plans yet"
+              desc="Create your first walk plan with a match."
+              action={<Button onClick={() => router.push("/walks/new")}>New plan</Button>}
             />
           )}
         </>

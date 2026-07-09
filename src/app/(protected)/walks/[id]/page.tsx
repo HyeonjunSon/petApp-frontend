@@ -1,6 +1,6 @@
 "use client";
 
-/** 약속 상세 — walk-invite detail + status actions. */
+/** Plan details — walk-invite detail + status actions. */
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -11,10 +11,10 @@ import { Card as UICard, Button, Badge, Avatar, Spinner, EmptyState } from "@/co
 import { type Match, type WalkInvite, peerOf, pickPet } from "../../chat/types";
 
 const STATUS: Record<string, string> = {
-  proposed: "대기 중",
-  confirmed: "수락됨",
-  declined: "거절됨",
-  cancelled: "취소됨",
+  proposed: "Pending",
+  confirmed: "Accepted",
+  declined: "Declined",
+  cancelled: "Cancelled",
 };
 
 export default function WalkInviteDetailPage() {
@@ -56,15 +56,15 @@ export default function WalkInviteDetailPage() {
 
   if (loading) {
     return (
-      <Page title="약속 상세">
+      <Page title="Plan details">
         <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}><Spinner /></div>
       </Page>
     );
   }
   if (!invite) {
     return (
-      <Page title="약속 상세">
-        <EmptyState emoji="🐾" title="약속을 찾을 수 없어요" action={<Button onClick={() => router.push("/walks")}>산책 약속으로</Button>} />
+      <Page title="Plan details">
+        <EmptyState emoji="🐾" title="Plan not found" action={<Button onClick={() => router.push("/walks")}>Back to Walk Plans</Button>} />
       </Page>
     );
   }
@@ -76,41 +76,41 @@ export default function WalkInviteDetailPage() {
     <Page
       title={
         <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
-          약속 상세 <Badge tone={invite.status === "confirmed" ? "brand" : "slate"}>{STATUS[invite.status]}</Badge>
+          Plan details <Badge tone={invite.status === "confirmed" ? "brand" : "slate"}>{STATUS[invite.status]}</Badge>
         </span>
       }
       maxWidth={900}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <UICard>
-          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>약속 정보</h2>
+          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Plan info</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
-            <Info label="날짜 및 시간" value={`${invite.date} ${invite.time}`} />
-            <Info label="장소" value={invite.place || "—"} />
-            <Info label="메모" value={invite.note || "—"} />
+            <Info label="Date & time" value={`${invite.date} ${invite.time}`} />
+            <Info label="Place" value={invite.place || "—"} />
+            <Info label="Note" value={invite.note || "—"} />
           </div>
           <div style={{ marginTop: 16 }}>
-            <ImagePlaceholder label="지도 미리보기" height={200} />
+            <ImagePlaceholder label="Map preview" height={200} />
           </div>
         </UICard>
 
         <UICard>
-          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>상대 보호자 정보</h2>
+          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Partner owner</h2>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Avatar src={peer?.faceUrl} fallbackText={(peer?.name || "상")[0]} size={48} />
+            <Avatar src={peer?.faceUrl} fallbackText={(peer?.name || "P")[0]} size={48} />
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>{peer?.name || "상대 보호자"}</div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{pet?.name ? `반려동물 ${pet.name}` : ""}</div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>{peer?.name || "Partner owner"}</div>
+              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{pet?.name ? `Pet ${pet.name}` : ""}</div>
             </div>
           </div>
         </UICard>
 
         <UICard>
-          <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>약속 상태</h2>
+          <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Plan status</h2>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Button disabled={busy || invite.status !== "proposed"} onClick={() => respond("confirmed")}>수락</Button>
-            <Button variant="secondary" disabled={busy || invite.status !== "proposed"} onClick={() => respond("declined")}>거절</Button>
-            <Button variant="dangerGhost" disabled={busy || invite.status === "cancelled"} onClick={() => respond("cancelled")}>취소</Button>
+            <Button disabled={busy || invite.status !== "proposed"} onClick={() => respond("confirmed")}>Accept</Button>
+            <Button variant="secondary" disabled={busy || invite.status !== "proposed"} onClick={() => respond("declined")}>Decline</Button>
+            <Button variant="dangerGhost" disabled={busy || invite.status === "cancelled"} onClick={() => respond("cancelled")}>Cancel</Button>
           </div>
         </UICard>
       </div>

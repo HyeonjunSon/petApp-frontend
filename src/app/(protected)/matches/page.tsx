@@ -43,30 +43,30 @@ export default function MatchesPage() {
 
   return (
     <Page
-      title="매칭 목록"
+      title="Matches"
       right={
         <Button variant="secondary" onClick={() => router.push("/matches/likes")}>
-          나를 좋아요한 사람 보기
+          See who liked you
         </Button>
       }
     >
       <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>
-            정렬 기준
+            Sort
           </div>
           <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 150, height: 40, fontSize: 13 }}>
-            <option value="recent">최신 매칭순</option>
-            <option value="message">최근 메시지순</option>
+            <option value="recent">Newest match</option>
+            <option value="message">Recent message</option>
           </Select>
         </div>
         <div>
           <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>
-            상태 필터
+            Status
           </div>
           <Select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ width: 110, height: 40, fontSize: 13 }}>
-            <option value="all">전체</option>
-            <option value="new">신규</option>
+            <option value="all">All</option>
+            <option value="new">New</option>
           </Select>
         </div>
       </div>
@@ -78,9 +78,9 @@ export default function MatchesPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           emoji="💚"
-          title="아직 매칭이 없어요"
-          desc="디스커버에서 마음에 드는 반려동물에게 좋아요를 보내보세요."
-          action={<Button onClick={() => router.push("/discover")}>디스커버로 가기</Button>}
+          title="No matches yet"
+          desc="Send a Like to a pet you like in Discover."
+          action={<Button onClick={() => router.push("/discover")}>Go to Discover</Button>}
         />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -105,30 +105,30 @@ export default function MatchesPage() {
                 }}
               >
                 <div style={{ width: 132, flexShrink: 0 }}>
-                  <ImagePlaceholder src={photo || undefined} label="강아지 사진" height={84} radius={10} />
+                  <ImagePlaceholder src={photo || undefined} label="Dog photo" height={84} radius={10} />
                 </div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-                      {pet?.name || peer?.name || "반려동물"}
+                      {pet?.name || peer?.name || "Pet"}
                     </span>
-                    {isNew && <Badge tone="brand">신규</Badge>}
+                    {isNew && <Badge tone="brand">New</Badge>}
                   </div>
                   <div
                     className="pd-line1"
                     style={{ fontSize: 14, color: "var(--ink-soft)", marginTop: 6 }}
                   >
-                    {last || "서로 좋아요를 눌렀어요. 대화를 시작해보세요!"}
+                    {last || "You both liked each other. Start chatting!"}
                   </div>
                   <div style={{ fontSize: 13, color: "var(--ink-faint)", marginTop: 6 }}>
-                    보호자 · {peer?.name || "—"}
+                    Owner · {peer?.name || "—"}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
                   <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
                     {formatTime(m.lastMessage?.createdAt)}
                   </span>
-                  <Button onClick={() => router.push(`/chat?open=${m._id}`)}>채팅하기</Button>
+                  <Button onClick={() => router.push(`/chat?open=${m._id}`)}>Chat</Button>
                 </div>
               </div>
             );

@@ -36,10 +36,10 @@ export default function DetailView({
         }}
       >
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "var(--ink)" }}>
-          프로필 상세
+          Profile details
         </h2>
         <Button size="sm" variant="secondary" onClick={onBack}>
-          디스커버로 돌아가기
+          Back to Discover
         </Button>
       </div>
 
@@ -55,7 +55,7 @@ export default function DetailView({
         <div>
           <ImagePlaceholder
             src={card.photos[0]}
-            label="반려동물 메인 사진"
+            label="Main pet photo"
             height={380}
           />
           {thumbs.length > 0 && (
@@ -77,9 +77,9 @@ export default function DetailView({
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <UICard>
             <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "var(--ink)" }}>
-              {[card.petName, card.breed, card.age != null ? `만 ${card.age}세` : ""]
+              {[card.petName, card.breed, card.age != null ? `${card.age} yrs` : ""]
                 .filter(Boolean)
-                .join(" · ") || "반려동물"}
+                .join(" · ") || "Pet"}
             </h3>
             {(card.temperament || []).length > 0 && (
               <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
@@ -97,12 +97,12 @@ export default function DetailView({
                 marginTop: 18,
               }}
             >
-              <Stat label="크기" value={card.size ? SIZE_LABEL[card.size] || card.size : "—"} />
-              <Stat label="나이" value={card.age != null ? `${card.age}살` : "—"} />
+              <Stat label="Size" value={card.size ? SIZE_LABEL[card.size] || card.size : "—"} />
+              <Stat label="Age" value={card.age != null ? `${card.age} yrs` : "—"} />
             </div>
             {card.petAbout && (
               <div style={{ marginTop: 18 }}>
-                <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>자기소개</div>
+                <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>About</div>
                 <p
                   style={{
                     margin: "6px 0 0",
@@ -119,13 +119,13 @@ export default function DetailView({
 
           <UICard>
             <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-              보호자 정보
+              Owner info
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <Avatar src={card.ownerFace} fallbackText="보호" size={44} />
+              <Avatar src={card.ownerFace} fallbackText="Owner" size={44} />
               <div>
                 <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>
-                  {card.ownerName || "보호자"}
+                  {card.ownerName || "Owner"}
                 </div>
                 {card.location && (
                   <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
@@ -159,10 +159,10 @@ export default function DetailView({
         }}
       >
         <Button onClick={onLike} icon="heart">
-          좋아요 보내기
+          Send Like
         </Button>
         <Button variant="secondary" onClick={onNext}>
-          다음 카드 보기
+          Next card
         </Button>
       </div>
     </div>

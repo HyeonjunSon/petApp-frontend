@@ -1,6 +1,6 @@
 "use client";
 
-/** 산책 기록 — Walk records + per-pet stats. */
+/** Walk Records — Walk records + per-pet stats. */
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ export default function WalkRecordsPage() {
     });
   }, []);
 
-  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "반려동물";
+  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "Pet";
 
   const stats = useMemo(() => {
     return pets
@@ -59,16 +59,16 @@ export default function WalkRecordsPage() {
 
   return (
     <Page
-      title="산책 기록"
-      right={<Button variant="ghost" onClick={() => router.push("/walks")}>산책 약속으로</Button>}
+      title="Walk Records"
+      right={<Button variant="ghost" onClick={() => router.push("/walks")}>Back to Walk Plans</Button>}
     >
       {loading ? (
         <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}><Spinner /></div>
       ) : walks.length === 0 ? (
-        <EmptyState emoji="🐾" title="산책 기록이 없어요" desc="산책 약속을 완료하면 기록이 쌓여요." />
+        <EmptyState emoji="🐾" title="No walk records" desc="Records appear when you complete walk plans." />
       ) : (
         <>
-          <h2 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>전체 기록</h2>
+          <h2 style={{ margin: "0 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>All records</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {sorted.map((w) => (
               <div
@@ -80,19 +80,19 @@ export default function WalkRecordsPage() {
                 }}
               >
                 <div style={{ width: 140, flexShrink: 0 }}>
-                  <ImagePlaceholder label="강아지 사진" height={72} radius={10} />
+                  <ImagePlaceholder label="Dog photo" height={72} radius={10} />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>
-                    {petName(w.pet)}와의 산책
+                    Walk with {petName(w.pet)}
                   </div>
                   <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-                    {new Date(w.startedAt).toLocaleString("ko-KR", { dateStyle: "long", timeStyle: "short" })}
+                    {new Date(w.startedAt).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" })}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 28 }}>
-                  <Metric label="거리" value={`${w.distanceKm} km`} />
-                  <Metric label="소요 시간" value={`${w.durationMin}분`} />
+                  <Metric label="Distance" value={`${w.distanceKm} km`} />
+                  <Metric label="Duration" value={`${w.durationMin} min`} />
                 </div>
               </div>
             ))}
@@ -101,7 +101,7 @@ export default function WalkRecordsPage() {
           {stats.length > 0 && (
             <>
               <h2 style={{ margin: "32px 0 14px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-                반려견별 통계
+                Stats by pet
               </h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
                 {stats.map((s) => (
@@ -111,13 +111,13 @@ export default function WalkRecordsPage() {
                       <div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{s.pet.name}</div>
                         <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                          {[s.pet.breed, s.pet.age != null ? `${s.pet.age}세` : ""].filter(Boolean).join(" · ")}
+                          {[s.pet.breed, s.pet.age != null ? `${s.pet.age} yrs` : ""].filter(Boolean).join(" · ")}
                         </div>
                       </div>
                     </div>
-                    <StatRow label="총 산책 횟수" value={`${s.count}회`} />
-                    <StatRow label="누적 거리" value={`${s.dist} km`} />
-                    <StatRow label="평균 소요 시간" value={`${s.avg}분`} />
+                    <StatRow label="Total walks" value={`${s.count} walks`} />
+                    <StatRow label="Total distance" value={`${s.dist} km`} />
+                    <StatRow label="Avg duration" value={`${s.avg} min`} />
                   </UICard>
                 ))}
               </div>

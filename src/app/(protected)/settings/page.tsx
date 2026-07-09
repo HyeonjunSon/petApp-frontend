@@ -54,55 +54,55 @@ export default function SettingsHubPage() {
     (user?.photos || []).find((p) => p.type === "owner_face")?.url;
 
   return (
-    <Page title="프로필 / 설정" maxWidth={900}>
-      <Section title="펫 프로필">
+    <Page title="Profile / Settings" maxWidth={900}>
+      <Section title="Pet profile">
         <Row
-          avatar={<Avatar fallbackText="펫" size={44} />}
-          title="내 반려동물 프로필"
-          desc="사진, 성격, 산책 스타일 수정"
-          action={<Button onClick={() => router.push("/settings/pet")}>수정하기</Button>}
+          avatar={<Avatar fallbackText="Pet" size={44} />}
+          title="My pet profile"
+          desc="Edit photo, temperament, walk style"
+          action={<Button onClick={() => router.push("/settings/pet")}>Edit</Button>}
         />
       </Section>
 
-      <Section title="소유자 프로필">
+      <Section title="Owner profile">
         <Row
-          avatar={<Avatar src={face} fallbackText={(user?.name || "나")[0]} size={44} />}
-          title="내 프로필"
-          desc="닉네임, 소개, 사진 수정"
-          action={<Button onClick={() => router.push("/settings/profile")}>수정하기</Button>}
+          avatar={<Avatar src={face} fallbackText={(user?.name || "Me")[0]} size={44} />}
+          title="My profile"
+          desc="Edit nickname, bio, photo"
+          action={<Button onClick={() => router.push("/settings/profile")}>Edit</Button>}
         />
       </Section>
 
-      <Section title="서비스 설정">
+      <Section title="Preferences">
         <Row
-          title="노출 / 필터 설정"
-          desc="탐색 반경, 견종, 나이 필터 관리"
-          action={<Button variant="secondary" onClick={() => router.push("/settings/exposure")}>설정</Button>}
+          title="Visibility & filters"
+          desc="Manage radius, breed, age filters"
+          action={<Button variant="secondary" onClick={() => router.push("/settings/exposure")}>Open</Button>}
         />
         <Row
-          title="알림 설정"
-          desc="매칭, 채팅, 산책 알림 관리"
-          action={<Button variant="secondary" onClick={() => router.push("/settings/notifications")}>설정</Button>}
-        />
-      </Section>
-
-      <Section title="구독">
-        <Row
-          title="프리미엄 구독"
-          desc="무제한 매칭·슈퍼 라이크·프리미엄 필터 이용"
-          action={<Button variant="secondary" onClick={() => router.push("/subscription/billing")}>구독 관리</Button>}
+          title="Notifications"
+          desc="Manage match, chat, walk alerts"
+          action={<Button variant="secondary" onClick={() => router.push("/settings/notifications")}>Open</Button>}
         />
       </Section>
 
-      <Section title="계정">
+      <Section title="Subscription">
         <Row
-          title="비밀번호 변경"
-          desc="로그인 비밀번호를 변경합니다"
-          action={<Button variant="secondary" onClick={() => setPwOpen(true)}>변경</Button>}
+          title="Premium subscription"
+          desc="Unlimited matches · Super Likes · premium filters"
+          action={<Button variant="secondary" onClick={() => router.push("/subscription/billing")}>Manage</Button>}
+        />
+      </Section>
+
+      <Section title="Account">
+        <Row
+          title="Change password"
+          desc="Change your login password"
+          action={<Button variant="secondary" onClick={() => setPwOpen(true)}>Change</Button>}
         />
         <Row
-          title="계정"
-          desc="로그아웃 또는 계정 삭제"
+          title="Account"
+          desc="Log out or delete account"
           action={
             <div style={{ display: "flex", gap: 8 }}>
               <Button
@@ -114,9 +114,9 @@ export default function SettingsHubPage() {
                   router.replace("/login");
                 }}
               >
-                로그아웃
+                Log out
               </Button>
-              <Button variant="dangerGhost" onClick={() => setDelOpen(true)}>계정 삭제</Button>
+              <Button variant="dangerGhost" onClick={() => setDelOpen(true)}>Delete account</Button>
             </div>
           }
         />
@@ -145,27 +145,27 @@ function PasswordSheet({ open, onClose }: { open: boolean; onClose: () => void }
 
   const submit = async () => {
     setErr(null);
-    if (next.length < 6) return setErr("새 비밀번호는 6자 이상이어야 해요.");
+    if (next.length < 6) return setErr("New password must be at least 6 characters.");
     setBusy(true);
     try {
       await api.post("/auth/change-password", { currentPassword: cur, newPassword: next });
       setOk(true);
       setCur(""); setNext("");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "변경하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Could not change.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="비밀번호 변경" desktop>
+    <Sheet open={open} onClose={onClose} title="Change password" desktop>
       <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         {err && <Banner tone="rose">{err}</Banner>}
-        {ok && <Banner tone="brand">비밀번호가 변경됐어요.</Banner>}
-        <Field label="현재 비밀번호"><Input type="password" value={cur} onChange={(e) => setCur(e.target.value)} /></Field>
-        <Field label="새 비밀번호" hint="6자 이상"><Input type="password" value={next} onChange={(e) => setNext(e.target.value)} /></Field>
-        <Button fullWidth size="lg" loading={busy} onClick={submit}>변경</Button>
+        {ok && <Banner tone="brand">Password changed.</Banner>}
+        <Field label="Current password"><Input type="password" value={cur} onChange={(e) => setCur(e.target.value)} /></Field>
+        <Field label="New password" hint="At least 6 characters"><Input type="password" value={next} onChange={(e) => setNext(e.target.value)} /></Field>
+        <Button fullWidth size="lg" loading={busy} onClick={submit}>Change</Button>
       </div>
     </Sheet>
   );
@@ -178,13 +178,13 @@ function DeleteSheet({ open, onClose, onDeleted }: { open: boolean; onClose: () 
     try { await api.delete("/account"); onDeleted(); } catch {} finally { setBusy(false); }
   };
   return (
-    <Sheet open={open} onClose={onClose} title="계정 삭제" desktop>
+    <Sheet open={open} onClose={onClose} title="Delete account" desktop>
       <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>
-          계정과 모든 데이터가 영구 삭제됩니다. 되돌릴 수 없어요.
+          Your account and all data will be permanently deleted. This cannot be undone.
         </p>
         <Button variant="danger" fullWidth size="lg" loading={busy} onClick={submit}>
-          영구 삭제
+          Delete permanently
         </Button>
       </div>
     </Sheet>

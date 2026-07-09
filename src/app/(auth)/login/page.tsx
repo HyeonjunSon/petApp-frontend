@@ -12,7 +12,7 @@ const apiErr = (e: any) =>
   e?.response?.data?.error ||
   e?.response?.data?.message ||
   e?.message ||
-  "문제가 발생했어요.";
+  "Something went wrong.";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,14 +58,14 @@ export default function LoginPage() {
   const doForgotSend = () =>
     run(async () => {
       await api.post("/auth/forgot-password", { email });
-      setMsg("재설정 코드를 이메일로 보냈어요.");
+      setMsg("We've emailed you a reset code.");
       setForgotStep(2);
     });
 
   const doReset = () =>
     run(async () => {
       await api.post("/auth/reset-password", { email, code, newPassword: newPw });
-      setMsg("비밀번호가 변경됐어요. 다시 로그인해 주세요.");
+      setMsg("Your password has been changed. Please sign in again.");
       setMode("login");
       setForgotStep(1);
       setCode("");
@@ -86,10 +86,10 @@ export default function LoginPage() {
           </span>
         </div>
         <h1 className="text-xl font-extrabold" style={{ letterSpacing: "-0.02em" }}>
-          PetDate에 오신 것을 환영합니다
+          Welcome to PetDate
         </h1>
         <p className="mt-1 text-sm" style={{ color: "var(--ink-soft)" }}>
-          반려동물의 새로운 친구를 찾아보세요
+          Find your pet a new friend
         </p>
       </div>
 
@@ -98,7 +98,7 @@ export default function LoginPage() {
         style={{ background: "var(--bg)", borderColor: "var(--border)", boxShadow: "var(--sh-card)" }}
       >
         <h2 className="mb-5 text-[17px] font-extrabold">
-          {mode === "login" ? "이메일로 로그인" : "비밀번호 재설정"}
+          {mode === "login" ? "Sign in with email" : "Reset password"}
         </h2>
 
         {err && <div className="mb-3"><Banner tone="rose">{err}</Banner></div>}
@@ -112,7 +112,7 @@ export default function LoginPage() {
             }}
             className="flex flex-col gap-4"
           >
-            <Field label="이메일 주소">
+            <Field label="Email">
               <Input
                 type="email"
                 value={email}
@@ -121,7 +121,7 @@ export default function LoginPage() {
                 placeholder="you@example.com"
               />
             </Field>
-            <Field label="비밀번호">
+            <Field label="Password">
               <Input
                 type="password"
                 value={pw}
@@ -130,13 +130,13 @@ export default function LoginPage() {
               />
             </Field>
             <Button type="submit" size="lg" fullWidth loading={busy}>
-              로그인
+              Sign in
             </Button>
 
             <p className="text-center text-sm" style={{ color: "var(--ink-soft)" }}>
-              계정이 없으신가요?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/register" style={{ color: "var(--brand-strong)", fontWeight: 700 }}>
-                회원가입
+                Sign up
               </Link>
             </p>
 
@@ -149,7 +149,7 @@ export default function LoginPage() {
                 setMsg(null);
               }}
             >
-              비밀번호 재설정
+              Reset password
             </Button>
           </form>
         ) : (
@@ -161,7 +161,7 @@ export default function LoginPage() {
             }}
             className="flex flex-col gap-4"
           >
-            <Field label="이메일 주소">
+            <Field label="Email">
               <Input
                 type="email"
                 value={email}
@@ -171,16 +171,16 @@ export default function LoginPage() {
             </Field>
             {forgotStep === 2 && (
               <>
-                <Field label="인증 코드">
+                <Field label="Verification code">
                   <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" />
                 </Field>
-                <Field label="새 비밀번호" hint="6자 이상">
+                <Field label="New password" hint="At least 6 characters">
                   <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
                 </Field>
               </>
             )}
             <Button type="submit" size="lg" fullWidth loading={busy}>
-              {forgotStep === 1 ? "재설정 코드 받기" : "비밀번호 변경"}
+              {forgotStep === 1 ? "Send reset code" : "Change password"}
             </Button>
             <Button
               variant="ghost"
@@ -192,17 +192,17 @@ export default function LoginPage() {
                 setMsg(null);
               }}
             >
-              로그인으로 돌아가기
+              Back to sign in
             </Button>
           </form>
         )}
 
         <p className="mt-6 text-center text-xs" style={{ color: "var(--ink-faint)" }}>
-          가입 시{" "}
-          <Link href="/terms" style={{ color: "var(--ink-soft)" }}>이용약관</Link>
-          {" 및 "}
-          <Link href="/privacy" style={{ color: "var(--ink-soft)" }}>개인정보처리방침</Link>
-          에 동의하게 됩니다.
+          By signing up, you agree to our{" "}
+          <Link href="/terms" style={{ color: "var(--ink-soft)" }}>Terms of Service</Link>
+          {" and "}
+          <Link href="/privacy" style={{ color: "var(--ink-soft)" }}>Privacy Policy</Link>
+          .
         </p>
       </div>
     </div>
