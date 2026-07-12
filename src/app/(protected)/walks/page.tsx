@@ -1,6 +1,6 @@
 "use client";
 
-/** Walk Plans — meetup (walk-invite) list. */
+/** Walk Plans — meetup (walk-invite) list. Completed plans auto-create records. */
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,14 +15,7 @@ const STATUS: Record<string, string> = {
   confirmed: "Accepted",
   declined: "Declined",
   cancelled: "Cancelled",
-};
-
-type WalkRec = {
-  _id: string;
-  pet: string;
-  distanceKm: number;
-  durationMin: number;
-  startedAt: string;
+  completed: "Completed",
 };
 
 export default function WalksPage() {
@@ -32,27 +25,17 @@ export default function WalksPage() {
 
   const [invites, setInvites] = useState<WalkInvite[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [walks, setWalks] = useState<WalkRec[]>([]);
-  const [pets, setPets] = useState<{ _id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("date");
 
   useEffect(() => {
-    const today = new Date();
-    const from = new Date(today);
-    from.setDate(from.getDate() - 90);
-    const iso = (d: Date) => d.toISOString().slice(0, 10);
     Promise.allSettled([
       api.get<WalkInvite[]>("/walk-invites"),
       api.get<Match[]>("/matches"),
-      api.get<WalkRec[]>("/walks", { params: { from: iso(from), to: iso(today) } }),
-      api.get<{ _id: string; name: string }[]>("/pets"),
-    ]).then(([inv, mt, wk, pt]) => {
+    ]).then(([inv, mt]) => {
       if (inv.status === "fulfilled") setInvites(inv.value.data || []);
       if (mt.status === "fulfilled") setMatches(mt.value.data || []);
-      if (wk.status === "fulfilled") setWalks(wk.value.data || []);
-      if (pt.status === "fulfilled") setPets(pt.value.data || []);
       setLoading(false);
     });
   }, []);
@@ -63,7 +46,6 @@ export default function WalksPage() {
     const pet = pickPet(peer);
     return { owner: peer?.name || "Partner", pet: pet?.name || "Pet" };
   };
-  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "Pet";
 
   const upcoming = useMemo(
     () =>
@@ -81,6 +63,47 @@ export default function WalksPage() {
     return l;
   }, [invites, status, sort]);
 
+  const past = useMemo(
+    () =>
+      invites
+        .filter((i) => i.status === "completed")
+        .sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)),
+    [invites]
+  );
+
+  const Row = ({ i, clickable = true }: { i: WalkInvite; clickable?: boolean }) => {
+    const n = peerName(i.match);
+    return (
+      <button
+        type="button"
+        onClick={clickable ? () => router.push(`/walks/${i._id}`) : undefined}
+        style={{
+          display: "flex", alignItems: "center", gap: 14, textAlign: "left",
+          border: "1px solid var(--border)", borderRadius: "var(--r-card)",
+          background: "var(--bg)", padding: 14,
+          cursor: clickable ? "pointer" : "default", fontFamily: "inherit",
+        }}
+      >
+        <div style={{
+          width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
+          color: "var(--ink-faint)", display: "flex", alignItems: "center",
+          justifyContent: "center", fontSize: 12, flexShrink: 0,
+        }}>Dog</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
+            {n.pet} · {n.owner}
+          </div>
+          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
+            {i.date} {i.time}{i.place ? ` · ${i.place}` : ""}
+          </div>
+        </div>
+        <Badge tone={i.status === "confirmed" || i.status === "completed" ? "brand" : i.status === "declined" || i.status === "cancelled" ? "rose" : "slate"}>
+          {STATUS[i.status]}
+        </Badge>
+      </button>
+    );
+  };
+
   return (
     <Page
       title="Walk Plans"
@@ -97,6 +120,13 @@ export default function WalksPage() {
         <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}>
           <Spinner />
         </div>
+      ) : invites.length === 0 ? (
+        <EmptyState
+          emoji="🐕"
+          title="No walk plans yet"
+          desc="Create your first walk plan with a match."
+          action={<Button onClick={() => router.push("/walks/new")}>New plan</Button>}
+        />
       ) : (
         <>
           {/* Upcoming */}
@@ -110,45 +140,29 @@ export default function WalksPage() {
               </p>
             </UICard>
           ) : (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-                gap: 16,
-              }}
-            >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
               {upcoming.map((i) => {
                 const n = peerName(i.match);
                 return (
                   <UICard key={i._id}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div
-                        style={{
-                          width: 52, height: 52, borderRadius: "50%",
-                          background: "var(--surface-2)", color: "var(--ink-faint)",
-                          display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: 12, flexShrink: 0,
-                        }}
-                      >
-                        Dog
-                      </div>
+                      <div style={{
+                        width: 52, height: 52, borderRadius: "50%",
+                        background: "var(--surface-2)", color: "var(--ink-faint)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 12, flexShrink: 0,
+                      }}>Dog</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                          {n.pet} · {n.owner}
-                        </div>
+                        <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{n.pet} · {n.owner}</div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
                           {i.date} {i.time}
                         </div>
                         {i.place && (
-                          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>
-                            {i.place}
-                          </div>
+                          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>{i.place}</div>
                         )}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                        <Badge tone={i.status === "confirmed" ? "brand" : "slate"}>
-                          {STATUS[i.status]}
-                        </Badge>
+                        <Badge tone={i.status === "confirmed" ? "brand" : "slate"}>{STATUS[i.status]}</Badge>
                         <button
                           type="button"
                           onClick={() => router.push(`/walks/${i._id}`)}
@@ -169,26 +183,16 @@ export default function WalksPage() {
           )}
 
           {/* All plans */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              margin: "32px 0 14px",
-              gap: 16,
-              flexWrap: "wrap",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-              All plans
-            </h2>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", margin: "32px 0 14px", gap: 16, flexWrap: "wrap" }}>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>All plans</h2>
             <div style={{ display: "flex", gap: 12 }}>
               <div>
                 <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>Status</div>
-                <Select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 110, height: 38, fontSize: 13 }}>
+                <Select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 120, height: 38, fontSize: 13 }}>
                   <option value="all">All</option>
                   <option value="proposed">Pending</option>
                   <option value="confirmed">Accepted</option>
+                  <option value="completed">Completed</option>
                   <option value="declined">Declined</option>
                   <option value="cancelled">Cancelled</option>
                 </Select>
@@ -206,84 +210,20 @@ export default function WalksPage() {
             <UICard><p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>No plans.</p></UICard>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {listRows.map((i) => {
-                const n = peerName(i.match);
-                return (
-                  <button
-                    key={i._id}
-                    type="button"
-                    onClick={() => router.push(`/walks/${i._id}`)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 14, textAlign: "left",
-                      border: "1px solid var(--border)", borderRadius: "var(--r-card)",
-                      background: "var(--bg)", padding: 14, cursor: "pointer", fontFamily: "inherit",
-                    }}
-                  >
-                    <div style={{
-                      width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
-                      color: "var(--ink-faint)", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 12, flexShrink: 0,
-                    }}>Dog</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                        {n.pet} · {n.owner}
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-                        {i.date} {i.time}{i.place ? ` · ${i.place}` : ""}
-                      </div>
-                    </div>
-                    <Badge tone={i.status === "confirmed" ? "brand" : i.status === "declined" || i.status === "cancelled" ? "rose" : "slate"}>
-                      {STATUS[i.status]}
-                    </Badge>
-                  </button>
-                );
-              })}
+              {listRows.map((i) => <Row key={i._id} i={i} />)}
             </div>
           )}
 
-          {/* Past plans (completed walks) */}
-          {walks.length > 0 && (
+          {/* Past plans (completed) */}
+          {past.length > 0 && (
             <>
               <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
                 Past plans
               </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {walks.slice(0, 5).map((w) => (
-                  <div
-                    key={w._id}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 14,
-                      border: "1px solid var(--border)", borderRadius: "var(--r-card)",
-                      background: "var(--bg)", padding: 14,
-                    }}
-                  >
-                    <div style={{
-                      width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
-                      color: "var(--ink-faint)", display: "flex", alignItems: "center",
-                      justifyContent: "center", fontSize: 12, flexShrink: 0,
-                    }}>Dog</div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-                        Walk with {petName(w.pet)}
-                      </div>
-                      <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-                        {new Date(w.startedAt).toLocaleDateString("en-US")} · {w.distanceKm}km · {w.durationMin} min
-                      </div>
-                    </div>
-                    <Badge tone="brand">Completed</Badge>
-                  </div>
-                ))}
+                {past.slice(0, 5).map((i) => <Row key={i._id} i={i} />)}
               </div>
             </>
-          )}
-
-          {invites.length === 0 && walks.length === 0 && (
-            <EmptyState
-              emoji="🐕"
-              title="No walk plans yet"
-              desc="Create your first walk plan with a match."
-              action={<Button onClick={() => router.push("/walks/new")}>New plan</Button>}
-            />
           )}
         </>
       )}

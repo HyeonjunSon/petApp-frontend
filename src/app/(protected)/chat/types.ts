@@ -36,7 +36,7 @@ export type WalkInvite = {
   time: string;
   place?: string;
   note?: string;
-  status: "proposed" | "confirmed" | "declined" | "cancelled";
+  status: "proposed" | "confirmed" | "declined" | "cancelled" | "completed";
   createdAt?: string;
 };
 

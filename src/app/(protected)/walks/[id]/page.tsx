@@ -15,6 +15,7 @@ const STATUS: Record<string, string> = {
   confirmed: "Accepted",
   declined: "Declined",
   cancelled: "Cancelled",
+  completed: "Completed",
 };
 
 export default function WalkInviteDetailPage() {
@@ -44,7 +45,7 @@ export default function WalkInviteDetailPage() {
     });
   }, [id]);
 
-  const respond = async (status: "confirmed" | "declined" | "cancelled") => {
+  const respond = async (status: "confirmed" | "declined" | "cancelled" | "completed") => {
     if (!invite) return;
     setBusy(true);
     try {
@@ -76,7 +77,7 @@ export default function WalkInviteDetailPage() {
     <Page
       title={
         <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
-          Plan details <Badge tone={invite.status === "confirmed" ? "brand" : "slate"}>{STATUS[invite.status]}</Badge>
+          Plan details <Badge tone={invite.status === "confirmed" || invite.status === "completed" ? "brand" : "slate"}>{STATUS[invite.status]}</Badge>
         </span>
       }
       maxWidth={900}
@@ -107,11 +108,35 @@ export default function WalkInviteDetailPage() {
 
         <UICard>
           <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Plan status</h2>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <Button disabled={busy || invite.status !== "proposed"} onClick={() => respond("confirmed")}>Accept</Button>
-            <Button variant="secondary" disabled={busy || invite.status !== "proposed"} onClick={() => respond("declined")}>Decline</Button>
-            <Button variant="dangerGhost" disabled={busy || invite.status === "cancelled"} onClick={() => respond("cancelled")}>Cancel</Button>
-          </div>
+          {invite.status === "proposed" ? (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Button disabled={busy} onClick={() => respond("confirmed")}>Accept</Button>
+              <Button variant="secondary" disabled={busy} onClick={() => respond("declined")}>Decline</Button>
+              <Button variant="dangerGhost" disabled={busy} onClick={() => respond("cancelled")}>Cancel</Button>
+            </div>
+          ) : invite.status === "confirmed" ? (
+            <div>
+              <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-soft)" }}>
+                Finished this walk? Mark it complete and a record is added to Walk Records automatically.
+              </p>
+              <Button disabled={busy} icon="check" onClick={() => respond("completed")}>
+                Mark as completed
+              </Button>
+            </div>
+          ) : invite.status === "completed" ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>
+                ✅ Completed — a walk record was added automatically.
+              </span>
+              <Button variant="secondary" onClick={() => router.push("/walks/records")}>
+                View records
+              </Button>
+            </div>
+          ) : (
+            <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>
+              This plan is {STATUS[invite.status]?.toLowerCase()}.
+            </span>
+          )}
         </UICard>
       </div>
     </Page>

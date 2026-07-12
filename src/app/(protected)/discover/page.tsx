@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
-import { Button, EmptyState, Spinner, Chip, Toast, type ToastData } from "@/components/ui";
+import { Button, EmptyState, Spinner, Toast, type ToastData } from "@/components/ui";
 import { adapt, type Card } from "@/lib/card";
 import DiscoverCard from "./DiscoverCard";
 import DetailView from "./DetailView";
@@ -14,7 +14,7 @@ import MatchModal from "./MatchModal";
 import SwipeLimit from "./SwipeLimit";
 import Filters from "./Filters";
 
-const SWIPE_LIMIT = 20;
+const SWIPE_LIMIT = 30; // matches backend FREE_DAILY_LIKE_LIMIT
 
 export default function DiscoverPage() {
   const router = useRouter();
@@ -152,7 +152,6 @@ export default function DiscoverPage() {
           }}
         >
           <div>
-            <ConditionBar />
             <DiscoverCard card={current} onDetail={() => setDetailMode(true)} />
             <div
               style={{
@@ -225,26 +224,5 @@ export default function DiscoverPage() {
 
       <Toast toast={toast} />
     </Page>
-  );
-}
-
-function ConditionBar() {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        flexWrap: "wrap",
-        marginBottom: 16,
-      }}
-    >
-      <Chip active>Energetic</Chip>
-      <Chip active>Likes walks</Chip>
-      <Chip active>Small</Chip>
-      <span style={{ fontSize: 13, color: "var(--ink-soft)", marginLeft: 4 }}>
-        Current filters: Within 500m · Small · Energetic
-      </span>
-    </div>
   );
 }
