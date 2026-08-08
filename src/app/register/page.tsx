@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -14,57 +14,91 @@ const apiErr = (e: any) =>
   e?.message ||
   "Something went wrong.";
 
+const RESEND_COOLDOWN = 60; // seconds
+
 export default function RegisterPage() {
   const router = useRouter();
   const { setUser } = useAuth();
 
-  const [step, setStep] = useState<"form" | "verify">("form");
   const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [code, setCode] = useState("");
 
+  const [sent, setSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const run = async (fn: () => Promise<void>) => {
-    setBusy(true);
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  const startCooldown = () => {
+    setCooldown(RESEND_COOLDOWN);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCooldown((s) => {
+        if (s <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const sendCode = async () => {
     setErr(null);
+    setMsg(null);
+    if (!email.trim()) return setErr("Please enter your email first.");
+    setSending(true);
     try {
-      await fn();
+      await api.post("/auth/send-code", { email });
+      setSent(true);
+      startCooldown();
+      setMsg("We've emailed you a 6-digit verification code.");
+    } catch (e) {
+      setErr(apiErr(e));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const submit = async () => {
+    setErr(null);
+    setMsg(null);
+    if (!email.trim()) return setErr("Please enter your email.");
+    if (!sent) return setErr("Please send a verification code to your email first.");
+    if (!/^\d{6}$/.test(code.trim()))
+      return setErr("Please enter the 6-digit verification code.");
+    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
+    if (pw !== pw2) return setErr("Passwords don't match.");
+    if (!agreeTerms || !agreePrivacy)
+      return setErr("Please agree to the Terms of Service and Privacy Policy.");
+
+    setBusy(true);
+    try {
+      await api.post("/auth/verify-code", { email, code: code.trim() });
+      const name = email.split("@")[0] || "User";
+      const { data } = await api.post("/auth/register", { email, password: pw, name });
+      localStorage.setItem("token", data.token);
+      setUser(data.user || null);
+      router.replace("/onboarding");
     } catch (e) {
       setErr(apiErr(e));
     } finally {
       setBusy(false);
     }
   };
-
-  const next = () => {
-    setErr(null);
-    if (!email.trim()) return setErr("Please enter your email.");
-    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
-    if (pw !== pw2) return setErr("Passwords don't match.");
-    if (!agreeTerms || !agreePrivacy)
-      return setErr("Please agree to the Terms of Service and Privacy Policy.");
-    run(async () => {
-      await api.post("/auth/send-code", { email });
-      setMsg("We've emailed you a verification code.");
-      setStep("verify");
-    });
-  };
-
-  const finish = () =>
-    run(async () => {
-      await api.post("/auth/verify-code", { email, code });
-      const name = email.split("@")[0] || "User";
-      const { data } = await api.post("/auth/register", { email, password: pw, name });
-      localStorage.setItem("token", data.token);
-      setUser(data.user || null);
-      router.replace("/onboarding");
-    });
 
   return (
     <div
@@ -87,75 +121,84 @@ export default function RegisterPage() {
         {err && <div className="mb-3"><Banner tone="rose">{err}</Banner></div>}
         {msg && !err && <div className="mb-3"><Banner tone="brand">{msg}</Banner></div>}
 
-        {step === "form" ? (
-          <div className="flex flex-col gap-4">
-            <Field label="Email">
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
-            </Field>
-            <Field label="Password" hint="At least 6 characters">
-              <Input type="password" value={pw} onChange={(e) => setPw(e.target.value)} />
-            </Field>
-            <Field label="Confirm password">
-              <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} />
-            </Field>
-
-            <div className="flex flex-col gap-3 pt-1">
-              <div>
-                <Switch on={agreeTerms} onChange={setAgreeTerms} label="Agree to Terms" />
-                <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  I agree to the PetDate Terms of Service
-                </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!busy) submit();
+          }}
+          className="flex flex-col gap-4"
+        >
+          <Field label="Email">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
               </div>
-              <div>
-                <Switch on={agreePrivacy} onChange={setAgreePrivacy} label="Agree to Privacy Policy" />
-                <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
-                  I agree to the Privacy Policy
-                </p>
-              </div>
+              <Button
+                variant="secondary"
+                onClick={sendCode}
+                loading={sending}
+                disabled={cooldown > 0}
+              >
+                {cooldown > 0 ? `Resend (${cooldown}s)` : sent ? "Resend code" : "Send code"}
+              </Button>
             </div>
+          </Field>
 
-            <div className="mt-2 flex items-center justify-between">
-              <Button variant="secondary" onClick={() => router.push("/login")}>
-                Cancel
-              </Button>
-              <Button onClick={next} loading={busy}>
-                Next
-              </Button>
+          <Field
+            label="Verification code"
+            hint={sent ? `Enter the 6-digit code we sent to ${email}.` : "Press “Send code” to get a code by email."}
+          >
+            <Input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="6 digits"
+            />
+          </Field>
+
+          <Field label="Password" hint="At least 6 characters">
+            <Input
+              type="password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              autoComplete="new-password"
+            />
+          </Field>
+          <Field label="Confirm password">
+            <Input
+              type="password"
+              value={pw2}
+              onChange={(e) => setPw2(e.target.value)}
+              autoComplete="new-password"
+            />
+          </Field>
+
+          <div className="flex flex-col gap-3 pt-1">
+            <div>
+              <Switch on={agreeTerms} onChange={setAgreeTerms} label="Agree to Terms" />
+              <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+                I agree to the PetDate Terms of Service
+              </p>
+            </div>
+            <div>
+              <Switch on={agreePrivacy} onChange={setAgreePrivacy} label="Agree to Privacy Policy" />
+              <p className="mt-1 text-xs" style={{ color: "var(--ink-soft)" }}>
+                I agree to the Privacy Policy
+              </p>
             </div>
           </div>
-        ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!busy) finish();
-            }}
-            className="flex flex-col gap-4"
-          >
-            <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
-              Enter the verification code we sent to <b style={{ color: "var(--ink)" }}>{email}</b>.
-            </p>
-            <Field label="Verification code">
-              <Input value={code} onChange={(e) => setCode(e.target.value)} inputMode="numeric" placeholder="6 digits" />
-            </Field>
-            <Button type="submit" size="lg" fullWidth loading={busy}>
-              Complete sign up
-            </Button>
-            <div className="flex items-center justify-between">
-              <Button variant="ghost" onClick={() => setStep("form")}>
-                Back
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => run(async () => {
-                  await api.post("/auth/send-code", { email });
-                  setMsg("We've resent the verification code.");
-                })}
-              >
-                Resend code
-              </Button>
-            </div>
-          </form>
-        )}
+
+          <Button type="submit" size="lg" fullWidth loading={busy}>
+            Complete sign up
+          </Button>
+        </form>
 
         <p className="mt-6 text-center text-sm" style={{ color: "var(--ink-soft)" }}>
           Already have an account?{" "}
