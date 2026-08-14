@@ -1,108 +1,239 @@
 "use client";
 
-import { Card as UICard, Chip, Avatar } from "@/components/ui";
-import { ImagePlaceholder } from "@/components/shell/Page";
-import { SIZE_LABEL, type Card } from "@/lib/card";
+import { Icon } from "@/components/ui";
+import { type Card } from "@/lib/card";
+
+/** 한국어 크기 라벨 (시안: 소형견/대형견 태그) */
+export const SIZE_KO: Record<string, string> = {
+  s: "소형견",
+  m: "중형견",
+  l: "대형견",
+};
+
+/** 시안 .tag — primary-10 배경 + primary 글자 pill */
+export function TagPill({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      style={{
+        background: "var(--primary-10)",
+        color: "var(--primary)",
+        borderRadius: "var(--radius-pill)",
+        padding: "3px 10px",
+        fontSize: "var(--fs-micro)",
+        fontWeight: 600,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+const actBtnBase: React.CSSProperties = {
+  flex: 1,
+  height: 40,
+  border: "none",
+  borderRadius: "var(--radius-md)",
+  fontSize: "var(--fs-meta)",
+  fontWeight: 700,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  transition: "opacity .15s",
+};
 
 export default function DiscoverCard({
   card,
+  acting,
   onDetail,
+  onPass,
+  onLike,
 }: {
   card: Card;
+  acting?: boolean;
   onDetail: () => void;
+  onPass?: () => void;
+  onLike?: () => void;
 }) {
-  const ageText = card.age != null ? `${card.age} yrs` : "";
-  const titleBits = [card.petName, card.breed, ageText].filter(Boolean);
-  const chips = [
+  const nameLine =
+    [card.petName, card.age != null ? `${card.age}살` : ""]
+      .filter(Boolean)
+      .join(" · ") || "이름 미공개";
+  const metaLine = [
+    card.breed,
+    card.ownerName ? `${card.ownerName} 보호자` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const tags = [
     ...(card.temperament || []),
-    card.size ? SIZE_LABEL[card.size] || card.size : "",
+    card.size ? SIZE_KO[card.size] || card.size : "",
   ].filter(Boolean);
 
   return (
-    <UICard padded={false} style={{ overflow: "hidden" }}>
-      <div style={{ position: "relative" }}>
-        <ImagePlaceholder
-          src={card.photos[0]}
-          label="Pet photo"
-          height={360}
-          radius={0}
-        />
-        <button
-          type="button"
-          onClick={onDetail}
+    <div
+      style={{
+        background: "var(--surface)",
+        borderRadius: "var(--radius-2xl)",
+        boxShadow: "var(--shadow-card)",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* 사진 영역 (탭하면 상세 보기) */}
+      <button
+        type="button"
+        onClick={onDetail}
+        aria-label="프로필 상세 보기"
+        style={{
+          position: "relative",
+          height: 190,
+          background: "var(--input-bg)",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          display: "block",
+          width: "100%",
+        }}
+      >
+        {card.photos[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={card.photos[0]}
+            alt={card.petName || "펫 사진"}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (img.dataset.fb === "1") return;
+              img.dataset.fb = "1";
+              img.src = "/img/pet-placeholder.svg";
+            }}
+          />
+        ) : (
+          <span
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              fontSize: 64,
+            }}
+            aria-hidden
+          >
+            🐾
+          </span>
+        )}
+        {card.location && (
+          <span
+            style={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              background: "rgba(0,0,0,.45)",
+              color: "var(--white)",
+              fontSize: "var(--fs-micro)",
+              fontWeight: 600,
+              borderRadius: "var(--radius-pill)",
+              padding: "3px 10px",
+            }}
+          >
+            {card.location}
+          </span>
+        )}
+        <span
           style={{
             position: "absolute",
-            right: 14,
-            bottom: 14,
-            border: "none",
-            background: "rgba(255,255,255,.92)",
-            color: "var(--ink)",
-            borderRadius: 999,
-            padding: "8px 14px",
-            fontSize: 13,
+            right: 12,
+            bottom: 12,
+            background: "rgba(0,0,0,.45)",
+            color: "var(--white)",
+            fontSize: "var(--fs-micro)",
             fontWeight: 600,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            boxShadow: "var(--sh-card)",
+            borderRadius: "var(--radius-pill)",
+            padding: "3px 10px",
           }}
         >
-          View details
-        </button>
-      </div>
+          상세 보기
+        </span>
+      </button>
 
-      <div style={{ padding: 20 }}>
-        <h2
+      {/* 본문 */}
+      <div style={{ padding: 16, flex: 1 }}>
+        <div
           style={{
-            margin: 0,
-            fontSize: 20,
+            fontSize: "var(--fs-body)",
             fontWeight: 800,
-            color: "var(--ink)",
+            color: "var(--text)",
           }}
         >
-          {titleBits.join(" · ") || "Pet"}
-        </h2>
-
-        {chips.length > 0 && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
-            {chips.map((c, i) => (
-              <Chip key={i}>{c}</Chip>
+          {nameLine}
+        </div>
+        {metaLine && (
+          <div
+            style={{
+              marginTop: 3,
+              fontSize: "var(--fs-caption)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            {metaLine}
+          </div>
+        )}
+        {tags.length > 0 && (
+          <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {tags.map((t, i) => (
+              <TagPill key={i}>{t}</TagPill>
             ))}
           </div>
         )}
-
-        {card.petAbout && (
-          <p
-            style={{
-              margin: "14px 0 0",
-              fontSize: 14,
-              lineHeight: 1.6,
-              color: "var(--ink-soft)",
-            }}
-          >
-            {card.petAbout}
-          </p>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            marginTop: 16,
-          }}
-        >
-          <Avatar
-            src={card.ownerFace}
-            fallbackText="Owner"
-            size={28}
-            style={{ fontSize: 11 }}
-          />
-          <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-            Owner {card.ownerName || "—"}
-            {card.location ? ` · ${card.location}` : ""}
-          </span>
-        </div>
       </div>
-    </UICard>
+
+      {/* 액션 */}
+      {(onPass || onLike) && (
+        <div style={{ display: "flex", gap: 10, padding: "0 16px 16px" }}>
+          {onPass && (
+            <button
+              type="button"
+              disabled={acting}
+              onClick={onPass}
+              style={{
+                ...actBtnBase,
+                background: "var(--input-bg)",
+                color: "var(--text-secondary)",
+                opacity: acting ? 0.55 : 1,
+              }}
+            >
+              <Icon name="close" size={16} />
+              패스
+            </button>
+          )}
+          {onLike && (
+            <button
+              type="button"
+              disabled={acting}
+              onClick={onLike}
+              style={{
+                ...actBtnBase,
+                background: "var(--primary)",
+                color: "var(--white)",
+                opacity: acting ? 0.55 : 1,
+              }}
+            >
+              <Icon name="heart" size={16} fill />
+              좋아요
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

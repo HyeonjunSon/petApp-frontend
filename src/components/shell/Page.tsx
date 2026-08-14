@@ -36,10 +36,10 @@ export function Page({
                 <h1
                   style={{
                     margin: 0,
-                    fontSize: 24,
+                    fontSize: "var(--fs-h1)",
                     fontWeight: 800,
-                    color: "var(--ink)",
-                    letterSpacing: "-0.02em",
+                    color: "var(--text)",
+                    letterSpacing: "var(--ls-snug)",
                   }}
                 >
                   {title}
@@ -48,9 +48,9 @@ export function Page({
               {subtitle && (
                 <p
                   style={{
-                    margin: "6px 0 0",
-                    fontSize: 14,
-                    color: "var(--ink-soft)",
+                    margin: "4px 0 0",
+                    fontSize: "var(--fs-meta)",
+                    color: "var(--text-secondary)",
                   }}
                 >
                   {subtitle}

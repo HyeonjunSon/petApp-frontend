@@ -1,12 +1,27 @@
 "use client";
 
-/** 결제 포털 — subscription status + payment methods (Stripe pending). */
+/** 결제 포털 — 구독 상태 + 결제 수단 (Stripe 연동 예정). */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Page } from "@/components/shell/Page";
-import { Card as UICard, Button, Input, Field, Badge, Toast, type ToastData } from "@/components/ui";
+import { Button, Input, Field, Badge, Toast, type ToastData } from "@/components/ui";
+
+const INPUT_STYLE: React.CSSProperties = {
+  border: "none",
+  background: "var(--input-bg)",
+  borderRadius: 10,
+  height: 46,
+};
+
+function SectionTitle({ children, first }: { children: React.ReactNode; first?: boolean }) {
+  return (
+    <h2 style={{ margin: first ? "0 0 12px" : "32px 0 12px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>
+      {children}
+    </h2>
+  );
+}
 
 export default function BillingPortalPage() {
   const router = useRouter();
@@ -39,9 +54,9 @@ export default function BillingPortalPage() {
     try {
       const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode: "premium_monthly" });
       if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "Payments are coming soon.", type: "error" });
+      else setToast({ msg: "결제 기능을 준비 중이에요.", type: "error" });
     } catch {
-      setToast({ msg: "Payments are coming soon.", type: "error" });
+      setToast({ msg: "결제 기능을 준비 중이에요.", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -51,72 +66,82 @@ export default function BillingPortalPage() {
     iso ? new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" }) : "—";
 
   return (
-    <Page title="Billing" maxWidth={880}>
-      <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Subscription status</h2>
-      <UICard>
+    <Page title="구독 관리" subtitle="구독 상태와 결제 수단을 관리해요." maxWidth={880}>
+      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+
+      <SectionTitle first>구독 상태</SectionTitle>
+      <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Current plan</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)", marginTop: 4 }}>
-              {premium ? "PetDate Premium" : "Free plan"}
+            <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>현재 플랜</div>
+            <div style={{ fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
+              {premium ? "PetDate 프리미엄" : "무료 플랜"}
             </div>
           </div>
-          <Badge tone={premium ? "brand" : "slate"}>{premium ? "Active" : "Inactive"}</Badge>
+          <Badge tone={premium ? "brand" : "slate"}>{premium ? "이용 중" : "미이용"}</Badge>
         </div>
         {premium && (
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, gap: 16, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Next billing date</div>
-              <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>{fmtDate(nextDate)}</div>
+              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>다음 결제일</div>
+              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>{fmtDate(nextDate)}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Amount</div>
-              <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>₩9,900 / mo</div>
+              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>결제 금액</div>
+              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>₩9,900 / 월</div>
             </div>
           </div>
         )}
-      </UICard>
+      </section>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Payment method</h2>
-      <UICard>
+      <SectionTitle>결제 수단</SectionTitle>
+      <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
-          <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-            No payment method on file.
+          <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
+            등록된 결제 수단이 없어요.
           </div>
-          <Button variant="secondary" onClick={() => setToast({ msg: "Card management is coming soon.", type: "error" })}>
-            Change card
+          <Button variant="secondary" onClick={() => setToast({ msg: "카드 관리 기능을 준비 중이에요.", type: "error" })}>
+            카드 변경
           </Button>
         </div>
-      </UICard>
+      </section>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Add payment method</h2>
-      <UICard>
+      <SectionTitle>결제 수단 추가</SectionTitle>
+      <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="Card number"><Input value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" /></Field>
+          <Field label="카드 번호">
+            <Input className="pdi" style={INPUT_STYLE} value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" />
+          </Field>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="Expiry (MM/YY)"><Input value={exp} onChange={(e) => setExp(e.target.value)} placeholder="MM/YY" style={{ width: 160 }} /></Field>
-            <Field label="CVC"><Input value={cvc} onChange={(e) => setCvc(e.target.value)} inputMode="numeric" style={{ width: 120 }} /></Field>
+            <Field label="유효기간 (MM/YY)">
+              <Input className="pdi" style={{ ...INPUT_STYLE, width: 160 }} value={exp} onChange={(e) => setExp(e.target.value)} placeholder="MM/YY" />
+            </Field>
+            <Field label="CVC">
+              <Input className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={cvc} onChange={(e) => setCvc(e.target.value)} inputMode="numeric" />
+            </Field>
           </div>
-          <Field label="Cardholder name"><Input value={holder} onChange={(e) => setHolder(e.target.value)} /></Field>
-          <Button fullWidth size="lg" loading={busy} onClick={pay}>Pay</Button>
+          <Field label="카드 소유자 이름">
+            <Input className="pdi" style={INPUT_STYLE} value={holder} onChange={(e) => setHolder(e.target.value)} />
+          </Field>
+          <Button fullWidth size="lg" loading={busy} onClick={pay}>결제하기</Button>
         </div>
-      </UICard>
+      </section>
 
-      <h2 style={{ margin: "32px 0 12px", fontSize: 16, fontWeight: 800, color: "var(--ink)" }}>Manage subscription</h2>
-      <UICard>
+      <SectionTitle>구독 해지</SectionTitle>
+      <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-            If you cancel, benefits last until the expiry date.
+          <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
+            해지해도 혜택은 만료일까지 그대로 유지돼요.
           </div>
           <Button
             variant="dangerGhost"
             disabled={!premium}
-            onClick={() => setToast({ msg: "Subscription cancellation is coming soon.", type: "error" })}
+            onClick={() => setToast({ msg: "구독 해지 기능을 준비 중이에요.", type: "error" })}
           >
-            Cancel subscription
+            구독 해지
           </Button>
         </div>
-      </UICard>
+      </section>
 
       <Toast toast={toast} />
     </Page>

@@ -1,8 +1,24 @@
 "use client";
 
-import { Button, Chip, Avatar } from "@/components/ui";
+import { Avatar } from "@/components/ui";
 import { ImagePlaceholder } from "@/components/shell/Page";
 import { type Card } from "@/lib/card";
+import { TagPill } from "./DiscoverCard";
+
+const btnBase: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  border: "none",
+  borderRadius: "var(--radius-md)",
+  padding: "11px 18px",
+  fontSize: "var(--fs-meta)",
+  fontWeight: 700,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "opacity .15s",
+};
 
 export default function MatchModal({
   card,
@@ -33,60 +49,91 @@ export default function MatchModal({
         style={{
           width: "100%",
           maxWidth: 460,
-          background: "var(--bg)",
-          borderRadius: "var(--r-card)",
-          boxShadow: "var(--sh-pop)",
+          background: "var(--surface)",
+          borderRadius: "var(--radius-2xl)",
+          boxShadow: "var(--shadow-card-strong)",
           padding: 28,
           animation: "pd-pop .25s ease",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800, color: "var(--ink)" }}>
-          It's a match!
+        <h2
+          style={{
+            margin: 0,
+            fontSize: "var(--fs-h1)",
+            fontWeight: 800,
+            color: "var(--text)",
+          }}
+        >
+          매치됐어요! 🎉
         </h2>
-        <p style={{ margin: "8px 0 18px", fontSize: 15, color: "var(--ink-soft)" }}>
-          You both liked each other
+        <p
+          style={{
+            margin: "8px 0 18px",
+            fontSize: "var(--fs-body)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          서로 좋아요를 눌렀어요.
         </p>
 
         <div
           style={{
-            border: "1px solid var(--border)",
-            borderRadius: 14,
+            background: "var(--input-bg)",
+            borderRadius: "var(--radius-xl)",
             padding: 14,
           }}
         >
-          <ImagePlaceholder
-            src={card.photos[0]}
-            label="Pet"
-            height={200}
-            radius={10}
-          />
+          <ImagePlaceholder src={card.photos[0]} label="펫 사진" height={200} radius={10} />
           <div style={{ marginTop: 12 }}>
-            <span style={{ fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-              {card.petName || "Pet"}
+            <span
+              style={{
+                fontSize: "var(--fs-h3)",
+                fontWeight: 800,
+                color: "var(--text)",
+              }}
+            >
+              {card.petName || "친구"}
             </span>
-            <span style={{ fontSize: 14, color: "var(--ink-soft)", marginLeft: 8 }}>
-              {[card.breed, card.age != null ? `${card.age} yrs` : ""]
+            <span
+              style={{
+                fontSize: "var(--fs-body-sm)",
+                color: "var(--text-secondary)",
+                marginLeft: 8,
+              }}
+            >
+              {[card.breed, card.age != null ? `${card.age}살` : ""]
                 .filter(Boolean)
-                .join(", ")}
+                .join(" · ")}
             </span>
           </div>
           {(card.temperament || []).length > 0 && (
-            <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
               {card.temperament!.slice(0, 3).map((t, i) => (
-                <Chip key={i}>{t}</Chip>
+                <TagPill key={i}>{t}</TagPill>
               ))}
             </div>
           )}
         </div>
 
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar src={card.ownerFace} fallbackText="User" size={40} />
+          <Avatar src={card.ownerFace} fallbackText="보호자" size={40} />
           <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "var(--ink)" }}>
-              {card.ownerName || "User"}
+            <div
+              style={{
+                fontSize: "var(--fs-body-sm)",
+                fontWeight: 700,
+                color: "var(--text)",
+              }}
+            >
+              {card.ownerName || "보호자"}
             </div>
             {card.location && (
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+              <div
+                style={{
+                  fontSize: "var(--fs-meta)",
+                  color: "var(--text-secondary)",
+                }}
+              >
                 {card.location}
               </div>
             )}
@@ -101,10 +148,28 @@ export default function MatchModal({
             marginTop: 22,
           }}
         >
-          <Button variant="secondary" onClick={onLater}>
-            Later
-          </Button>
-          <Button onClick={onChat}>Chat</Button>
+          <button
+            type="button"
+            onClick={onLater}
+            style={{
+              ...btnBase,
+              background: "var(--input-bg)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            나중에
+          </button>
+          <button
+            type="button"
+            onClick={onChat}
+            style={{
+              ...btnBase,
+              background: "var(--primary)",
+              color: "var(--white)",
+            }}
+          >
+            채팅하기
+          </button>
         </div>
       </div>
     </div>

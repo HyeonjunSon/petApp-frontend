@@ -1,12 +1,25 @@
 "use client";
 
-import { Card as UICard, Button } from "@/components/ui";
-
 const BENEFITS = [
-  { title: "Unlimited swipes", desc: "Discover pets all day, no limits" },
-  { title: "Premium filters", desc: "Search precisely by age, size, and walk style" },
-  { title: "Priority matching", desc: "Meet the best matches for your pet first" },
+  { title: "무제한 스와이프", desc: "하루 종일 제한 없이 친구들을 만나요" },
+  { title: "프리미엄 필터", desc: "나이·크기·산책 스타일로 정밀하게 검색해요" },
+  { title: "우선 매칭", desc: "우리 펫과 잘 맞는 친구를 먼저 만나요" },
 ];
+
+const btnBase: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  border: "none",
+  borderRadius: "var(--radius-md)",
+  padding: "12px 18px",
+  fontSize: "var(--fs-meta)",
+  fontWeight: 700,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "opacity .15s",
+};
 
 export default function SwipeLimit({
   used,
@@ -21,7 +34,14 @@ export default function SwipeLimit({
 }) {
   return (
     <div style={{ maxWidth: 720 }}>
-      <UICard>
+      <div
+        style={{
+          background: "var(--surface)",
+          borderRadius: "var(--radius-2xl)",
+          boxShadow: "var(--shadow-card)",
+          padding: 20,
+        }}
+      >
         <div
           style={{
             display: "flex",
@@ -31,45 +51,71 @@ export default function SwipeLimit({
           }}
         >
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>
-              Today's swipe limit
-            </div>
-            <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 14 }}>
-              Swipes used
+            <div
+              style={{
+                fontSize: "var(--fs-h3)",
+                fontWeight: 700,
+                color: "var(--text)",
+              }}
+            >
+              오늘의 스와이프 제한
             </div>
             <div
               style={{
-                fontSize: 34,
+                fontSize: "var(--fs-meta)",
+                color: "var(--text-secondary)",
+                marginTop: 14,
+              }}
+            >
+              사용한 스와이프
+            </div>
+            <div
+              style={{
+                fontSize: "var(--fs-display)",
                 fontWeight: 800,
-                color: "var(--ink)",
+                color: "var(--text)",
                 marginTop: 4,
               }}
             >
               {used} / {limit}
             </div>
           </div>
-          <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-            Resets at midnight
+          <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
+            자정에 초기화돼요
           </div>
         </div>
-      </UICard>
+      </div>
 
       <h3
         style={{
           margin: "28px 0 16px",
-          fontSize: 18,
+          fontSize: "var(--fs-h3)",
           fontWeight: 800,
-          color: "var(--ink)",
+          color: "var(--text)",
         }}
       >
-        Upgrade to Premium
+        프리미엄으로 업그레이드
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         {BENEFITS.map((b) => (
           <div key={b.title}>
-            <div style={{ fontSize: 13, color: "var(--ink-faint)" }}>{b.title}</div>
-            <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 2 }}>
+            <div
+              style={{
+                fontSize: "var(--fs-meta)",
+                fontWeight: 700,
+                color: "var(--primary)",
+              }}
+            >
+              {b.title}
+            </div>
+            <div
+              style={{
+                fontSize: "var(--fs-body)",
+                color: "var(--text)",
+                marginTop: 2,
+              }}
+            >
               {b.desc}
             </div>
           </div>
@@ -84,10 +130,28 @@ export default function SwipeLimit({
           marginTop: 32,
         }}
       >
-        <Button variant="secondary" onClick={onLater}>
-          Later
-        </Button>
-        <Button onClick={onUpgrade}>Get Premium</Button>
+        <button
+          type="button"
+          onClick={onLater}
+          style={{
+            ...btnBase,
+            background: "var(--input-bg)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          나중에
+        </button>
+        <button
+          type="button"
+          onClick={onUpgrade}
+          style={{
+            ...btnBase,
+            background: "var(--primary)",
+            color: "var(--white)",
+          }}
+        >
+          프리미엄 시작하기
+        </button>
       </div>
     </div>
   );

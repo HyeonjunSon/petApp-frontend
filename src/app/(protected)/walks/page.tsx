@@ -2,21 +2,121 @@
 
 /** Walk Plans — meetup (walk-invite) list. Completed plans auto-create records. */
 
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
-import { Card as UICard, Button, Select, Badge, Spinner, EmptyState } from "@/components/ui";
+import { Select, Spinner, EmptyState } from "@/components/ui";
 import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
 
 const STATUS: Record<string, string> = {
-  proposed: "Pending",
-  confirmed: "Accepted",
-  declined: "Declined",
-  cancelled: "Cancelled",
-  completed: "Completed",
+  proposed: "수락 대기 중",
+  confirmed: "확정",
+  declined: "거절됨",
+  cancelled: "취소됨",
+  completed: "완료",
 };
+
+type WalkRecord = {
+  _id: string;
+  pet: string;
+  distanceKm: number;
+  durationMin: number;
+  startedAt: string;
+};
+
+/* ── 시안 스타일 (petdate-website.html #page-walks) ── */
+const cardStyle: React.CSSProperties = {
+  background: "var(--surface)",
+  borderRadius: "var(--radius-xl)",
+  boxShadow: "var(--shadow-card)",
+  overflow: "hidden",
+};
+const sectionTitleStyle: React.CSSProperties = {
+  margin: "28px 0 12px",
+  fontSize: "var(--fs-h3)",
+  fontWeight: 800,
+  color: "var(--text)",
+};
+const btnPrimarySm: React.CSSProperties = {
+  background: "var(--primary)",
+  color: "var(--white)",
+  fontSize: "var(--fs-meta)",
+  fontWeight: 700,
+  borderRadius: "var(--radius-md)",
+  padding: "10px 16px",
+  border: "none",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 6,
+};
+const btnGhostSm: React.CSSProperties = {
+  ...btnPrimarySm,
+  background: "var(--input-bg)",
+  color: "var(--text-secondary)",
+  fontWeight: 600,
+};
+
+const PILL_TONES: Record<string, { bg: string; fg: string }> = {
+  proposed: { bg: "var(--warning-soft)", fg: "var(--warning)" },
+  confirmed: { bg: "var(--success-soft)", fg: "var(--success)" },
+  completed: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+  declined: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+  cancelled: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+};
+
+function Pill({ status }: { status: string }) {
+  const t = PILL_TONES[status] || PILL_TONES.completed;
+  return (
+    <span
+      style={{
+        fontSize: "var(--fs-micro)",
+        fontWeight: 700,
+        borderRadius: "var(--radius-pill)",
+        padding: "4px 12px",
+        background: t.bg,
+        color: t.fg,
+        whiteSpace: "nowrap",
+        flexShrink: 0,
+      }}
+    >
+      {STATUS[status] || status}
+    </span>
+  );
+}
+
+/** "HH:MM" → "오전 10:00" */
+function fmtTime(t?: string) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  if (Number.isNaN(h)) return t;
+  const ampm = h < 12 ? "오전" : "오후";
+  const h12 = h % 12 || 12;
+  return `${ampm} ${h12}:${String(Number.isNaN(m) ? 0 : m).padStart(2, "0")}`;
+}
+
+/** "YYYY-MM-DD" → { day: "11", month: "8월" } */
+function calParts(date?: string) {
+  const d = String(date || "");
+  const day = Number(d.slice(8, 10));
+  const month = Number(d.slice(5, 7));
+  return {
+    day: Number.isNaN(day) ? "-" : String(day),
+    month: Number.isNaN(month) ? "" : `${month}월`,
+  };
+}
+
+/** 분 → "6시간 40분" */
+function fmtDuration(min: number) {
+  if (!min) return "0분";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h === 0) return `${m}분`;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
 
 export default function WalksPage() {
   const router = useRouter();
@@ -25,17 +125,24 @@ export default function WalksPage() {
 
   const [invites, setInvites] = useState<WalkInvite[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [records, setRecords] = useState<WalkRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("all");
   const [sort, setSort] = useState("date");
 
   useEffect(() => {
+    const today = new Date();
+    const from = new Date(today);
+    from.setFullYear(from.getFullYear() - 1);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
     Promise.allSettled([
       api.get<WalkInvite[]>("/walk-invites"),
       api.get<Match[]>("/matches"),
-    ]).then(([inv, mt]) => {
+      api.get<WalkRecord[]>("/walks", { params: { from: iso(from), to: iso(today) } }),
+    ]).then(([inv, mt, wk]) => {
       if (inv.status === "fulfilled") setInvites(inv.value.data || []);
       if (mt.status === "fulfilled") setMatches(mt.value.data || []);
+      if (wk.status === "fulfilled") setRecords(wk.value.data || []);
       setLoading(false);
     });
   }, []);
@@ -44,7 +151,7 @@ export default function WalksPage() {
     const m = matches.find((x) => x._id === matchId);
     const peer = m ? peerOf(m, myId) : undefined;
     const pet = pickPet(peer);
-    return { owner: peer?.name || "Partner", pet: pet?.name || "Pet" };
+    return { owner: peer?.name || "보호자", pet: pet?.name || "친구" };
   };
 
   const upcoming = useMemo(
@@ -71,159 +178,292 @@ export default function WalksPage() {
     [invites]
   );
 
-  const Row = ({ i, clickable = true }: { i: WalkInvite; clickable?: boolean }) => {
+  /* 이번 달 산책 / 총 거리 / 총 시간 (산책 기록 기준) */
+  const stats = useMemo(() => {
+    const now = new Date();
+    const monthCount = records.filter((w) => {
+      const d = new Date(w.startedAt);
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).length;
+    const dist = records.reduce((s, w) => s + (w.distanceKm || 0), 0);
+    const mins = records.reduce((s, w) => s + (w.durationMin || 0), 0);
+    return {
+      count: `${monthCount}회`,
+      dist: `${Math.round(dist * 10) / 10}km`,
+      time: fmtDuration(mins),
+    };
+  }, [records]);
+
+  /* 지난 산책 행 메타용: 날짜가 같은 산책 기록을 찾아 거리·시간을 붙인다 */
+  const recordByDate = useMemo(() => {
+    const map = new Map<string, WalkRecord>();
+    records.forEach((w) => {
+      const key = String(w.startedAt || "").slice(0, 10);
+      if (key && !map.has(key)) map.set(key, w);
+    });
+    return map;
+  }, [records]);
+
+  const rowTitle = (i: WalkInvite) => {
     const n = peerName(i.match);
+    return i.place ? `${n.pet}네와 ${i.place} 산책` : `${n.pet}네와 산책`;
+  };
+
+  const Row = ({ i, metaOverride }: { i: WalkInvite; metaOverride?: string }) => {
+    const n = peerName(i.match);
+    const cal = calParts(i.date);
+    const meta =
+      metaOverride ||
+      [fmtTime(i.time), i.place || `${n.owner} 보호자`].filter(Boolean).join(" · ");
     return (
       <button
         type="button"
-        onClick={clickable ? () => router.push(`/walks/${i._id}`) : undefined}
+        onClick={() => router.push(`/walks/${i._id}`)}
         style={{
-          display: "flex", alignItems: "center", gap: 14, textAlign: "left",
-          border: "1px solid var(--border)", borderRadius: "var(--r-card)",
-          background: "var(--bg)", padding: 14,
-          cursor: clickable ? "pointer" : "default", fontFamily: "inherit",
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          padding: "16px 18px",
+          width: "100%",
+          textAlign: "left",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "inherit",
         }}
       >
-        <div style={{
-          width: 48, height: 48, borderRadius: "50%", background: "var(--surface-2)",
-          color: "var(--ink-faint)", display: "flex", alignItems: "center",
-          justifyContent: "center", fontSize: 12, flexShrink: 0,
-        }}>Dog</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 600, color: "var(--ink)" }}>
-            {n.pet} · {n.owner}
-          </div>
-          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-            {i.date} {i.time}{i.place ? ` · ${i.place}` : ""}
-          </div>
+        <div
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: "var(--radius-lg)",
+            background: "var(--primary-10)",
+            color: "var(--primary)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <b style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>{cal.day}</b>
+          <span style={{ fontSize: "var(--fs-nano)", fontWeight: 700 }}>{cal.month}</span>
         </div>
-        <Badge tone={i.status === "confirmed" || i.status === "completed" ? "brand" : i.status === "declined" || i.status === "cancelled" ? "rose" : "slate"}>
-          {STATUS[i.status]}
-        </Badge>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <b
+            style={{
+              display: "block",
+              fontSize: "var(--fs-body)",
+              fontWeight: 700,
+              color: "var(--text)",
+            }}
+          >
+            {rowTitle(i)}
+          </b>
+          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
+            {meta}
+          </span>
+        </div>
+        <Pill status={i.status} />
       </button>
     );
   };
 
+  const RowList = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
+      {React.Children.map(children, (child, idx) => (
+        <div style={idx > 0 ? { borderTop: "1px solid var(--border)" } : undefined}>{child}</div>
+      ))}
+    </div>
+  );
+
   return (
     <Page
-      title="Walk Plans"
+      title="산책"
+      subtitle="다가오는 약속과 지난 기록을 확인해요."
       right={
         <>
-          <Button variant="ghost" onClick={() => router.push("/walks/records")}>
-            View records
-          </Button>
-          <Button onClick={() => router.push("/walks/new")}>New plan</Button>
+          <button type="button" style={btnGhostSm} onClick={() => router.push("/walks/records")}>
+            산책 기록
+          </button>
+          <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
+            + 약속 만들기
+          </button>
         </>
       }
     >
       {loading ? (
-        <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}>
+        <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}>
           <Spinner />
         </div>
       ) : invites.length === 0 ? (
         <EmptyState
           emoji="🐕"
-          title="No walk plans yet"
-          desc="Create your first walk plan with a match."
-          action={<Button onClick={() => router.push("/walks/new")}>New plan</Button>}
+          title="아직 산책 약속이 없어요"
+          desc="매치된 친구와 첫 산책 약속을 만들어 보세요."
+          action={
+            <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
+              + 약속 만들기
+            </button>
+          }
         />
       ) : (
         <>
-          {/* Upcoming */}
-          <h2 style={{ margin: "0 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-            Upcoming
-          </h2>
+          {/* 통계 */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 14,
+              marginBottom: 8,
+            }}
+          >
+            {[
+              { v: stats.count, l: "이번 달 산책" },
+              { v: stats.dist, l: "총 거리" },
+              { v: stats.time, l: "총 시간" },
+            ].map((s) => (
+              <div
+                key={s.l}
+                style={{
+                  background: "var(--surface)",
+                  borderRadius: "var(--radius-2xl)",
+                  boxShadow: "var(--shadow-card)",
+                  padding: 20,
+                }}
+              >
+                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--primary)" }}>{s.v}</div>
+                <div
+                  style={{
+                    marginTop: 2,
+                    fontSize: "var(--fs-caption)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {s.l}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 다가오는 약속 */}
+          <div style={sectionTitleStyle}>다가오는 약속</div>
           {upcoming.length === 0 ? (
-            <UICard>
-              <p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>
-                No upcoming walk plans.
+            <div style={{ ...cardStyle, padding: "16px 18px" }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "var(--fs-body-sm)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                다가오는 약속이 없어요.
               </p>
-            </UICard>
-          ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
-              {upcoming.map((i) => {
-                const n = peerName(i.match);
-                return (
-                  <UICard key={i._id}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{
-                        width: 52, height: 52, borderRadius: "50%",
-                        background: "var(--surface-2)", color: "var(--ink-faint)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12, flexShrink: 0,
-                      }}>Dog</div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{n.pet} · {n.owner}</div>
-                        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)", marginTop: 2 }}>
-                          {i.date} {i.time}
-                        </div>
-                        {i.place && (
-                          <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 2 }}>{i.place}</div>
-                        )}
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                        <Badge tone={i.status === "confirmed" ? "brand" : "slate"}>{STATUS[i.status]}</Badge>
-                        <button
-                          type="button"
-                          onClick={() => router.push(`/walks/${i._id}`)}
-                          style={{
-                            background: "none", border: "none", cursor: "pointer",
-                            fontFamily: "inherit", fontSize: 13, color: "var(--brand-strong)",
-                            textDecoration: "underline", textUnderlineOffset: 3,
-                          }}
-                        >
-                          Plan details
-                        </button>
-                      </div>
-                    </div>
-                  </UICard>
-                );
-              })}
             </div>
+          ) : (
+            <RowList>
+              {upcoming.map((i) => (
+                <Row key={i._id} i={i} />
+              ))}
+            </RowList>
           )}
 
-          {/* All plans */}
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", margin: "32px 0 14px", gap: 16, flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>All plans</h2>
+          {/* 지난 산책 */}
+          {past.length > 0 && (
+            <>
+              <div style={sectionTitleStyle}>지난 산책</div>
+              <RowList>
+                {past.slice(0, 5).map((i) => {
+                  const rec = recordByDate.get(i.date);
+                  const meta = rec
+                    ? [
+                        rec.distanceKm ? `${rec.distanceKm}km` : "",
+                        rec.durationMin ? fmtDuration(rec.durationMin) : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")
+                    : undefined;
+                  return <Row key={i._id} i={i} metaOverride={meta} />;
+                })}
+              </RowList>
+            </>
+          )}
+
+          {/* 전체 약속 (상태 필터 · 정렬) */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 16,
+              flexWrap: "wrap",
+              margin: "28px 0 12px",
+            }}
+          >
+            <div style={{ ...sectionTitleStyle, margin: 0 }}>전체 약속</div>
             <div style={{ display: "flex", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>Status</div>
-                <Select value={status} onChange={(e) => setStatus(e.target.value)} style={{ width: 120, height: 38, fontSize: 13 }}>
-                  <option value="all">All</option>
-                  <option value="proposed">Pending</option>
-                  <option value="confirmed">Accepted</option>
-                  <option value="completed">Completed</option>
-                  <option value="declined">Declined</option>
-                  <option value="cancelled">Cancelled</option>
+                <div
+                  style={{
+                    fontSize: "var(--fs-caption)",
+                    color: "var(--text-secondary)",
+                    marginBottom: 4,
+                  }}
+                >
+                  상태
+                </div>
+                <Select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  style={{ width: 130, height: 38, fontSize: "var(--fs-meta)" }}
+                >
+                  <option value="all">전체</option>
+                  <option value="proposed">수락 대기 중</option>
+                  <option value="confirmed">확정</option>
+                  <option value="completed">완료</option>
+                  <option value="declined">거절됨</option>
+                  <option value="cancelled">취소됨</option>
                 </Select>
               </div>
               <div>
-                <div style={{ fontSize: 12, color: "var(--ink-faint)", marginBottom: 4 }}>Sort</div>
-                <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 130, height: 38, fontSize: 13 }}>
-                  <option value="date">Newest first</option>
+                <div
+                  style={{
+                    fontSize: "var(--fs-caption)",
+                    color: "var(--text-secondary)",
+                    marginBottom: 4,
+                  }}
+                >
+                  정렬
+                </div>
+                <Select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  style={{ width: 110, height: 38, fontSize: "var(--fs-meta)" }}
+                >
+                  <option value="date">최신순</option>
                 </Select>
               </div>
             </div>
           </div>
 
           {listRows.length === 0 ? (
-            <UICard><p style={{ margin: 0, fontSize: 14, color: "var(--ink-soft)" }}>No plans.</p></UICard>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {listRows.map((i) => <Row key={i._id} i={i} />)}
+            <div style={{ ...cardStyle, padding: "16px 18px" }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "var(--fs-body-sm)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                조건에 맞는 약속이 없어요.
+              </p>
             </div>
-          )}
-
-          {/* Past plans (completed) */}
-          {past.length > 0 && (
-            <>
-              <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>
-                Past plans
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {past.slice(0, 5).map((i) => <Row key={i._id} i={i} />)}
-              </div>
-            </>
+          ) : (
+            <RowList>
+              {listRows.map((i) => (
+                <Row key={i._id} i={i} />
+              ))}
+            </RowList>
           )}
         </>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-/** Shared layout for static legal pages — brand bar + max-w content. */
+/** 정적 법적 고지 페이지 공통 레이아웃 — 브랜드 바 + 본문 카드. */
 
 import Link from "next/link";
 import { Icon } from "@/components/ui";
@@ -17,12 +17,12 @@ export default function LegalLayout({
   return (
     <div
       className="min-h-dvh"
-      style={{ background: "var(--bg-subtle)", color: "var(--ink)" }}
+      style={{ background: "var(--background)", color: "var(--text)" }}
     >
       <header
         className="sticky top-0 z-40 border-b"
         style={{
-          background: "rgba(255,255,255,.85)",
+          background: "color-mix(in srgb, var(--surface) 85%, transparent)",
           backdropFilter: "saturate(180%) blur(12px)",
           borderColor: "var(--border)",
         }}
@@ -32,10 +32,14 @@ export default function LegalLayout({
             href="/"
             className="flex items-center gap-2 no-underline"
           >
-            <Icon name="paw" size={22} fill color="var(--brand)" />
+            <Icon name="paw" size={22} fill color="var(--primary)" />
             <span
-              className="text-base font-extrabold"
-              style={{ color: "var(--ink)", letterSpacing: "-0.02em" }}
+              className="text-base"
+              style={{
+                color: "var(--text)",
+                fontWeight: 800,
+                letterSpacing: "-0.02em",
+              }}
             >
               PetDate
             </span>
@@ -45,52 +49,60 @@ export default function LegalLayout({
 
       <main className="mx-auto max-w-[720px] px-5 pt-10 pb-20">
         <h1
-          className="m-0 text-[32px] font-extrabold"
-          style={{ color: "var(--ink)", letterSpacing: "-0.03em" }}
+          className="m-0"
+          style={{
+            color: "var(--text)",
+            fontSize: "var(--fs-h1)",
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+          }}
         >
           {title}
         </h1>
         <div
-          className="mt-2 text-[13px]"
-          style={{ color: "var(--ink-faint)" }}
+          className="mt-2"
+          style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}
         >
-          Last updated · {updated}
+          마지막 업데이트 · {updated}
         </div>
 
-        <div className="prose mt-8">{children}</div>
+        <div className="pd-card mt-8" style={{ padding: "12px 28px 28px" }}>
+          {children}
+        </div>
       </main>
 
       <footer
-        className="border-t py-8 text-center text-xs"
+        className="border-t py-8 text-center"
         style={{
-          background: "var(--bg)",
+          background: "var(--surface)",
           borderColor: "var(--border)",
-          color: "var(--ink-faint)",
+          color: "var(--text-secondary)",
+          fontSize: "var(--fs-caption)",
         }}
       >
         © {new Date().getFullYear()} PetDate ·{" "}
         <Link
           href="/privacy"
           className="no-underline"
-          style={{ color: "var(--ink-soft)" }}
+          style={{ color: "var(--text-secondary)" }}
         >
-          Privacy
+          개인정보처리방침
         </Link>{" "}
         ·{" "}
         <Link
           href="/terms"
           className="no-underline"
-          style={{ color: "var(--ink-soft)" }}
+          style={{ color: "var(--text-secondary)" }}
         >
-          Terms
+          이용약관
         </Link>{" "}
         ·{" "}
         <Link
           href="/content-policy"
           className="no-underline"
-          style={{ color: "var(--ink-soft)" }}
+          style={{ color: "var(--text-secondary)" }}
         >
-          Content policy
+          콘텐츠 정책
         </Link>
       </footer>
     </div>
@@ -100,8 +112,13 @@ export default function LegalLayout({
 export function H2({ children }: { children: React.ReactNode }) {
   return (
     <h2
-      className="mt-10 mb-2 text-[20px] font-extrabold"
-      style={{ color: "var(--ink)", letterSpacing: "-0.01em" }}
+      className="mt-10 mb-2"
+      style={{
+        color: "var(--text)",
+        fontSize: "var(--fs-h3)",
+        fontWeight: 800,
+        letterSpacing: "-0.01em",
+      }}
     >
       {children}
     </h2>
@@ -111,8 +128,8 @@ export function H2({ children }: { children: React.ReactNode }) {
 export function P({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="my-3 text-[15px] leading-relaxed"
-      style={{ color: "var(--ink)" }}
+      className="my-3 leading-relaxed"
+      style={{ color: "var(--text)", fontSize: "var(--fs-body)" }}
     >
       {children}
     </p>
@@ -122,8 +139,8 @@ export function P({ children }: { children: React.ReactNode }) {
 export function UL({ children }: { children: React.ReactNode }) {
   return (
     <ul
-      className="my-3 ml-5 list-disc text-[15px] leading-relaxed"
-      style={{ color: "var(--ink)" }}
+      className="my-3 ml-5 list-disc leading-relaxed"
+      style={{ color: "var(--text)", fontSize: "var(--fs-body)" }}
     >
       {children}
     </ul>

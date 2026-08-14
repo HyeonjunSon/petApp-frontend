@@ -50,7 +50,7 @@ export default function DiscoverPage() {
         .map(adapt);
       setDeck(mapped);
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Failed to load.");
+      setError(e?.response?.data?.message || e?.message || "불러오지 못했어요.");
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,10 @@ export default function DiscoverPage() {
         if (data?.matchId) {
           setMatch(current);
         } else {
-          setToast({ msg: `Liked ${current.petName || current.ownerName || "them"}`, type: "ok" });
+          setToast({
+            msg: `${current.petName || current.ownerName || "친구"}에게 좋아요를 보냈어요`,
+            type: "ok",
+          });
           next();
         }
       } else {
@@ -91,7 +94,7 @@ export default function DiscoverPage() {
         setShowLimit(true);
         setUsed(SWIPE_LIMIT);
       } else {
-        setToast({ msg: "Something went wrong. Please try again.", type: "error" });
+        setToast({ msg: "문제가 발생했어요. 다시 시도해 주세요.", type: "error" });
       }
     } finally {
       setActing(false);
@@ -100,11 +103,24 @@ export default function DiscoverPage() {
 
   const limitView = showLimit || used >= SWIPE_LIMIT;
 
+  const myLocation =
+    (user as any)?.locationName || (user as any)?.location || "";
+
   return (
     <Page
-      title="Discover"
-      right={!limitView ? <Filters onApply={fetchDeck} /> : undefined}
+      title="디스커버"
+      subtitle={
+        myLocation
+          ? `${myLocation} · 가까운 동네의 친구들이에요.`
+          : "가까운 동네의 친구들이에요."
+      }
     >
+      {!limitView && (
+        <div style={{ display: detailMode ? "none" : undefined }}>
+          <Filters onApply={fetchDeck} />
+        </div>
+      )}
+
       {limitView ? (
         <SwipeLimit
           used={Math.min(used, SWIPE_LIMIT)}
@@ -113,24 +129,35 @@ export default function DiscoverPage() {
           onUpgrade={() => router.push("/subscription")}
         />
       ) : loading ? (
-        <div className="flex justify-center pt-20" style={{ color: "var(--ink-soft)" }}>
+        <div
+          className="flex justify-center pt-20"
+          style={{ color: "var(--text-secondary)" }}
+        >
           <Spinner />
         </div>
       ) : error ? (
         <EmptyState
           emoji="⚠️"
-          title="Something went wrong"
+          title="문제가 발생했어요"
           desc={error}
-          action={<Button icon="refresh" onClick={fetchDeck}>Retry</Button>}
+          action={
+            <Button icon="refresh" onClick={fetchDeck}>
+              다시 시도
+            </Button>
+          }
         />
       ) : !current ? (
         <EmptyState
           emoji="🐾"
-          title="No more pets to show"
-          desc="Widen your filters or check back soon."
+          title="더 보여줄 친구가 없어요"
+          desc="필터를 넓히거나 잠시 후 다시 확인해 주세요."
           action={
-            <Button icon="filter" variant="secondary" onClick={() => router.push("/settings/exposure")}>
-              Widen filters
+            <Button
+              icon="filter"
+              variant="secondary"
+              onClick={() => router.push("/settings/exposure")}
+            >
+              필터 넓히기
             </Button>
           }
         />
@@ -142,73 +169,73 @@ export default function DiscoverPage() {
           onNext={next}
         />
       ) : (
-        <div
-          className="pd-discover-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) 320px",
-            gap: 24,
-            alignItems: "start",
-          }}
-        >
-          <div>
-            <DiscoverCard card={current} onDetail={() => setDetailMode(true)} />
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                gap: 12,
-                marginTop: 18,
-              }}
-            >
-              <Button variant="secondary" disabled={acting} onClick={() => act("pass")}>
-                Pass →
-              </Button>
-              <Button disabled={acting} onClick={() => act("like")} icon="heart">
-                Like
-              </Button>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                gap: 14,
-                marginTop: 14,
-              }}
-            >
-              <Button size="sm" onClick={() => router.push("/subscription")}>
-                Use boost ⚡
-              </Button>
-              <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>
-                Swipes left today: {Math.max(0, SWIPE_LIMIT - used)} / {SWIPE_LIMIT}
-              </span>
-            </div>
-            <div style={{ textAlign: "center", marginTop: 12 }}>
-              <button
-                type="button"
-                onClick={() => setShowLimit(true)}
+        <>
+          <div
+            className="pd-discover-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0,1fr) 320px",
+              gap: 24,
+              alignItems: "start",
+            }}
+          >
+            <div>
+              <div style={{ maxWidth: 380, width: "100%", margin: "0 auto" }}>
+                <DiscoverCard
+                  card={current}
+                  acting={acting}
+                  onDetail={() => setDetailMode(true)}
+                  onPass={() => act("pass")}
+                  onLike={() => act("like")}
+                />
+              </div>
+              <div
                 style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: 13,
-                  color: "var(--ink-soft)",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  gap: 14,
+                  marginTop: 18,
                 }}
               >
-                Swipe limit info
-              </button>
+                <Button size="sm" onClick={() => router.push("/subscription")}>
+                  부스트 사용 ⚡
+                </Button>
+                <span
+                  style={{
+                    fontSize: "var(--fs-meta)",
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  오늘 남은 스와이프: {Math.max(0, SWIPE_LIMIT - used)} / {SWIPE_LIMIT}
+                </span>
+              </div>
+              <div style={{ textAlign: "center", marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowLimit(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "var(--fs-meta)",
+                    color: "var(--text-secondary)",
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  스와이프 제한 안내
+                </button>
+              </div>
             </div>
-          </div>
 
-          <RightRail
-            upcoming={deck.slice(idx + 1, idx + 4)}
-            onPremium={() => router.push("/subscription")}
-          />
-        </div>
+            <RightRail
+              upcoming={deck.slice(idx + 1, idx + 4)}
+              onPremium={() => router.push("/subscription")}
+            />
+          </div>
+        </>
       )}
 
       {match && (

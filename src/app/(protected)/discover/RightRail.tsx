@@ -1,7 +1,15 @@
 "use client";
 
-import { Card as UICard, Chip, Avatar, Button } from "@/components/ui";
-import { SIZE_LABEL, type Card } from "@/lib/card";
+import { Avatar } from "@/components/ui";
+import { type Card } from "@/lib/card";
+import { SIZE_KO, TagPill } from "./DiscoverCard";
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--surface)",
+  borderRadius: "var(--radius-2xl)",
+  boxShadow: "var(--shadow-card)",
+  padding: 20,
+};
 
 export default function RightRail({
   upcoming,
@@ -12,27 +20,33 @@ export default function RightRail({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <UICard>
+      <div style={cardStyle}>
         <h3
           style={{
             margin: "0 0 14px",
-            fontSize: 16,
+            fontSize: "var(--fs-body)",
             fontWeight: 700,
-            color: "var(--ink)",
+            color: "var(--text)",
           }}
         >
-          Up next
+          다음 친구들
         </h3>
         {upcoming.length === 0 ? (
-          <p style={{ margin: 0, fontSize: 13, color: "var(--ink-soft)" }}>
-            No more pets to recommend.
+          <p
+            style={{
+              margin: 0,
+              fontSize: "var(--fs-meta)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            추천할 친구가 더 없어요.
           </p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {upcoming.map((c) => {
-              const chips = [
+              const tags = [
                 ...(c.temperament || []).slice(0, 1),
-                c.size ? SIZE_LABEL[c.size] || c.size : "",
+                c.size ? SIZE_KO[c.size] || c.size : "",
               ].filter(Boolean);
               return (
                 <div
@@ -41,67 +55,86 @@ export default function RightRail({
                     display: "flex",
                     gap: 12,
                     alignItems: "center",
-                    border: "1px solid var(--border)",
-                    borderRadius: 12,
+                    background: "var(--input-bg)",
+                    borderRadius: "var(--radius-lg)",
                     padding: 12,
                   }}
                 >
-                  <Avatar src={c.photos[0]} fallbackText="Pet" size={44} />
+                  <Avatar src={c.photos[0]} fallbackText="펫" size={44} />
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div
                       style={{
-                        fontSize: 13,
+                        fontSize: "var(--fs-meta)",
                         fontWeight: 600,
-                        color: "var(--ink)",
+                        color: "var(--text)",
                       }}
                     >
-                      {[c.petName, c.breed, c.age != null ? `${c.age} yrs` : ""]
+                      {[c.petName, c.breed, c.age != null ? `${c.age}살` : ""]
                         .filter(Boolean)
                         .join(" · ")}
                     </div>
-                    <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
-                      {chips.map((x, i) => (
-                        <span
-                          key={i}
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            color: "var(--ink-soft)",
-                            background: "var(--surface-2)",
-                            borderRadius: 999,
-                            padding: "2px 8px",
-                          }}
-                        >
-                          {x}
-                        </span>
-                      ))}
-                    </div>
+                    {tags.length > 0 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: 6,
+                          marginTop: 6,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {tags.map((x, i) => (
+                          <TagPill key={i}>{x}</TagPill>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </UICard>
+      </div>
 
-      <UICard>
+      <div style={cardStyle}>
         <h3
           style={{
             margin: "0 0 6px",
-            fontSize: 16,
+            fontSize: "var(--fs-body)",
             fontWeight: 700,
-            color: "var(--ink)",
+            color: "var(--text)",
           }}
         >
-          💎 Meet more with Premium
+          💎 프리미엄으로 더 만나요
         </h3>
-        <p style={{ margin: "0 0 14px", fontSize: 13, color: "var(--ink-soft)" }}>
-          Unlimited swipes · Super Likes · 3 Boosts
+        <p
+          style={{
+            margin: "0 0 14px",
+            fontSize: "var(--fs-meta)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          무제한 스와이프 · 슈퍼 좋아요 · 부스트 3회
         </p>
-        <Button fullWidth onClick={onPremium}>
-          Get Premium
-        </Button>
-      </UICard>
+        <button
+          type="button"
+          onClick={onPremium}
+          style={{
+            width: "100%",
+            height: 40,
+            border: "none",
+            borderRadius: "var(--radius-md)",
+            background: "var(--primary)",
+            color: "var(--white)",
+            fontSize: "var(--fs-meta)",
+            fontWeight: 700,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            transition: "opacity .15s",
+          }}
+        >
+          프리미엄 시작하기
+        </button>
+      </div>
     </div>
   );
 }

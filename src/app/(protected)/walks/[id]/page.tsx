@@ -2,21 +2,80 @@
 
 /** Plan details — walk-invite detail + status actions. */
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page, ImagePlaceholder } from "@/components/shell/Page";
-import { Card as UICard, Button, Badge, Avatar, Spinner, EmptyState } from "@/components/ui";
+import { Button, Avatar, Spinner, EmptyState } from "@/components/ui";
 import { type Match, type WalkInvite, peerOf, pickPet } from "../../chat/types";
 
 const STATUS: Record<string, string> = {
-  proposed: "Pending",
-  confirmed: "Accepted",
-  declined: "Declined",
-  cancelled: "Cancelled",
-  completed: "Completed",
+  proposed: "수락 대기 중",
+  confirmed: "확정",
+  declined: "거절됨",
+  cancelled: "취소됨",
+  completed: "완료",
 };
+
+const PILL_TONES: Record<string, { bg: string; fg: string }> = {
+  proposed: { bg: "var(--warning-soft)", fg: "var(--warning)" },
+  confirmed: { bg: "var(--success-soft)", fg: "var(--success)" },
+  completed: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+  declined: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+  cancelled: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
+};
+
+function Pill({ status }: { status: string }) {
+  const t = PILL_TONES[status] || PILL_TONES.completed;
+  return (
+    <span
+      style={{
+        fontSize: "var(--fs-micro)",
+        fontWeight: 700,
+        borderRadius: "var(--radius-pill)",
+        padding: "4px 12px",
+        background: t.bg,
+        color: t.fg,
+        whiteSpace: "nowrap",
+      }}
+    >
+      {STATUS[status] || status}
+    </span>
+  );
+}
+
+const cardStyle: React.CSSProperties = {
+  background: "var(--surface)",
+  borderRadius: "var(--radius-2xl)",
+  boxShadow: "var(--shadow-card)",
+  padding: 20,
+};
+const cardTitleStyle: React.CSSProperties = {
+  margin: "0 0 16px",
+  fontSize: "var(--fs-h3)",
+  fontWeight: 800,
+  color: "var(--text)",
+};
+
+/** "HH:MM" → "오전 10:00" */
+function fmtTime(t?: string) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  if (Number.isNaN(h)) return t;
+  const ampm = h < 12 ? "오전" : "오후";
+  const h12 = h % 12 || 12;
+  return `${ampm} ${h12}:${String(Number.isNaN(m) ? 0 : m).padStart(2, "0")}`;
+}
+
+/** "2026-08-11" → "8월 11일 (월)" */
+function fmtDateKo(date?: string) {
+  if (!date) return "";
+  const d = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return date;
+  const wd = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 (${wd})`;
+}
 
 export default function WalkInviteDetailPage() {
   const router = useRouter();
@@ -57,15 +116,15 @@ export default function WalkInviteDetailPage() {
 
   if (loading) {
     return (
-      <Page title="Plan details">
-        <div className="flex justify-center pt-16" style={{ color: "var(--ink-soft)" }}><Spinner /></div>
+      <Page title="약속 상세">
+        <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}><Spinner /></div>
       </Page>
     );
   }
   if (!invite) {
     return (
-      <Page title="Plan details">
-        <EmptyState emoji="🐾" title="Plan not found" action={<Button onClick={() => router.push("/walks")}>Back to Walk Plans</Button>} />
+      <Page title="약속 상세">
+        <EmptyState emoji="🐾" title="약속을 찾을 수 없어요" action={<Button onClick={() => router.push("/walks")}>산책으로 돌아가기</Button>} />
       </Page>
     );
   }
@@ -77,67 +136,71 @@ export default function WalkInviteDetailPage() {
     <Page
       title={
         <span style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
-          Plan details <Badge tone={invite.status === "confirmed" || invite.status === "completed" ? "brand" : "slate"}>{STATUS[invite.status]}</Badge>
+          약속 상세 <Pill status={invite.status} />
         </span>
       }
       maxWidth={900}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <UICard>
-          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Plan info</h2>
+        <div style={cardStyle}>
+          <h2 style={cardTitleStyle}>약속 정보</h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 16 }}>
-            <Info label="Date & time" value={`${invite.date} ${invite.time}`} />
-            <Info label="Place" value={invite.place || "—"} />
-            <Info label="Note" value={invite.note || "—"} />
+            <Info label="날짜 · 시간" value={`${fmtDateKo(invite.date)} ${fmtTime(invite.time)}`} />
+            <Info label="장소" value={invite.place || "—"} />
+            <Info label="메모" value={invite.note || "—"} />
           </div>
           <div style={{ marginTop: 16 }}>
-            <ImagePlaceholder label="Map preview" height={200} />
+            <ImagePlaceholder label="지도 미리보기" height={200} />
           </div>
-        </UICard>
+        </div>
 
-        <UICard>
-          <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Partner owner</h2>
+        <div style={cardStyle}>
+          <h2 style={cardTitleStyle}>상대 보호자</h2>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Avatar src={peer?.faceUrl} fallbackText={(peer?.name || "P")[0]} size={48} />
+            <Avatar src={peer?.faceUrl} fallbackText={(peer?.name || "보")[0]} size={48} />
             <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>{peer?.name || "Partner owner"}</div>
-              <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>{pet?.name ? `Pet ${pet.name}` : ""}</div>
+              <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>
+                {peer?.name ? `${peer.name} 보호자` : "상대 보호자"}
+              </div>
+              <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
+                {pet?.name ? `반려동물 ${pet.name}` : ""}
+              </div>
             </div>
           </div>
-        </UICard>
+        </div>
 
-        <UICard>
-          <h2 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>Plan status</h2>
+        <div style={cardStyle}>
+          <h2 style={{ ...cardTitleStyle, margin: "0 0 12px" }}>약속 상태</h2>
           {invite.status === "proposed" ? (
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Button disabled={busy} onClick={() => respond("confirmed")}>Accept</Button>
-              <Button variant="secondary" disabled={busy} onClick={() => respond("declined")}>Decline</Button>
-              <Button variant="dangerGhost" disabled={busy} onClick={() => respond("cancelled")}>Cancel</Button>
+              <Button disabled={busy} onClick={() => respond("confirmed")}>수락하기</Button>
+              <Button variant="secondary" disabled={busy} onClick={() => respond("declined")}>거절하기</Button>
+              <Button variant="dangerGhost" disabled={busy} onClick={() => respond("cancelled")}>약속 취소</Button>
             </div>
           ) : invite.status === "confirmed" ? (
             <div>
-              <p style={{ margin: "0 0 12px", fontSize: 13, color: "var(--ink-soft)" }}>
-                Finished this walk? Mark it complete and a record is added to Walk Records automatically.
+              <p style={{ margin: "0 0 12px", fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
+                산책을 마쳤나요? 완료로 표시하면 산책 기록이 자동으로 추가돼요.
               </p>
               <Button disabled={busy} icon="check" onClick={() => respond("completed")}>
-                Mark as completed
+                완료로 표시
               </Button>
             </div>
           ) : invite.status === "completed" ? (
             <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-                ✅ Completed — a walk record was added automatically.
+              <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
+                ✅ 완료된 산책이에요 — 산책 기록이 자동으로 추가되었어요.
               </span>
               <Button variant="secondary" onClick={() => router.push("/walks/records")}>
-                View records
+                기록 보기
               </Button>
             </div>
           ) : (
-            <span style={{ fontSize: 14, color: "var(--ink-soft)" }}>
-              This plan is {STATUS[invite.status]?.toLowerCase()}.
+            <span style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
+              이 약속은 {STATUS[invite.status]} 상태예요.
             </span>
           )}
-        </UICard>
+        </div>
       </div>
     </Page>
   );
@@ -146,8 +209,8 @@ export default function WalkInviteDetailPage() {
 function Info({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>{label}</div>
-      <div style={{ fontSize: 15, color: "var(--ink)", marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>{label}</div>
+      <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>{value}</div>
     </div>
   );
 }

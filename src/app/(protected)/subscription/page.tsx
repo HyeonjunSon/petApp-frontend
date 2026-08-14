@@ -1,12 +1,12 @@
 "use client";
 
-/** 프리미엄 구독 — plan comparison + FAQ. */
+/** 프리미엄 구독 — 플랜 비교 + FAQ. */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Page } from "@/components/shell/Page";
-import { Card as UICard, Button, Toast, type ToastData } from "@/components/ui";
+import { Button, Icon, Toast, type ToastData } from "@/components/ui";
 
 type Plan = {
   code: string;
@@ -17,20 +17,20 @@ type Plan = {
   features?: string[];
 };
 
-const FREE_FEATURES = ["5 swipes per day", "3 match messages per day", "Basic filters (distance·breed)", "With ads"];
+const FREE_FEATURES = ["하루 스와이프 5회", "매칭 메시지 하루 3회", "기본 필터 (거리 · 견종)", "광고 포함"];
 const PREMIUM_FEATURES = [
-  "Unlimited swipes",
-  "Unlimited match messages",
-  "Advanced filters (temperament·walk style·age)",
-  "See who liked you",
-  "No ads",
-  "Premium badge",
+  "무제한 스와이프",
+  "무제한 매칭 메시지",
+  "고급 필터 (성격 · 산책 스타일 · 나이)",
+  "나를 좋아한 상대 확인",
+  "광고 없음",
+  "프리미엄 배지",
 ];
 
 const FAQ = [
-  ["Can I cancel anytime?", "Yes—cancel anytime; benefits last until the expiry date."],
-  ["What payment methods are supported?", "Credit/debit cards, KakaoPay, and NaverPay."],
-  ["Do benefits apply immediately?", "Yes—benefits apply as soon as payment completes."],
+  ["언제든 해지할 수 있나요?", "네, 언제든 해지할 수 있어요. 혜택은 만료일까지 그대로 유지돼요."],
+  ["어떤 결제 수단을 지원하나요?", "신용·체크카드, 카카오페이, 네이버페이를 지원해요."],
+  ["혜택은 바로 적용되나요?", "네, 결제가 완료되면 즉시 적용돼요."],
 ];
 
 export default function SubscriptionPage() {
@@ -62,10 +62,10 @@ export default function SubscriptionPage() {
     try {
       const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode });
       if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "Payments are coming soon.", type: "error" });
+      else setToast({ msg: "결제 기능을 준비 중이에요.", type: "error" });
     } catch (e: any) {
       setToast({
-        msg: e?.response?.data?.msg || "Payments are coming soon.",
+        msg: e?.response?.data?.msg || "결제 기능을 준비 중이에요.",
         type: "error",
       });
     } finally {
@@ -74,50 +74,50 @@ export default function SubscriptionPage() {
   };
 
   return (
-    <Page title="Premium" maxWidth={920}>
-      <UICard>
+    <Page title="프리미엄" subtitle="더 많은 매칭과 프리미엄 기능을 만나요." maxWidth={920}>
+      <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: 12, color: "var(--ink-faint)" }}>Current plan</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: "var(--ink)", marginTop: 4 }}>
-              {premium ? "PetDate Premium" : "Free plan"}
+            <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>현재 플랜</div>
+            <div style={{ fontSize: "var(--fs-h2)", fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
+              {premium ? "PetDate 프리미엄" : "무료 플랜"}
             </div>
-            <div style={{ fontSize: 13, color: "var(--ink-soft)", marginTop: 4 }}>
-              {premium ? "All premium benefits active" : "5 swipes/day · limited match messages"}
+            <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)", marginTop: 4 }}>
+              {premium ? "모든 프리미엄 혜택 이용 중" : "하루 스와이프 5회 · 매칭 메시지 제한"}
             </div>
           </div>
           {premium ? (
-            <Button variant="secondary" onClick={() => router.push("/subscription/billing")}>Manage</Button>
+            <Button variant="secondary" onClick={() => router.push("/subscription/billing")}>관리</Button>
           ) : (
-            <Button onClick={subscribe} loading={busy}>Upgrade plan</Button>
+            <Button onClick={subscribe} loading={busy}>플랜 업그레이드</Button>
           )}
         </div>
-      </UICard>
+      </section>
 
-      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>Compare plans</h2>
+      <h2 style={{ margin: "32px 0 14px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>플랜 비교</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
         <PlanCard
-          title="Free"
+          title="무료"
           price="₩0"
           features={FREE_FEATURES}
-          cta={<Button variant="secondary" fullWidth disabled>Current plan</Button>}
+          cta={<Button variant="secondary" fullWidth disabled>현재 이용 중</Button>}
         />
         <PlanCard
-          title="Premium"
+          title="프리미엄"
           price="₩9,900"
           highlight
           features={PREMIUM_FEATURES}
-          cta={<Button fullWidth loading={busy} onClick={subscribe}>Get Premium</Button>}
+          cta={<Button fullWidth loading={busy} onClick={subscribe}>프리미엄 시작하기</Button>}
         />
       </div>
 
-      <h2 style={{ margin: "32px 0 14px", fontSize: 18, fontWeight: 800, color: "var(--ink)" }}>FAQ</h2>
+      <h2 style={{ margin: "32px 0 14px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>자주 묻는 질문</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {FAQ.map(([q, a]) => (
-          <UICard key={q}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "var(--ink)" }}>{q}</div>
-            <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--ink-soft)" }}>{a}</p>
-          </UICard>
+          <section className="pd-card" key={q} style={{ padding: 20 }}>
+            <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>{q}</div>
+            <p style={{ margin: "8px 0 0", fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>{a}</p>
+          </section>
         ))}
       </div>
 
@@ -141,22 +141,54 @@ function PlanCard({
 }) {
   return (
     <div
+      className="pd-card"
       style={{
-        background: "var(--bg)",
-        border: `1px solid ${highlight ? "var(--brand)" : "var(--border)"}`,
-        borderRadius: "var(--r-card)",
-        boxShadow: "var(--sh-card)",
         padding: 24,
+        position: "relative",
+        boxShadow: highlight
+          ? "var(--shadow-card), inset 0 0 0 2px var(--primary)"
+          : "var(--shadow-card)",
       }}
     >
-      <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)" }}>{title}</div>
+      {highlight && (
+        <span
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            background: "var(--primary-10)",
+            color: "var(--primary)",
+            fontSize: "var(--fs-micro)",
+            fontWeight: 700,
+            borderRadius: "var(--radius-pill)",
+            padding: "4px 12px",
+          }}
+        >
+          인기
+        </span>
+      )}
+      <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>{title}</div>
       <div style={{ marginTop: 10, display: "flex", alignItems: "baseline", gap: 4 }}>
-        <span style={{ fontSize: 32, fontWeight: 800, color: "var(--ink)" }}>{price}</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-soft)" }}>/ mo</span>
+        <span style={{ fontSize: 32, fontWeight: 800, color: "var(--text)" }}>{price}</span>
+        <span style={{ fontSize: "var(--fs-body-sm)", fontWeight: 600, color: "var(--text-secondary)" }}>/ 월</span>
       </div>
       <ul style={{ listStyle: "none", padding: 0, margin: "18px 0", display: "flex", flexDirection: "column", gap: 10 }}>
         {features.map((f) => (
-          <li key={f} style={{ fontSize: 14, color: "var(--ink-soft)" }}>{f}</li>
+          <li
+            key={f}
+            style={{
+              fontSize: "var(--fs-body-sm)",
+              color: "var(--text-secondary)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <span style={{ color: highlight ? "var(--primary)" : "var(--text-secondary)", display: "flex" }}>
+              <Icon name="check" size={15} />
+            </span>
+            {f}
+          </li>
         ))}
       </ul>
       {cta}

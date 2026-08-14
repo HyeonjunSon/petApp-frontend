@@ -5,81 +5,175 @@
    Loads only the Hangul glyphs actually used, so it's light. */
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css");
 
+/* ─────────────────────────────────────────────
+ * PetDate 시안 토큰 (claude.ai/design "PetDate Website")
+ * 라벤더 퍼플 브랜드 · Pretendard · 카드 = 그림자(보더 없음)
+ * ───────────────────────────────────────────── */
 :root {
-  /* emerald brand — matches Tailwind emerald-600/700/100/50 */
-  --brand: #059669;
-  --brand-strong: #047857;
-  --brand-soft: #d1fae5;
-  --brand-tint: #ecfdf5;
+  /* Brand */
+  --primary: #7f77dd;
+  --primary-light: #a09be8;
+  --primary-strong: #6a61c9;
+  --primary-15: rgba(127, 119, 221, 0.15);
+  --primary-10: rgba(127, 119, 221, 0.1);
 
-  /* Semantic vars kept so legacy ui.tsx components still render correctly */
-  --bg: #ffffff;
-  --bg-subtle: #f8fafc;
-  --ink: #0f172a;
-  --ink-soft: #64748b;
-  --ink-faint: #94a3b8;
-  --like: #059669;
-  --pass: #94a3b8;
-  --danger: #dc2626;
+  /* Surfaces */
+  --background: #f8f8f8;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --input-bg: #f4f5f9;
+
+  /* Foreground */
+  --text: #1a1a1a;
+  --text-secondary: #888888;
+  --white: #ffffff;
+
+  /* Semantic */
+  --danger: #ff4444;
   --danger-soft: #fef2f2;
-  --warning: #d97706;
+  --success: #2d9e5a;
+  --success-soft: #e8fff1;
+  --warning: #f59e0b;
   --warning-soft: #fef3c7;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --surface-2: #f1f5f9;
+  --info: #6366f1;
+  --info-soft: #eef2ff;
+  --accent: #8b5cf6;
+  --accent-soft: #f5f3ff;
+
+  /* Type scale */
+  --fs-display: 36px;
+  --fs-h1: 22px;
+  --fs-h2: 20px;
+  --fs-h3: 17px;
+  --fs-body: 15px;
+  --fs-body-sm: 14px;
+  --fs-meta: 13px;
+  --fs-caption: 12px;
+  --fs-micro: 11px;
+  --fs-nano: 10px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+
+  --lh-tight: 1.2;
+  --lh-snug: 1.35;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  --ls-tight: -0.5px;
+  --ls-snug: -0.3px;
+  --ls-normal: -0.2px;
+
+  /* Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 18px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 6px rgba(0, 0, 0, 0.06);
+  --shadow-card-strong: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --shadow-fab: 0 4px 12px rgba(127, 119, 221, 0.35);
+  --shadow-banner: 0 3px 12px rgba(127, 119, 221, 0.22);
+
+  /* ── Legacy aliases (기존 ui.tsx / 페이지들이 쓰는 이름) ── */
+  --brand: var(--primary);
+  --brand-strong: var(--primary-strong);
+  --brand-soft: var(--primary-15);
+  --brand-tint: var(--primary-10);
+
+  --bg: var(--surface);
+  --bg-subtle: var(--background);
+  --ink: var(--text);
+  --ink-soft: var(--text-secondary);
+  --ink-faint: #aaaaaa;
+  --like: var(--primary);
+  --pass: #94a3b8;
+  --border: #e5e5e5;
+  --border-strong: #d6d6d6;
+  --surface-2: var(--input-bg);
   --on-brand: #ffffff;
   --overlay: rgba(15, 23, 42, 0.45);
 
-  --r-card: 16px;
-  --r-btn: 12px;
-  --r-input: 12px;
-  --r-chip: 999px;
+  --r-card: var(--radius-2xl);
+  --r-btn: var(--radius-lg);
+  --r-input: var(--radius-md);
+  --r-chip: var(--radius-pill);
 
-  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-card: var(--shadow-card);
   --sh-pop: 0 12px 40px rgba(15, 23, 42, 0.14);
-  --sh-swipe: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --sh-fab: 0 6px 18px rgba(5, 150, 105, 0.32);
+  --sh-swipe: var(--shadow-card-strong);
+  --sh-fab: var(--shadow-fab);
 }
 
 /* Dark mode — applied when <html class="dark"> */
 .dark {
-  --bg: #0f172a;
-  --bg-subtle: #0b1220;
-  --ink: #f1f5f9;
-  --ink-soft: #94a3b8;
-  --ink-faint: #64748b;
-  --brand: #10b981;
-  --brand-strong: #34d399;
-  --brand-soft: rgba(16, 185, 129, 0.2);
-  --brand-tint: rgba(16, 185, 129, 0.12);
-  --border: #1e293b;
-  --border-strong: #334155;
-  --surface-2: #1e293b;
-  --on-brand: #062b20;
+  --primary: #9a92e8;
+  --primary-light: #bab4f0;
+  --primary-strong: #7f77dd;
+  --primary-15: rgba(154, 146, 232, 0.18);
+  --primary-10: rgba(154, 146, 232, 0.12);
+
+  --background: #0f1014;
+  --surface: #1a1b22;
+  --card: #1a1b22;
+  --input-bg: #262830;
+
+  --text: #f2f2f5;
+  --text-secondary: #9aa0ac;
+
+  --danger: #ff6b6b;
+  --danger-soft: #3a1f22;
+  --success: #4ade80;
+  --success-soft: #1a2e22;
+  --warning: #fbbf24;
+  --warning-soft: #3a2d14;
+  --info: #818cf8;
+  --info-soft: #1f2233;
+  --accent: #a78bfa;
+  --accent-soft: #2a1f3d;
+
+  --shadow-card: 0 1px 6px rgba(0, 0, 0, 0.35);
+  --shadow-card-strong: 0 2px 12px rgba(0, 0, 0, 0.45);
+  --shadow-fab: 0 4px 14px rgba(154, 146, 232, 0.45);
+  --shadow-banner: 0 3px 14px rgba(154, 146, 232, 0.35);
+
+  /* Legacy aliases */
+  --ink-faint: #6b7280;
+  --border: #353845;
+  --border-strong: #454858;
   --overlay: rgba(0, 0, 0, 0.6);
-  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.4);
   --sh-pop: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
 .dark body {
-  background: var(--bg-subtle);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--text);
 }
 
 @layer base {
   html,
   body {
-    background: var(--bg-subtle);
-    color: var(--ink);
+    background: var(--background);
+    color: var(--text);
     font-family: "Pretendard Variable", Pretendard, -apple-system,
       "Apple SD Gothic Neo", system-ui, "Segoe UI", Roboto, sans-serif;
+    font-size: var(--fs-body-sm);
+    line-height: var(--lh-normal);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
-  /* tighter Korean headings, per DESIGN.md §3 */
+  /* tighter Korean headings */
   h1,
   h2,
   h3 {
-    letter-spacing: -0.02em;
+    letter-spacing: var(--ls-snug);
   }
 }
 
@@ -92,12 +186,18 @@
   scrollbar-width: none;
 }
 
-/* Utilities reused by legacy ui.tsx components */
 @layer utilities {
+  /* 시안 카드: 보더 없이 그림자만 */
   .surface {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    box-shadow: var(--sh-card);
+    background: var(--surface);
+    border: none;
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-2xl);
+  }
+  .pd-card {
+    background: var(--surface);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
   }
   .pd-spinner {
     width: 18px;
@@ -109,7 +209,6 @@
     display: inline-block;
     opacity: 0.8;
   }
-  /* Skeleton (DESIGN.md §7.12) — shimmer placeholder */
   .pd-skel {
     background: linear-gradient(
       90deg,
@@ -150,6 +249,19 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* 시안 메뉴 카드: 행 사이에만 헤어라인 */
+.pd-menu > button + button {
+  border-top: 0.5px solid var(--border);
+}
+
+/* 시안 그라디언트 (히어로/배너/브랜드 패널) */
+.pd-gradient {
+  background: linear-gradient(135deg, var(--primary), #6a61c9);
+}
+.dark .pd-gradient {
+  background: linear-gradient(135deg, #7f77dd, #5a51b9);
 }
 
 @keyframes pd-fade {

@@ -26,6 +26,7 @@ export function cx(...parts: Array<string | false | null | undefined>) {
    Solid fill is allowed for: heart, paw.
 ============================================================= */
 const ICON_PATHS = {
+  home: "M3 10.5L12 3l9 7.5M5 9.5V21h5v-6h4v6h5V9.5",
   heart:
     "M12 21s-7.5-4.6-10-9.2C.6 9 1.6 5.5 4.8 4.6 7 4 9 5 12 8c3-3 5-4 7.2-3.4C22.4 5.5 23.4 9 22 11.8 19.5 16.4 12 21 12 21z",
   paw:

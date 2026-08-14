@@ -3,13 +3,13 @@
 import LegalLayout, { H2, P, UL } from "../_legal/Layout";
 
 export const metadata = {
-  title: "Content Policy — PetDate",
+  title: "콘텐츠 정책 — PetDate",
   description: "Rules for what you can post on PetDate.",
 };
 
 export default function ContentPolicy() {
   return (
-    <LegalLayout title="Content Policy" updated="2026-06-14">
+    <LegalLayout title="콘텐츠 정책" updated="2026-06-14">
       <P>
         PetDate is a place for pet owners to meet neighbors and plan walks.
         These rules apply to every photo, message, and bit of profile text you

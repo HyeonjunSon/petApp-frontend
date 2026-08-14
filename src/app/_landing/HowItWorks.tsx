@@ -1,50 +1,32 @@
 "use client";
 
-import { useLocale } from "@/lib/i18n";
-import SectionHead from "./SectionHead";
-
-const STEPS = ["land.how.1", "land.how.2", "land.how.3"];
+const STEPS = [
+  {
+    title: "펫 프로필 만들기",
+    desc: "사진과 성격, 좋아하는 산책 코스를 등록해요.",
+  },
+  {
+    title: "동네 친구 매칭",
+    desc: "3km 이내의 친구를 추천받고 서로 좋아요를 눌러요.",
+  },
+  {
+    title: "산책 약속 잡기",
+    desc: "채팅으로 시간·장소를 정하고 함께 걸어요.",
+  },
+];
 
 export default function HowItWorks() {
-  const { t } = useLocale();
   return (
-    <section
-      id="how"
-      className="border-t border-b"
-      style={{
-        background: "var(--bg-subtle)",
-        borderColor: "var(--border)",
-      }}
-    >
-      <div className="mx-auto max-w-[1120px] px-6 py-18">
-        <SectionHead
-          kicker={t("land.how.kicker")}
-          title={t("land.how.title")}
-        />
-        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {STEPS.map((key, i) => (
-            <div key={key}>
-              <div
-                className="flex h-11 w-11 items-center justify-center rounded-full text-base font-extrabold text-white"
-                style={{ background: "var(--brand)" }}
-              >
-                {i + 1}
-              </div>
-              <div
-                className="mt-3.5 text-lg font-bold"
-                style={{ color: "var(--ink)" }}
-              >
-                {t(`${key}.title`)}
-              </div>
-              <div
-                className="mt-1.5 text-sm leading-relaxed"
-                style={{ color: "var(--ink-soft)" }}
-              >
-                {t(`${key}.desc`)}
-              </div>
-            </div>
-          ))}
-        </div>
+    <section className="ld-sect" id="how">
+      <h2>이렇게 시작해요</h2>
+      <div className="ld-steps">
+        {STEPS.map((s, i) => (
+          <div className="ld-step" key={s.title}>
+            <span className="no">{i + 1}</span>
+            <b>{s.title}</b>
+            <p>{s.desc}</p>
+          </div>
+        ))}
       </div>
     </section>
   );
