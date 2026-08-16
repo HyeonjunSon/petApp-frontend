@@ -104,8 +104,18 @@ export function useChat() {
         const { data } = await api.get<Message[]>(
           `/matches/${current}/messages`
         );
-        setMessages(data);
-        await markAsRead(current, data);
+        // 서버는 최신순(desc)으로 내려주므로 화면용으로 오래된 순으로 뒤집는다.
+        // createdAt이 같으면(시드 데이터 등) ObjectId가 시간순이므로 그걸로 판별.
+        const asc = (data || [])
+          .slice()
+          .sort((a, b) => {
+            const d =
+              new Date(a.createdAt || 0).getTime() -
+              new Date(b.createdAt || 0).getTime();
+            return d !== 0 ? d : String(a._id || "").localeCompare(String(b._id || ""));
+          });
+        setMessages(asc);
+        await markAsRead(current, asc);
         setMatches((p) =>
           p.map((m) => (m._id === current ? { ...m, unreadCount: 0 } : m))
         );

@@ -1,5 +1,7 @@
 "use client";
 
+/** 디스커버 — 시안 #page-discover: 칩 필터 + 3열 매치카드 그리드. */
+
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -9,7 +11,6 @@ import { Button, EmptyState, Spinner, Toast, type ToastData } from "@/components
 import { adapt, type Card } from "@/lib/card";
 import DiscoverCard from "./DiscoverCard";
 import DetailView from "./DetailView";
-import RightRail from "./RightRail";
 import MatchModal from "./MatchModal";
 import SwipeLimit from "./SwipeLimit";
 import Filters from "./Filters";
@@ -21,14 +22,13 @@ export default function DiscoverPage() {
   const { user } = useAuth();
 
   const [deck, setDeck] = useState<Card[]>([]);
-  const [idx, setIdx] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [acting, setActing] = useState(false);
-  const [used, setUsed] = useState(0);
+  const [actingId, setActingId] = useState<string | null>(null);
   const [match, setMatch] = useState<Card | null>(null);
-  const [detailMode, setDetailMode] = useState(false);
+  const [detail, setDetail] = useState<Card | null>(null);
   const [showLimit, setShowLimit] = useState(false);
+  const [used, setUsed] = useState(0);
   const [toast, setToast] = useState<ToastData>(null);
 
   useEffect(() => {
@@ -40,8 +40,7 @@ export default function DiscoverPage() {
   const fetchDeck = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setIdx(0);
-    setDetailMode(false);
+    setDetail(null);
     try {
       const { data } = await api.get("/discover");
       const me = (user as any)?._id;
@@ -60,34 +59,33 @@ export default function DiscoverPage() {
     fetchDeck();
   }, [fetchDeck]);
 
-  const current = deck[idx];
-  const next = () => {
-    setIdx((v) => v + 1);
-    setDetailMode(false);
+  const remove = (id: string) => {
+    setDeck((d) => d.filter((c) => c.id !== id));
+    setDetail((v) => (v?.id === id ? null : v));
   };
 
   const goChat = (id: string) => router.push(`/chat?open=${id}`);
 
-  const act = async (dir: "like" | "pass") => {
-    if (acting || !current) return;
-    setActing(true);
+  const act = async (card: Card, dir: "like" | "pass") => {
+    if (actingId) return;
+    setActingId(card.id);
     try {
       if (dir === "like") {
-        const { data } = await api.post(`/matches/like/${current.id}`);
+        const { data } = await api.post(`/matches/like/${card.id}`);
         setUsed((u) => u + 1);
         if (data?.matchId) {
-          setMatch(current);
+          setMatch(card);
         } else {
           setToast({
-            msg: `${current.petName || current.ownerName || "친구"}에게 좋아요를 보냈어요`,
+            msg: `${card.petName || card.ownerName || "친구"}에게 좋아요를 보냈어요`,
             type: "ok",
           });
-          next();
         }
+        remove(card.id);
       } else {
-        api.post(`/matches/pass/${current.id}`).catch(() => {});
+        api.post(`/matches/pass/${card.id}`).catch(() => {});
         setUsed((u) => u + 1);
-        next();
+        remove(card.id);
       }
     } catch (e: any) {
       if (e?.response?.status === 402) {
@@ -97,11 +95,9 @@ export default function DiscoverPage() {
         setToast({ msg: "문제가 발생했어요. 다시 시도해 주세요.", type: "error" });
       }
     } finally {
-      setActing(false);
+      setActingId(null);
     }
   };
-
-  const limitView = showLimit || used >= SWIPE_LIMIT;
 
   const myLocation =
     (user as any)?.locationName || (user as any)?.location || "";
@@ -115,13 +111,9 @@ export default function DiscoverPage() {
           : "가까운 동네의 친구들이에요."
       }
     >
-      {!limitView && (
-        <div style={{ display: detailMode ? "none" : undefined }}>
-          <Filters onApply={fetchDeck} />
-        </div>
-      )}
+      {!showLimit && !detail && <Filters onApply={fetchDeck} />}
 
-      {limitView ? (
+      {showLimit ? (
         <SwipeLimit
           used={Math.min(used, SWIPE_LIMIT)}
           limit={SWIPE_LIMIT}
@@ -146,7 +138,14 @@ export default function DiscoverPage() {
             </Button>
           }
         />
-      ) : !current ? (
+      ) : detail ? (
+        <DetailView
+          card={detail}
+          onBack={() => setDetail(null)}
+          onLike={() => act(detail, "like")}
+          onNext={() => setDetail(null)}
+        />
+      ) : deck.length === 0 ? (
         <EmptyState
           emoji="🐾"
           title="더 보여줄 친구가 없어요"
@@ -161,91 +160,26 @@ export default function DiscoverPage() {
             </Button>
           }
         />
-      ) : detailMode ? (
-        <DetailView
-          card={current}
-          onBack={() => setDetailMode(false)}
-          onLike={() => act("like")}
-          onNext={next}
-        />
       ) : (
-        <>
-          <div
-            className="pd-discover-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0,1fr) 320px",
-              gap: 24,
-              alignItems: "start",
-            }}
-          >
-            <div>
-              <div style={{ maxWidth: 380, width: "100%", margin: "0 auto" }}>
-                <DiscoverCard
-                  card={current}
-                  acting={acting}
-                  onDetail={() => setDetailMode(true)}
-                  onPass={() => act("pass")}
-                  onLike={() => act("like")}
-                />
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  gap: 14,
-                  marginTop: 18,
-                }}
-              >
-                <Button size="sm" onClick={() => router.push("/subscription")}>
-                  부스트 사용 ⚡
-                </Button>
-                <span
-                  style={{
-                    fontSize: "var(--fs-meta)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  오늘 남은 스와이프: {Math.max(0, SWIPE_LIMIT - used)} / {SWIPE_LIMIT}
-                </span>
-              </div>
-              <div style={{ textAlign: "center", marginTop: 12 }}>
-                <button
-                  type="button"
-                  onClick={() => setShowLimit(true)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    fontFamily: "inherit",
-                    fontSize: "var(--fs-meta)",
-                    color: "var(--text-secondary)",
-                    textDecoration: "underline",
-                    textUnderlineOffset: 3,
-                  }}
-                >
-                  스와이프 제한 안내
-                </button>
-              </div>
-            </div>
-
-            <RightRail
-              upcoming={deck.slice(idx + 1, idx + 4)}
-              onPremium={() => router.push("/subscription")}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {deck.map((card) => (
+            <DiscoverCard
+              key={card.id}
+              card={card}
+              acting={actingId === card.id}
+              onDetail={() => setDetail(card)}
+              onPass={() => act(card, "pass")}
+              onLike={() => act(card, "like")}
             />
-          </div>
-        </>
+          ))}
+        </div>
       )}
 
       {match && (
         <MatchModal
           card={match}
           onChat={() => goChat(match.id)}
-          onLater={() => {
-            setMatch(null);
-            next();
-          }}
+          onLater={() => setMatch(null)}
         />
       )}
 

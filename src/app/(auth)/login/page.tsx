@@ -164,7 +164,7 @@ export default function LoginPage() {
 
   return (
     <div className="au-wrap">
-      <style>{css}</style>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <BrandPanel />
       <main className="au-form-wrap">
         <div className="au-card">

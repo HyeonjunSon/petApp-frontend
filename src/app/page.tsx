@@ -89,7 +89,7 @@ export default function Landing() {
 
   return (
     <div style={{ background: "var(--background)", color: "var(--text)" }}>
-      <style>{css}</style>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
       <TopNav />
       <Hero />
       <Features />

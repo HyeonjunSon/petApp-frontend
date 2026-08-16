@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
-import { Select, Spinner, EmptyState } from "@/components/ui";
+import { Spinner, EmptyState } from "@/components/ui";
 import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
 
 const STATUS: Record<string, string> = {
@@ -127,8 +127,6 @@ export default function WalksPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [records, setRecords] = useState<WalkRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState("date");
 
   useEffect(() => {
     const today = new Date();
@@ -162,13 +160,6 @@ export default function WalksPage() {
         .slice(0, 4),
     [invites]
   );
-
-  const listRows = useMemo(() => {
-    let l = invites.slice();
-    if (status !== "all") l = l.filter((i) => i.status === status);
-    if (sort === "date") l.sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time));
-    return l;
-  }, [invites, status, sort]);
 
   const past = useMemo(
     () =>
@@ -389,82 +380,6 @@ export default function WalksPage() {
             </>
           )}
 
-          {/* 전체 약속 (상태 필터 · 정렬) */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              gap: 16,
-              flexWrap: "wrap",
-              margin: "28px 0 12px",
-            }}
-          >
-            <div style={{ ...sectionTitleStyle, margin: 0 }}>전체 약속</div>
-            <div style={{ display: "flex", gap: 12 }}>
-              <div>
-                <div
-                  style={{
-                    fontSize: "var(--fs-caption)",
-                    color: "var(--text-secondary)",
-                    marginBottom: 4,
-                  }}
-                >
-                  상태
-                </div>
-                <Select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  style={{ width: 130, height: 38, fontSize: "var(--fs-meta)" }}
-                >
-                  <option value="all">전체</option>
-                  <option value="proposed">수락 대기 중</option>
-                  <option value="confirmed">확정</option>
-                  <option value="completed">완료</option>
-                  <option value="declined">거절됨</option>
-                  <option value="cancelled">취소됨</option>
-                </Select>
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: "var(--fs-caption)",
-                    color: "var(--text-secondary)",
-                    marginBottom: 4,
-                  }}
-                >
-                  정렬
-                </div>
-                <Select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  style={{ width: 110, height: 38, fontSize: "var(--fs-meta)" }}
-                >
-                  <option value="date">최신순</option>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {listRows.length === 0 ? (
-            <div style={{ ...cardStyle, padding: "16px 18px" }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "var(--fs-body-sm)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                조건에 맞는 약속이 없어요.
-              </p>
-            </div>
-          ) : (
-            <RowList>
-              {listRows.map((i) => (
-                <Row key={i._id} i={i} />
-              ))}
-            </RowList>
-          )}
         </>
       )}
     </Page>

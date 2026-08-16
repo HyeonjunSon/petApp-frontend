@@ -341,7 +341,7 @@ export default function ChatPage() {
 
   return (
     <Page title="채팅" subtitle="매칭된 친구들과 대화하고 약속을 잡아요.">
-      <style>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;gap:0;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;height:calc(100vh - 180px);min-height:520px}
         .pd-chatlist{border-right:1px solid var(--border);overflow-y:auto}
         .pd-chatroom{display:flex;flex-direction:column;background:var(--background);min-width:0}
@@ -355,7 +355,7 @@ export default function ChatPage() {
           .pd-chatwrap:not(.pd-list-mode) .pd-chatlist{display:none}
           .pd-chat-back{display:grid!important}
         }
-      `}</style>
+      ` }} />
 
       <div className={`pd-chatwrap${c.showListOnMobile ? " pd-list-mode" : ""}`}>
         {/* ---- 좌측: 대화 리스트 ---- */}

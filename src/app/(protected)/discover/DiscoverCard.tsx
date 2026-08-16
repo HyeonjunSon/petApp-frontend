@@ -61,7 +61,9 @@ export default function DiscoverCard({
   const nameLine =
     [card.petName, card.age != null ? `${card.age}살` : ""]
       .filter(Boolean)
-      .join(" · ") || "이름 미공개";
+      .join(" · ") ||
+    card.ownerName ||
+    "새 친구";
   const metaLine = [
     card.breed,
     card.ownerName ? `${card.ownerName} 보호자` : "",
