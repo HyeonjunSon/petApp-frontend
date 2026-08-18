@@ -3,7 +3,7 @@
 import { Avatar, Icon } from "@/components/ui";
 import { ImagePlaceholder } from "@/components/shell/Page";
 import { type Card } from "@/lib/card";
-import { SIZE_KO, TagPill } from "./DiscoverCard";
+import { SIZE_KO, TEMPER_KO, TagPill } from "./DiscoverCard";
 
 const cardStyle: React.CSSProperties = {
   background: "var(--surface)",
@@ -131,7 +131,7 @@ export default function DetailView({
             {((card.temperament || []).length > 0 || card.size) && (
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
                 {(card.temperament || []).map((t, i) => (
-                  <TagPill key={i}>{t}</TagPill>
+                  <TagPill key={i}>{TEMPER_KO[t] || t}</TagPill>
                 ))}
                 {card.size && <TagPill>{SIZE_KO[card.size] || card.size}</TagPill>}
               </div>

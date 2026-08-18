@@ -10,6 +10,17 @@ export const SIZE_KO: Record<string, string> = {
   l: "대형견",
 };
 
+/** 성격 값은 영문으로 저장됨(필터 호환) — 표기만 한국어로 */
+export const TEMPER_KO: Record<string, string> = {
+  Energetic: "활발함",
+  Friendly: "사교적",
+  Gentle: "온순함",
+  Shy: "수줍음",
+  Independent: "독립적",
+  Calm: "차분함",
+  Playful: "장난기 많음",
+};
+
 /** 시안 .tag — primary-10 배경 + primary 글자 pill */
 export function TagPill({ children }: { children: React.ReactNode }) {
   return (
@@ -71,7 +82,7 @@ export default function DiscoverCard({
     .filter(Boolean)
     .join(" · ");
   const tags = [
-    ...(card.temperament || []),
+    ...(card.temperament || []).map((t) => TEMPER_KO[t] || t),
     card.size ? SIZE_KO[card.size] || card.size : "",
   ].filter(Boolean);
 
