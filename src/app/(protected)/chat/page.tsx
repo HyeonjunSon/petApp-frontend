@@ -342,9 +342,9 @@ export default function ChatPage() {
   return (
     <Page title="Chat" subtitle="Talk with your matches and plan walks.">
       <style dangerouslySetInnerHTML={{ __html: `
-        .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;gap:0;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;height:calc(100vh - 180px);min-height:520px}
-        .pd-chatlist{border-right:1px solid var(--border);overflow-y:auto}
-        .pd-chatroom{display:flex;flex-direction:column;background:var(--background);min-width:0}
+        .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;grid-template-rows:minmax(0,1fr);gap:0;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;height:calc(100dvh - 214px);min-height:380px}
+        .pd-chatlist{border-right:1px solid var(--border);overflow-y:auto;min-height:0}
+        .pd-chatroom{display:flex;flex-direction:column;background:var(--background);min-width:0;min-height:0;overflow:hidden}
         .pd-day-sep{align-self:center;background:rgba(0,0,0,.06);color:var(--text-secondary);font-size:var(--fs-micro);border-radius:var(--radius-pill);padding:4px 14px;margin:8px 0}
         .pd-mrow{display:flex;align-items:flex-end;gap:8px;max-width:70%}
         .pd-mrow.me{align-self:flex-end;flex-direction:row-reverse}
