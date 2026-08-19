@@ -1,6 +1,6 @@
 "use client";
 
-/** 홈 — 시안의 대시보드. 인사 + 산책 배너 + 이번 달 활동 + 빠른 실행 + 내 펫. */
+/** 홈 — 시안의 대시보드. 인사 + 산책 배너 + 이번 달 활동 + Quick actions + 내 펫. */
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ type Walk = {
 };
 
 const PET_EMOJI: Record<string, string> = { dog: "🐕", cat: "🐈", other: "🐾" };
-const SEX_KO: Record<string, string> = { male: "남아", female: "여아" };
+const SEX_KO: Record<string, string> = { male: "Boy", female: "Girl" };
 
 export default function HomePage() {
   const router = useRouter();
@@ -78,7 +78,7 @@ export default function HomePage() {
         new Date(new Date().toISOString().slice(0, 10) + "T00:00:00").getTime()) /
         86400000
     );
-    return days <= 0 ? "D-DAY" : `D-${days}`;
+    return days <= 0 ? "Today" : `D-${days}`;
   }, [next]);
 
   const monthWalks = useMemo(
@@ -90,16 +90,16 @@ export default function HomePage() {
     [walks]
   );
 
-  const name = user?.name || "보호자";
+  const name = user?.name || "there";
   const firstPet = pets[0]?.name;
 
   return (
     <Page
-      title={<>안녕하세요, {name}님 👋</>}
+      title={<>Hello, {name} 👋</>}
       subtitle={
         firstPet
-          ? `${firstPet}가 산책을 기다리고 있어요.`
-          : "오늘도 반려동물과 행복한 하루 보내세요."
+          ? `${firstPet} is waiting for a walk.`
+          : "Have a happy day with your pet."
       }
       right={
         <button
@@ -107,7 +107,7 @@ export default function HomePage() {
           onClick={() => router.push("/discover")}
           style={btnPrimarySm}
         >
-          <Icon name="heart" size={15} fill />새 친구 찾기
+          <Icon name="heart" size={15} fill />Find friends
         </button>
       }
       maxWidth={1040}
@@ -143,8 +143,8 @@ export default function HomePage() {
           <div style={{ minWidth: 0 }}>
             <b style={{ fontSize: "var(--fs-body)", fontWeight: 700 }}>
               {nextPeer?.name
-                ? `${pickPet(nextPeer)?.name || nextPeer.name}네와 산책`
-                : "산책 약속"}
+                ? `Walk with ${pickPet(nextPeer)?.name || nextPeer.name}`
+                : "Walk plan"}
             </b>
             <br />
             <span style={{ fontSize: "var(--fs-meta)", color: "rgba(255,255,255,.8)" }}>
@@ -169,46 +169,46 @@ export default function HomePage() {
               flexShrink: 0,
             }}
           >
-            약속 보기
+            View plan
           </button>
         </div>
       )}
 
       {/* 이번 달 활동 */}
-      <SectionTitle>이번 달 활동</SectionTitle>
+      <SectionTitle>This month</SectionTitle>
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3">
-        <Stat v={String(matches.length)} l="매칭된 친구" />
-        <Stat v={`${monthWalks}회`} l="함께한 산책" />
-        <Stat v={`${monthKm.toFixed(1)}km`} l="산책 거리" />
+        <Stat v={String(matches.length)} l="Matched friends" />
+        <Stat v={String(monthWalks)} l="Walks together" />
+        <Stat v={`${monthKm.toFixed(1)}km`} l="Distance walked" />
       </div>
 
-      {/* 빠른 실행 */}
-      <SectionTitle>빠른 실행</SectionTitle>
+      {/* Quick actions */}
+      <SectionTitle>Quick actions</SectionTitle>
       <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
         <Quick
           icon="heart"
-          label="친구 찾기"
+          label="Find friends"
           bg="var(--primary-10)"
           color="var(--primary)"
           onClick={() => router.push("/discover")}
         />
         <Quick
           icon="cal"
-          label="산책 약속"
+          label="Walk plans"
           bg="var(--success-soft)"
           color="var(--success)"
           onClick={() => router.push("/walks")}
         />
         <Quick
           icon="chat"
-          label="채팅"
+          label="Chat"
           bg="var(--info-soft)"
           color="var(--info)"
           onClick={() => router.push("/chat")}
         />
         <Quick
           icon="paw"
-          label="내 펫 관리"
+          label="My pets"
           bg="var(--warning-soft)"
           color="var(--warning)"
           onClick={() => router.push("/settings/pet")}
@@ -231,11 +231,11 @@ export default function HomePage() {
               color: "var(--text-secondary)",
             }}
           >
-            펫 추가 ›
+            Add a pet ›
           </button>
         }
       >
-        내 펫
+        My pets
       </SectionTitle>
       {pets.length === 0 ? (
         <div
@@ -247,14 +247,14 @@ export default function HomePage() {
             fontSize: "var(--fs-meta)",
           }}
         >
-          아직 등록한 펫이 없어요. 우리 아이를 등록하면 매칭을 시작할 수 있어요.
+          No pets yet. Register your pet to start matching.
           <div style={{ marginTop: 14 }}>
             <button
               type="button"
               onClick={() => router.push("/settings/pet")}
               style={btnPrimarySm}
             >
-              펫 추가하기
+              Add a pet
             </button>
           </div>
         </div>
@@ -306,7 +306,7 @@ export default function HomePage() {
                         color: "var(--primary)",
                       }}
                     >
-                      대표
+                      Main
                     </span>
                   )}
                 </div>
@@ -319,7 +319,7 @@ export default function HomePage() {
                 >
                   {[
                     p.breed,
-                    typeof p.age === "number" ? `${p.age}살` : undefined,
+                    typeof p.age === "number" ? `${p.age} yrs` : undefined,
                     p.sex ? SEX_KO[p.sex] : undefined,
                   ]
                     .filter(Boolean)

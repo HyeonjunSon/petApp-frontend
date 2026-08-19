@@ -65,31 +65,31 @@ export default function MatchesPage() {
 
   return (
     <Page
-      title="매치"
-      subtitle="서로 좋아요한 친구들이에요."
+      title="Matches"
+      subtitle="Friends who liked you back."
       right={
         <button type="button" style={btnGhostSm} onClick={() => router.push("/matches/likes")}>
-          나를 좋아요한 친구
+          Likes you
         </button>
       }
     >
       <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
         <div>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)", marginBottom: 4 }}>
-            정렬
+            Sort
           </div>
           <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 150, height: 40, fontSize: "var(--fs-meta)" }}>
-            <option value="recent">최근 매치순</option>
-            <option value="message">최근 메시지순</option>
+            <option value="recent">Newest matches</option>
+            <option value="message">Latest messages</option>
           </Select>
         </div>
         <div>
           <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)", marginBottom: 4 }}>
-            상태
+            Status
           </div>
           <Select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ width: 110, height: 40, fontSize: "var(--fs-meta)" }}>
-            <option value="all">전체</option>
-            <option value="new">새 메시지</option>
+            <option value="all">All</option>
+            <option value="new">New messages</option>
           </Select>
         </div>
       </div>
@@ -101,11 +101,11 @@ export default function MatchesPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           emoji="💜"
-          title="아직 매치가 없어요"
-          desc="디스커버에서 마음에 드는 친구에게 좋아요를 보내보세요."
+          title="No matches yet"
+          desc="Send a like to a friend you love in Discover."
           action={
             <button type="button" style={btnPrimarySm} onClick={() => router.push("/discover")}>
-              디스커버 가기
+              Go to Discover
             </button>
           }
         />
@@ -165,17 +165,17 @@ export default function MatchesPage() {
                 </div>
                 <div style={{ padding: 16, flex: 1 }}>
                   <div style={{ fontSize: "var(--fs-body)", fontWeight: 800, color: "var(--text)" }}>
-                    {pet?.name || peer?.name || "친구"}
+                    {pet?.name || peer?.name || "Friend"}
                   </div>
                   <div style={{ marginTop: 3, fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
-                    {peer?.name ? `${peer.name} 보호자` : "보호자"}
+                    {peer?.name ? `${peer.name} (owner)` : "Owner"}
                     {m.lastMessage?.createdAt ? ` · ${formatTime(m.lastMessage.createdAt)}` : ""}
                   </div>
                   <div
                     className="pd-line1"
                     style={{ marginTop: 8, fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}
                   >
-                    {last || "서로 좋아요했어요. 대화를 시작해 보세요!"}
+                    {last || "You liked each other. Start the conversation!"}
                   </div>
                   {isNew && (
                     <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -190,7 +190,7 @@ export default function MatchesPage() {
                           fontWeight: 700,
                         }}
                       >
-                        새 메시지 {m.unreadCount}
+                        {m.unreadCount} new
                       </span>
                     </div>
                   )}
@@ -216,7 +216,7 @@ export default function MatchesPage() {
                       gap: 6,
                     }}
                   >
-                    채팅하기
+                    Start chatting
                   </button>
                 </div>
               </div>

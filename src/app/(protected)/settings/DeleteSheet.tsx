@@ -32,27 +32,27 @@ export default function DeleteSheet({
 
   const submit = async () => {
     setErr(null);
-    if (confirm !== "DELETE") return setErr("DELETE를 정확히 입력해 주세요.");
+    if (confirm !== "DELETE") return setErr("Please type DELETE exactly.");
     setBusy(true);
     try {
       await api.delete("/account");
       onDeleted();
     } catch (e: any) {
-      setErr(e?.response?.data?.message || "탈퇴 처리에 실패했어요.");
+      setErr(e?.response?.data?.message || "Failed to delete account.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={close} title="회원 탈퇴">
+    <Sheet open={open} onClose={close} title="Delete account">
       <div className="flex flex-col gap-3 px-5 pt-2 pb-6">
         <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
         <Banner tone="rose">
-          탈퇴하면 계정과 모든 데이터가 영구적으로 삭제돼요. 이 작업은 되돌릴 수 없어요.
+          Deleting your account permanently removes your account and all data. This action cannot be undone.
         </Banner>
         {err && <Banner tone="rose">{err}</Banner>}
-        <Field label="확인을 위해 DELETE를 입력해 주세요" required>
+        <Field label="Type DELETE to confirm" required>
           <Input
             className="pdi"
             style={INPUT_STYLE}
@@ -63,7 +63,7 @@ export default function DeleteSheet({
         </Field>
         <div className="mt-1 flex justify-end gap-2">
           <Button variant="secondary" onClick={close}>
-            취소
+            Cancel
           </Button>
           <Button
             variant="danger"
@@ -72,7 +72,7 @@ export default function DeleteSheet({
             icon="trash"
             onClick={submit}
           >
-            영구 삭제
+            Delete permanently
           </Button>
         </div>
       </div>

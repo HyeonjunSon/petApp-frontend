@@ -54,91 +54,91 @@ export default function BillingPortalPage() {
     try {
       const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode: "premium_monthly" });
       if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "결제 기능을 준비 중이에요.", type: "error" });
+      else setToast({ msg: "Payments are coming soon.", type: "error" });
     } catch {
-      setToast({ msg: "결제 기능을 준비 중이에요.", type: "error" });
+      setToast({ msg: "Payments are coming soon.", type: "error" });
     } finally {
       setBusy(false);
     }
   };
 
   const fmtDate = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" }) : "—";
+    iso ? new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "—";
 
   return (
-    <Page title="구독 관리" subtitle="구독 상태와 결제 수단을 관리해요." maxWidth={880}>
+    <Page title="Manage subscription" subtitle="Manage your subscription status and payment method." maxWidth={880}>
       <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
 
-      <SectionTitle first>구독 상태</SectionTitle>
+      <SectionTitle first>Subscription status</SectionTitle>
       <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
-            <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>현재 플랜</div>
+            <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Current plan</div>
             <div style={{ fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
-              {premium ? "PetDate 프리미엄" : "무료 플랜"}
+              {premium ? "PetDate Premium" : "Free plan"}
             </div>
           </div>
-          <Badge tone={premium ? "brand" : "slate"}>{premium ? "이용 중" : "미이용"}</Badge>
+          <Badge tone={premium ? "brand" : "slate"}>{premium ? "Active" : "Inactive"}</Badge>
         </div>
         {premium && (
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 18, gap: 16, flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>다음 결제일</div>
+              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Next billing date</div>
               <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>{fmtDate(nextDate)}</div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>결제 금액</div>
-              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>₩9,900 / 월</div>
+              <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Billing amount</div>
+              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>₩9,900 / month</div>
             </div>
           </div>
         )}
       </section>
 
-      <SectionTitle>결제 수단</SectionTitle>
+      <SectionTitle>Payment method</SectionTitle>
       <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-            등록된 결제 수단이 없어요.
+            No payment method on file.
           </div>
-          <Button variant="secondary" onClick={() => setToast({ msg: "카드 관리 기능을 준비 중이에요.", type: "error" })}>
-            카드 변경
+          <Button variant="secondary" onClick={() => setToast({ msg: "Card management is coming soon.", type: "error" })}>
+            Change card
           </Button>
         </div>
       </section>
 
-      <SectionTitle>결제 수단 추가</SectionTitle>
+      <SectionTitle>Add payment method</SectionTitle>
       <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="카드 번호">
+          <Field label="Card number">
             <Input className="pdi" style={INPUT_STYLE} value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" />
           </Field>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="유효기간 (MM/YY)">
+            <Field label="Expiry (MM/YY)">
               <Input className="pdi" style={{ ...INPUT_STYLE, width: 160 }} value={exp} onChange={(e) => setExp(e.target.value)} placeholder="MM/YY" />
             </Field>
             <Field label="CVC">
               <Input className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={cvc} onChange={(e) => setCvc(e.target.value)} inputMode="numeric" />
             </Field>
           </div>
-          <Field label="카드 소유자 이름">
+          <Field label="Cardholder name">
             <Input className="pdi" style={INPUT_STYLE} value={holder} onChange={(e) => setHolder(e.target.value)} />
           </Field>
-          <Button fullWidth size="lg" loading={busy} onClick={pay}>결제하기</Button>
+          <Button fullWidth size="lg" loading={busy} onClick={pay}>Pay now</Button>
         </div>
       </section>
 
-      <SectionTitle>구독 해지</SectionTitle>
+      <SectionTitle>Cancel subscription</SectionTitle>
       <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-            해지해도 혜택은 만료일까지 그대로 유지돼요.
+            Your benefits stay active until the expiration date even after canceling.
           </div>
           <Button
             variant="dangerGhost"
             disabled={!premium}
-            onClick={() => setToast({ msg: "구독 해지 기능을 준비 중이에요.", type: "error" })}
+            onClick={() => setToast({ msg: "Subscription cancellation is coming soon.", type: "error" })}
           >
-            구독 해지
+            Cancel subscription
           </Button>
         </div>
       </section>

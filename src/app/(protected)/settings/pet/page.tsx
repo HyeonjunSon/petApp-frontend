@@ -10,11 +10,11 @@ import { Button, Input, Textarea, Select, Field, Chip, Banner, Spinner, EmptySta
 import { toAbs } from "@/lib/card";
 
 const TEMPERAMENTS = [
-  { v: "Energetic", label: "활발함" },
-  { v: "Gentle", label: "온순함" },
-  { v: "Shy", label: "낯가림" },
-  { v: "Friendly", label: "친화적" },
-  { v: "Independent", label: "독립적" },
+  { v: "Energetic", label: "Energetic" },
+  { v: "Gentle", label: "Gentle" },
+  { v: "Shy", label: "Shy" },
+  { v: "Friendly", label: "Friendly" },
+  { v: "Independent", label: "Independent" },
 ];
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -106,9 +106,9 @@ export default function PetEditPage() {
       const fd = new FormData();
       fd.append("photo", f);
       await api.post(`/pets/${pet._id}/photo`, fd, { headers: { "Content-Type": "multipart/form-data" } });
-      setToast({ msg: "사진이 변경되었어요", type: "ok" });
+      setToast({ msg: "Photo updated", type: "ok" });
     } catch {
-      setToast({ msg: "사진 업로드에 실패했어요", type: "error" });
+      setToast({ msg: "Failed to upload photo", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -131,7 +131,7 @@ export default function PetEditPage() {
       });
       router.push("/settings");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "저장하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Failed to save.");
     } finally {
       setBusy(false);
     }
@@ -139,7 +139,7 @@ export default function PetEditPage() {
 
   if (loading) {
     return (
-      <Page title="펫 프로필 수정">
+      <Page title="Edit pet profile">
         <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}><Spinner /></div>
       </Page>
     );
@@ -147,53 +147,53 @@ export default function PetEditPage() {
 
   if (!pet) {
     return (
-      <Page title="펫 프로필 수정">
+      <Page title="Edit pet profile">
         <EmptyState
           emoji="🐶"
-          title="등록된 펫이 없어요"
-          desc="먼저 펫 프로필을 만들어 주세요."
-          action={<Button onClick={() => router.push("/onboarding")}>펫 등록하기</Button>}
+          title="No pet registered yet"
+          desc="Create a pet profile first."
+          action={<Button onClick={() => router.push("/onboarding")}>Add a pet</Button>}
         />
       </Page>
     );
   }
 
   return (
-    <Page title="펫 프로필 수정" subtitle="우리 아이의 정보를 관리해요." maxWidth={860}>
+    <Page title="Edit pet profile" subtitle="Manage your pet's info." maxWidth={860}>
       <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onPick(e.target.files?.[0] || null)} />
 
       <Card>
-        <CardTitle>프로필 사진</CardTitle>
-        <ImagePlaceholder src={preview} label="펫 사진" height={200} />
+        <CardTitle>Profile photo</CardTitle>
+        <ImagePlaceholder src={preview} label="Pet photo" height={200} />
         <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
-          <Button variant="secondary" fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>사진 업로드</Button>
+          <Button variant="secondary" fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>Upload photo</Button>
         </div>
       </Card>
 
       <div style={{ height: 16 }} />
 
       <Card>
-        <CardTitle>기본 정보</CardTitle>
+        <CardTitle>Basic info</CardTitle>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="이름"><Input className="pdi" style={INPUT_STYLE} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="Name"><Input className="pdi" style={INPUT_STYLE} value={name} onChange={(e) => setName(e.target.value)} /></Field>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="견종" className="flex-1"><Input className="pdi" style={INPUT_STYLE} value={breed} onChange={(e) => setBreed(e.target.value)} /></Field>
-            <Field label="나이 (살)"><Input className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" /></Field>
+            <Field label="Breed" className="flex-1"><Input className="pdi" style={INPUT_STYLE} value={breed} onChange={(e) => setBreed(e.target.value)} /></Field>
+            <Field label="Age (years)"><Input className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" /></Field>
           </div>
-          <Field label="성별">
+          <Field label="Sex">
             <Select className="pdi" style={INPUT_STYLE} value={sex} onChange={(e) => setSex(e.target.value)}>
-              <option value="male">남아</option>
-              <option value="female">여아</option>
-              <option value="unknown">모름</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="unknown">Unknown</option>
             </Select>
           </Field>
-          <Field label="크기">
+          <Field label="Size">
             <Select className="pdi" style={INPUT_STYLE} value={size} onChange={(e) => setSize(e.target.value)}>
-              <option value="s">소형 (7kg 이하)</option>
-              <option value="m">중형 (7–15kg)</option>
-              <option value="l">대형 (15kg 이상)</option>
+              <option value="s">Small (under 7kg)</option>
+              <option value="m">Medium (7–15kg)</option>
+              <option value="l">Large (over 15kg)</option>
             </Select>
           </Field>
         </div>
@@ -202,18 +202,18 @@ export default function PetEditPage() {
       <div style={{ height: 16 }} />
 
       <Card>
-        <h2 style={{ margin: "0 0 14px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>성격 · 산책 스타일</h2>
+        <h2 style={{ margin: "0 0 14px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>Temperament & walk style</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
           {TEMPERAMENTS.map((tp) => (
             <Chip key={tp.v} active={temper.includes(tp.v)} onClick={() => toggle(tp.v)}>{tp.label}</Chip>
           ))}
         </div>
-        <Field label="한 줄 소개"><Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="우리 아이를 소개해 주세요" /></Field>
+        <Field label="Short bio"><Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Tell us about your pet" /></Field>
       </Card>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-        <Button variant="secondary" onClick={() => router.push("/settings")}>취소</Button>
-        <Button onClick={save} loading={busy} icon="check">저장</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings")}>Cancel</Button>
+        <Button onClick={save} loading={busy} icon="check">Save</Button>
       </div>
 
       <Toast toast={toast} />

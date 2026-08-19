@@ -12,7 +12,7 @@ const apiErr = (e: any) =>
   e?.response?.data?.error ||
   e?.response?.data?.message ||
   e?.message ||
-  "문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+  "Something went wrong. Please try again in a moment.";
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -68,42 +68,42 @@ function BrandPanel() {
       </div>
       <div>
         <h1>
-          우리 강아지의
+          Find your dog&apos;s
           <br />
-          산책 친구를
+          perfect
           <br />
-          찾아보세요
+          walking mate
         </h1>
         <p className="sub">
-          가까운 동네 보호자와 펫을 만나 같이 걷고,
+          Meet nearby owners and pets — walk together,
           <br />
-          친구가 되고, 데이트까지 이어져요.
+          become friends, and maybe more.
         </p>
         <ul className="au-feats">
           <li>
             <span className="ic">💜</span>
             <span className="tx">
-              <b>취향 매칭</b>
-              <span>취향과 동네가 맞는 펫을 발견해요</span>
+              <b>Smart matching</b>
+              <span>Discover pets that match your vibe and neighborhood</span>
             </span>
           </li>
           <li>
             <span className="ic">🐕</span>
             <span className="tx">
-              <b>같이 산책하기</b>
-              <span>약속을 잡고 산책 기록을 남겨요</span>
+              <b>Walk together</b>
+              <span>Plan meetups and keep a log of your walks</span>
             </span>
           </li>
           <li>
             <span className="ic">🛡️</span>
             <span className="tx">
-              <b>안전한 만남</b>
-              <span>인증 배지 · 신고 · 차단으로 안심해요</span>
+              <b>Safe meetups</b>
+              <span>Verified badges, report and block for peace of mind</span>
             </span>
           </li>
         </ul>
       </div>
-      <p className="foot">© 2026 PetDate · 반려동물 산책 메이트</p>
+      <p className="foot">© 2026 PetDate · Walking mates for your pet</p>
       <span className="bigpaw" aria-hidden>
         🐾
       </span>
@@ -155,13 +155,13 @@ export default function RegisterPage() {
   const sendCode = async () => {
     setErr(null);
     setMsg(null);
-    if (!email.trim()) return setErr("이메일을 먼저 입력해 주세요.");
+    if (!email.trim()) return setErr("Please enter your email first.");
     setSending(true);
     try {
       await api.post("/auth/send-code", { email });
       setSent(true);
       startCooldown();
-      setMsg("인증 코드를 이메일로 보내드렸어요.");
+      setMsg("We sent a verification code to your email.");
     } catch (e) {
       setErr(apiErr(e));
     } finally {
@@ -172,14 +172,14 @@ export default function RegisterPage() {
   const submit = async () => {
     setErr(null);
     setMsg(null);
-    if (!email.trim()) return setErr("이메일을 입력해 주세요.");
-    if (!sent) return setErr("이메일로 인증 코드를 먼저 받아 주세요.");
+    if (!email.trim()) return setErr("Please enter your email.");
+    if (!sent) return setErr("Please request a verification code by email first.");
     if (!/^\d{6}$/.test(code.trim()))
-      return setErr("6자리 인증 코드를 입력해 주세요.");
-    if (pw.length < 6) return setErr("비밀번호는 6자 이상이어야 해요.");
-    if (pw !== pw2) return setErr("비밀번호가 서로 달라요.");
+      return setErr("Please enter the 6-digit verification code.");
+    if (pw.length < 6) return setErr("Password must be at least 6 characters.");
+    if (pw !== pw2) return setErr("Passwords don't match.");
     if (!agreeTerms || !agreePrivacy)
-      return setErr("이용약관과 개인정보처리방침에 동의해 주세요.");
+      return setErr("Please agree to the Terms of Service and Privacy Policy.");
 
     setBusy(true);
     try {
@@ -202,8 +202,8 @@ export default function RegisterPage() {
       <BrandPanel />
       <main className="au-form-wrap">
         <div className="au-card">
-          <h2>만나서 반가워요</h2>
-          <p className="hint">이메일 인증만 하면 바로 시작할 수 있어요.</p>
+          <h2>Nice to meet you</h2>
+          <p className="hint">Verify your email and you&apos;re ready to go.</p>
 
           {err && (
             <div style={{ marginTop: 16 }}>
@@ -223,7 +223,7 @@ export default function RegisterPage() {
             }}
           >
             <div className="au-field">
-              <label htmlFor="reg-email">이메일</label>
+              <label htmlFor="reg-email">Email</label>
               <div className="au-code-row">
                 <div className="grow">
                   <input
@@ -242,33 +242,33 @@ export default function RegisterPage() {
                   disabled={sending || cooldown > 0}
                 >
                   {cooldown > 0
-                    ? `재전송 (${cooldown}초)`
+                    ? `Resend (${cooldown}s)`
                     : sent
-                      ? "코드 재전송"
-                      : "인증 코드 받기"}
+                      ? "Resend code"
+                      : "Send code"}
                 </button>
               </div>
             </div>
 
             <div className="au-field">
-              <label htmlFor="reg-code">인증 코드</label>
+              <label htmlFor="reg-code">Verification code</label>
               <input
                 id="reg-code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 inputMode="numeric"
                 maxLength={6}
-                placeholder="6자리 코드"
+                placeholder="6-digit code"
               />
               <p className="sub-hint">
                 {sent
-                  ? `${email}로 보낸 6자리 코드를 입력해 주세요.`
-                  : "‘인증 코드 받기’를 누르면 이메일로 코드를 보내드려요."}
+                  ? `Enter the 6-digit code we sent to ${email}.`
+                  : "Press 'Send code' and we'll email you a code."}
               </p>
             </div>
 
             <div className="au-field">
-              <label htmlFor="reg-pw">비밀번호</label>
+              <label htmlFor="reg-pw">Password</label>
               <div className="au-pw">
                 <input
                   id="reg-pw"
@@ -279,13 +279,13 @@ export default function RegisterPage() {
                   placeholder="••••••••"
                 />
                 <button type="button" onClick={() => setShowPw((v) => !v)}>
-                  {showPw ? "숨김" : "표시"}
+                  {showPw ? "Hide" : "Show"}
                 </button>
               </div>
-              <p className="sub-hint">6자 이상 입력해 주세요.</p>
+              <p className="sub-hint">Use at least 6 characters.</p>
             </div>
             <div className="au-field">
-              <label htmlFor="reg-pw2">비밀번호 확인</label>
+              <label htmlFor="reg-pw2">Confirm password</label>
               <input
                 id="reg-pw2"
                 type={showPw ? "text" : "password"}
@@ -299,26 +299,26 @@ export default function RegisterPage() {
             <div className="au-agree">
               <div className="row">
                 <span className="lb">
-                  <Link href="/terms">이용약관</Link>에 동의해요 (필수)
+                  I agree to the <Link href="/terms">Terms of Service</Link> (required)
                 </span>
                 <Switch on={agreeTerms} onChange={setAgreeTerms} />
               </div>
               <div className="row">
                 <span className="lb">
-                  <Link href="/privacy">개인정보처리방침</Link>에 동의해요 (필수)
+                  I agree to the <Link href="/privacy">Privacy Policy</Link> (required)
                 </span>
                 <Switch on={agreePrivacy} onChange={setAgreePrivacy} />
               </div>
             </div>
 
             <button type="submit" className="au-btn" disabled={busy}>
-              {busy ? "가입하는 중..." : "가입하기"}
+              {busy ? "Signing up..." : "Sign up"}
             </button>
           </form>
 
           <div className="au-links">
             <span>
-              이미 계정이 있나요?&nbsp;<Link href="/login">로그인</Link>
+              Already have an account?&nbsp;<Link href="/login">Log in</Link>
             </span>
           </div>
         </div>

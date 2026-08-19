@@ -2,9 +2,9 @@ import "./globals.css";
 import type { ReactNode } from "react";
 
 export const metadata = {
-  title: "PetDate — 반려견 산책 메이트",
+  title: "PetDate — Your pet's walking mate",
   description:
-    "가까운 동네 보호자와 펫을 만나 같이 걷고, 친구가 되고, 데이트까지 이어져요.",
+    "Meet nearby owners and pets — walk together, become friends, and maybe more.",
 };
 
 /**
@@ -14,7 +14,7 @@ export const metadata = {
  */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body
         className="min-h-screen antialiased"
         style={{ background: "var(--background)", color: "var(--text)" }}

@@ -5,20 +5,20 @@ import { type Card } from "@/lib/card";
 
 /** 한국어 크기 라벨 (시안: 소형견/대형견 태그) */
 export const SIZE_KO: Record<string, string> = {
-  s: "소형견",
-  m: "중형견",
-  l: "대형견",
+  s: "Small dog",
+  m: "Medium",
+  l: "Large dog",
 };
 
 /** 성격 값은 영문으로 저장됨(필터 호환) — 표기만 한국어로 */
 export const TEMPER_KO: Record<string, string> = {
-  Energetic: "활발함",
-  Friendly: "사교적",
-  Gentle: "온순함",
-  Shy: "수줍음",
-  Independent: "독립적",
-  Calm: "차분함",
-  Playful: "장난기 많음",
+  Energetic: "Energetic",
+  Friendly: "Friendly",
+  Gentle: "Gentle",
+  Shy: "Shy",
+  Independent: "Independent",
+  Calm: "Calm",
+  Playful: "Playful",
 };
 
 /** 시안 .tag — primary-10 배경 + primary 글자 pill */
@@ -70,14 +70,14 @@ export default function DiscoverCard({
   onLike?: () => void;
 }) {
   const nameLine =
-    [card.petName, card.age != null ? `${card.age}살` : ""]
+    [card.petName, card.age != null ? `${card.age} yrs` : ""]
       .filter(Boolean)
       .join(" · ") ||
     card.ownerName ||
-    "새 친구";
+    "New friend";
   const metaLine = [
     card.breed,
-    card.ownerName ? `${card.ownerName} 보호자` : "",
+    card.ownerName ? `Owner ${card.ownerName}` : "",
   ]
     .filter(Boolean)
     .join(" · ");
@@ -101,7 +101,7 @@ export default function DiscoverCard({
       <button
         type="button"
         onClick={onDetail}
-        aria-label="프로필 상세 보기"
+        aria-label="View profile details"
         style={{
           position: "relative",
           height: 190,
@@ -117,7 +117,7 @@ export default function DiscoverCard({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={card.photos[0]}
-            alt={card.petName || "펫 사진"}
+            alt={card.petName || "Pet photo"}
             style={{
               width: "100%",
               height: "100%",
@@ -175,7 +175,7 @@ export default function DiscoverCard({
             padding: "3px 10px",
           }}
         >
-          상세 보기
+          Details
         </span>
       </button>
 
@@ -226,7 +226,7 @@ export default function DiscoverCard({
               }}
             >
               <Icon name="close" size={16} />
-              패스
+              Pass
             </button>
           )}
           {onLike && (
@@ -242,7 +242,7 @@ export default function DiscoverCard({
               }}
             >
               <Icon name="heart" size={16} fill />
-              좋아요
+              Like
             </button>
           )}
         </div>

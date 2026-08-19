@@ -55,17 +55,17 @@ export default function NewWalkInvitePage() {
 
   const submit = async () => {
     setErr(null);
-    if (!matchId) return setErr("파트너를 선택해 주세요. 먼저 매치가 필요해요.");
-    if (!date || !time) return setErr("날짜와 시작 시간을 입력해 주세요.");
+    if (!matchId) return setErr("Please choose a partner. You need a match first.");
+    if (!date || !time) return setErr("Please enter a date and start time.");
     setBusy(true);
     try {
       const noteParts = [
-        title && `제목: ${title}`,
-        address && `만날 장소: ${address}`,
-        duration && `약 ${duration}분`,
+        title && `Title: ${title}`,
+        address && `Meeting point: ${address}`,
+        duration && `About ${duration} min`,
         petCond !== "any" &&
-          `조건: ${petCond === "small" ? "소형견만" : petCond === "medium" ? "중형견만" : "대형견만"}`,
-        `최대 ${maxPeople}명 · ${approval === "auto" ? "자동 수락" : "직접 승인"}`,
+          `Condition: ${petCond === "small" ? "Small dogs only" : petCond === "medium" ? "Medium dogs only" : "Large dogs only"}`,
+        `Up to ${maxPeople} people · ${approval === "auto" ? "Auto-accept" : "Manual approval"}`,
       ].filter(Boolean);
       await api.post(`/matches/${matchId}/walk-invite`, {
         date,
@@ -75,7 +75,7 @@ export default function NewWalkInvitePage() {
       });
       router.replace("/walks");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "약속을 만들지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Couldn't create the plan.");
     } finally {
       setBusy(false);
     }
@@ -84,21 +84,21 @@ export default function NewWalkInvitePage() {
   const partnerLabel = (m: Match) => {
     const peer = peerOf(m, myId);
     const pet = pickPet(peer);
-    return `${pet?.name || "친구"} · ${peer?.name || "보호자"}`;
+    return `${pet?.name || "Friend"} · ${peer?.name || "Owner"}`;
   };
 
   return (
-    <Page title="약속 만들기" subtitle="산책 친구와 새 약속을 잡아요." maxWidth={880}>
+    <Page title="New plan" subtitle="Set up a new walk with a friend." maxWidth={880}>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>기본 정보</h2>
+          <h2 style={cardTitleStyle}>Basic info</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Field label="파트너" required>
+            <Field label="Partner" required>
               {matches.length === 0 ? (
                 <p style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)", margin: 0 }}>
-                  아직 매치가 없어요. 디스커버에서 먼저 친구를 만들어 주세요.
+                  No matches yet. Make a friend in Discover first.
                 </p>
               ) : (
                 <Select value={matchId} onChange={(e) => setMatchId(e.target.value)}>
@@ -108,22 +108,22 @@ export default function NewWalkInvitePage() {
                 </Select>
               )}
             </Field>
-            <Field label="제목">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="주말 아침 산책" />
+            <Field label="Title">
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Weekend morning walk" />
             </Field>
-            <Field label="장소">
-              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="서울숲" />
+            <Field label="Place">
+              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Seoul Forest" />
             </Field>
-            <Field label="주소 · 만날 지점">
-              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="주소나 만날 지점을 적어 주세요" />
+            <Field label="Address · Meeting point">
+              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter an address or meeting point" />
             </Field>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <Field label="예상 소요 시간(분)">
+              <Field label="Estimated duration (min)">
                 <Input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={{ width: 140 }} />
               </Field>
-              <Field label="최대 인원">
+              <Field label="Max people">
                 <Select value={maxPeople} onChange={(e) => setMaxPeople(e.target.value)} style={{ width: 110 }}>
-                  {["2", "3", "4", "5"].map((n) => <option key={n} value={n}>{n}명</option>)}
+                  {["2", "3", "4", "5"].map((n) => <option key={n} value={n}>{n}</option>)}
                 </Select>
               </Field>
             </div>
@@ -131,39 +131,39 @@ export default function NewWalkInvitePage() {
         </div>
 
         <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>일정</h2>
+          <h2 style={cardTitleStyle}>Schedule</h2>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Field label="날짜" required>
+            <Field label="Date" required>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: 180 }} />
             </Field>
-            <Field label="시작 시간" required>
+            <Field label="Start time" required>
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={{ width: 180 }} />
             </Field>
           </div>
-          <Field label="펫 조건" className="mt-4">
+          <Field label="Pet condition" className="mt-4">
             <Select value={petCond} onChange={(e) => setPetCond(e.target.value)}>
-              <option value="any">제한 없음</option>
-              <option value="small">소형견만</option>
-              <option value="medium">중형견만</option>
-              <option value="large">대형견만</option>
+              <option value="any">Any</option>
+              <option value="small">Small dogs only</option>
+              <option value="medium">Medium dogs only</option>
+              <option value="large">Large dogs only</option>
             </Select>
           </Field>
         </div>
 
         <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>참여</h2>
-          <Field label="승인 방식">
+          <h2 style={cardTitleStyle}>Participation</h2>
+          <Field label="Approval">
             <Select value={approval} onChange={(e) => setApproval(e.target.value)}>
-              <option value="auto">자동 수락</option>
-              <option value="manual">직접 승인</option>
+              <option value="auto">Auto-accept</option>
+              <option value="manual">Manual approval</option>
             </Select>
           </Field>
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <Button variant="secondary" onClick={() => router.push("/walks")}>취소</Button>
+          <Button variant="secondary" onClick={() => router.push("/walks")}>Cancel</Button>
           <Button onClick={submit} loading={busy} disabled={matches.length === 0}>
-            약속 만들기
+            Create plan
           </Button>
         </div>
       </div>

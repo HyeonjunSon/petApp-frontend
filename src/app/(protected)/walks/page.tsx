@@ -11,11 +11,11 @@ import { Spinner, EmptyState } from "@/components/ui";
 import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
 
 const STATUS: Record<string, string> = {
-  proposed: "수락 대기 중",
-  confirmed: "확정",
-  declined: "거절됨",
-  cancelled: "취소됨",
-  completed: "완료",
+  proposed: "Pending",
+  confirmed: "Confirmed",
+  declined: "Declined",
+  cancelled: "Cancelled",
+  completed: "Completed",
 };
 
 type WalkRecord = {
@@ -88,34 +88,36 @@ function Pill({ status }: { status: string }) {
   );
 }
 
-/** "HH:MM" → "오전 10:00" */
+/** "HH:MM" → "10:00 AM" */
 function fmtTime(t?: string) {
   if (!t) return "";
   const [h, m] = t.split(":").map(Number);
   if (Number.isNaN(h)) return t;
-  const ampm = h < 12 ? "오전" : "오후";
+  const ampm = h < 12 ? "AM" : "PM";
   const h12 = h % 12 || 12;
-  return `${ampm} ${h12}:${String(Number.isNaN(m) ? 0 : m).padStart(2, "0")}`;
+  return `${h12}:${String(Number.isNaN(m) ? 0 : m).padStart(2, "0")} ${ampm}`;
 }
 
-/** "YYYY-MM-DD" → { day: "11", month: "8월" } */
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "YYYY-MM-DD" → { day: "11", month: "Aug" } */
 function calParts(date?: string) {
   const d = String(date || "");
   const day = Number(d.slice(8, 10));
   const month = Number(d.slice(5, 7));
   return {
     day: Number.isNaN(day) ? "-" : String(day),
-    month: Number.isNaN(month) ? "" : `${month}월`,
+    month: Number.isNaN(month) ? "" : MONTHS[month - 1] || "",
   };
 }
 
-/** 분 → "6시간 40분" */
+/** minutes → "6h 40m" */
 function fmtDuration(min: number) {
-  if (!min) return "0분";
+  if (!min) return "0m";
   const h = Math.floor(min / 60);
   const m = min % 60;
-  if (h === 0) return `${m}분`;
-  return m ? `${h}시간 ${m}분` : `${h}시간`;
+  if (h === 0) return `${m}m`;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
 
 export default function WalksPage() {
@@ -149,7 +151,7 @@ export default function WalksPage() {
     const m = matches.find((x) => x._id === matchId);
     const peer = m ? peerOf(m, myId) : undefined;
     const pet = pickPet(peer);
-    return { owner: peer?.name || "보호자", pet: pet?.name || "친구" };
+    return { owner: peer?.name || "Owner", pet: pet?.name || "Friend" };
   };
 
   const upcoming = useMemo(
@@ -179,7 +181,7 @@ export default function WalksPage() {
     const dist = records.reduce((s, w) => s + (w.distanceKm || 0), 0);
     const mins = records.reduce((s, w) => s + (w.durationMin || 0), 0);
     return {
-      count: `${monthCount}회`,
+      count: `${monthCount}`,
       dist: `${Math.round(dist * 10) / 10}km`,
       time: fmtDuration(mins),
     };
@@ -197,7 +199,7 @@ export default function WalksPage() {
 
   const rowTitle = (i: WalkInvite) => {
     const n = peerName(i.match);
-    return i.place ? `${n.pet}네와 ${i.place} 산책` : `${n.pet}네와 산책`;
+    return i.place ? `Walk with ${n.pet} at ${i.place}` : `Walk with ${n.pet}`;
   };
 
   const Row = ({ i, metaOverride }: { i: WalkInvite; metaOverride?: string }) => {
@@ -205,7 +207,7 @@ export default function WalksPage() {
     const cal = calParts(i.date);
     const meta =
       metaOverride ||
-      [fmtTime(i.time), i.place || `${n.owner} 보호자`].filter(Boolean).join(" · ");
+      [fmtTime(i.time), i.place || `with ${n.owner}`].filter(Boolean).join(" · ");
     return (
       <button
         type="button"
@@ -270,15 +272,15 @@ export default function WalksPage() {
 
   return (
     <Page
-      title="산책"
-      subtitle="다가오는 약속과 지난 기록을 확인해요."
+      title="Walks"
+      subtitle="Upcoming plans and past records."
       right={
         <>
           <button type="button" style={btnGhostSm} onClick={() => router.push("/walks/records")}>
-            산책 기록
+            Records
           </button>
           <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
-            + 약속 만들기
+            + New plan
           </button>
         </>
       }
@@ -290,11 +292,11 @@ export default function WalksPage() {
       ) : invites.length === 0 ? (
         <EmptyState
           emoji="🐕"
-          title="아직 산책 약속이 없어요"
-          desc="매치된 친구와 첫 산책 약속을 만들어 보세요."
+          title="No walk plans yet"
+          desc="Make your first walk plan with a matched friend."
           action={
             <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
-              + 약속 만들기
+              + New plan
             </button>
           }
         />
@@ -310,9 +312,9 @@ export default function WalksPage() {
             }}
           >
             {[
-              { v: stats.count, l: "이번 달 산책" },
-              { v: stats.dist, l: "총 거리" },
-              { v: stats.time, l: "총 시간" },
+              { v: stats.count, l: "Walks this month" },
+              { v: stats.dist, l: "Total distance" },
+              { v: stats.time, l: "Total time" },
             ].map((s) => (
               <div
                 key={s.l}
@@ -338,7 +340,7 @@ export default function WalksPage() {
           </div>
 
           {/* 다가오는 약속 */}
-          <div style={sectionTitleStyle}>다가오는 약속</div>
+          <div style={sectionTitleStyle}>Upcoming</div>
           {upcoming.length === 0 ? (
             <div style={{ ...cardStyle, padding: "16px 18px" }}>
               <p
@@ -348,7 +350,7 @@ export default function WalksPage() {
                   color: "var(--text-secondary)",
                 }}
               >
-                다가오는 약속이 없어요.
+                No upcoming plans.
               </p>
             </div>
           ) : (
@@ -362,7 +364,7 @@ export default function WalksPage() {
           {/* 지난 산책 */}
           {past.length > 0 && (
             <>
-              <div style={sectionTitleStyle}>지난 산책</div>
+              <div style={sectionTitleStyle}>Past walks</div>
               <RowList>
                 {past.slice(0, 5).map((i) => {
                   const rec = recordByDate.get(i.date);

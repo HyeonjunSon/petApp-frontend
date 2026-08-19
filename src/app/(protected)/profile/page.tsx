@@ -46,13 +46,13 @@ export default function ProfilePage() {
   const face =
     (user as any)?.faceUrl ||
     (user?.photos || []).find((p) => p.type === "owner_face")?.url;
-  const name = user?.name || "사용자";
+  const name = user?.name || "User";
   const petSummary = pets
     .map((p) => `${p.name}${p.breed ? `(${p.breed})` : ""}`)
     .join(" · ");
 
   return (
-    <Page title="프로필" subtitle="내 정보와 펫 프로필을 관리해요." maxWidth={1040}>
+    <Page title="Profile" subtitle="Manage your info and pet profiles." maxWidth={1040}>
       {/* 히어로 */}
       <div
         className="pd-card"
@@ -87,7 +87,7 @@ export default function ProfilePage() {
                 padding: "3px 10px",
               }}
             >
-              ✓ 인증완료
+              ✓ Verified
             </span>
           </h3>
           <p
@@ -122,7 +122,7 @@ export default function ProfilePage() {
           }}
         >
           <Icon name="edit" size={15} />
-          프로필 수정
+          Edit profile
         </button>
       </div>
 
@@ -137,71 +137,71 @@ export default function ProfilePage() {
           textAlign: "center",
         }}
       >
-        <PStat v={matchCount === null ? "—" : String(matchCount)} l="매칭" first />
-        <PStat v={walkCount === null ? "—" : String(walkCount)} l="산책" />
-        <PStat v={String(pets.length)} l="내 펫" />
+        <PStat v={matchCount === null ? "—" : String(matchCount)} l="Matches" first />
+        <PStat v={walkCount === null ? "—" : String(walkCount)} l="Walks" />
+        <PStat v={String(pets.length)} l="My pets" />
       </div>
 
       {/* 계정 */}
-      <SectionTitle>계정</SectionTitle>
+      <SectionTitle>Account</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="paw"
           bg="var(--primary-10)"
           color="var(--primary)"
-          label="내 펫 관리"
+          label="My pets"
           onClick={() => router.push("/settings/pet")}
         />
         <MenuItem
           icon="pin"
           bg="var(--info-soft)"
           color="var(--info)"
-          label="내 지역 설정"
+          label="My area"
           onClick={() => router.push("/settings/exposure")}
         />
         <MenuItem
           icon="shield"
           bg="var(--success-soft)"
           color="var(--success)"
-          label="보호자 인증"
+          label="Owner verification"
           onClick={() => router.push("/settings/profile")}
         />
       </MenuCard>
 
       {/* 알림 · 차단 */}
-      <SectionTitle>알림 · 차단</SectionTitle>
+      <SectionTitle>Notifications · Blocking</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="bell"
           bg="var(--warning-soft)"
           color="var(--warning)"
-          label="알림 설정"
+          label="Notifications"
           onClick={() => router.push("/settings/notifications")}
         />
         <MenuItem
           icon="block"
           bg="var(--danger-soft)"
           color="var(--danger)"
-          label="차단 목록"
+          label="Blocked users"
           onClick={() => router.push("/settings")}
         />
       </MenuCard>
 
       {/* 기타 */}
-      <SectionTitle>기타</SectionTitle>
+      <SectionTitle>More</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="info"
           bg="var(--input-bg)"
           color="var(--text-secondary)"
-          label="이용약관 · 개인정보처리방침"
+          label="Terms · Privacy policy"
           onClick={() => router.push("/terms")}
         />
         <MenuItem
           icon="logout"
           bg="var(--danger-soft)"
           color="var(--danger)"
-          label={busy ? "로그아웃 중…" : "로그아웃"}
+          label={busy ? "Logging out…" : "Log out"}
           danger
           right={busy ? <Spinner /> : undefined}
           onClick={onLogout}

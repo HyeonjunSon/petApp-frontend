@@ -1,6 +1,6 @@
 "use client";
 
-/** Chat — 시안(petdate-website.html #page-chat) 2컬럼 레이아웃. Logic in useChat hook. */
+/** Chat — 2-column layout from the wireframe (petdate-website.html #page-chat). Logic in useChat hook. */
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,17 +20,17 @@ import {
 } from "@/components/ui";
 
 const STATUS_LABEL: Record<string, string> = {
-  proposed: "대기 중",
-  confirmed: "수락됨",
-  declined: "거절됨",
-  cancelled: "취소됨",
-  completed: "완료",
+  proposed: "Pending",
+  confirmed: "Accepted",
+  declined: "Declined",
+  cancelled: "Cancelled",
+  completed: "Completed",
 };
 
-/* ---- 한국어 시간/날짜 포맷 (표시 전용) ---- */
+/* ---- English time/date formatting (display only) ---- */
 const timeKo = (iso?: string) =>
   iso
-    ? new Date(iso).toLocaleTimeString("ko-KR", {
+    ? new Date(iso).toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
       })
@@ -46,38 +46,38 @@ const listTimeKo = (iso?: string) => {
     d.getDate() === now.getDate();
   return sameDay
     ? timeKo(iso)
-    : d.toLocaleDateString("ko-KR", { month: "long", day: "numeric" });
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 };
 
 const dayKo = (iso?: string) =>
   iso
-    ? new Date(iso).toLocaleDateString("ko-KR", {
-        month: "long",
+    ? new Date(iso).toLocaleDateString("en-US", {
+        month: "short",
         day: "numeric",
         weekday: "long",
       })
     : "";
 
-/** "YYYY-MM-DD" + "HH:MM" → "8월 11일 (월) 오전 10:00" */
+/** "YYYY-MM-DD" + "HH:MM" → "Fri, Aug 21 · 10:00 AM" */
 const inviteWhenKo = (date: string, time: string) => {
   const d = new Date(`${date}T00:00:00`);
   const day = Number.isNaN(d.getTime())
     ? date
-    : `${d.getMonth() + 1}월 ${d.getDate()}일 (${d.toLocaleDateString("ko-KR", { weekday: "short" })})`;
+    : `${d.toLocaleDateString("en-US", { weekday: "short" })}, ${d.toLocaleDateString("en-US", { month: "short" })} ${d.getDate()}`;
   const [hRaw, mRaw] = (time || "").split(":");
   const h = parseInt(hRaw, 10);
   if (Number.isNaN(h)) return `${day} ${time}`;
-  const ampm = h < 12 ? "오전" : "오후";
+  const ampm = h < 12 ? "AM" : "PM";
   const h12 = h % 12 || 12;
-  return `${day} ${ampm} ${h12}:${mRaw || "00"}`;
+  return `${day} · ${h12}:${mRaw || "00"} ${ampm}`;
 };
 
-/** 시안 표기: "보리네 (김민지)" */
+/** Wireframe naming: "Bori & Minji" */
 const convoName = (match: Match, myId: string) => {
   const peer = peerOf(match, myId);
   const pet = pickPet(peer);
-  if (pet?.name && peer?.name) return `${pet.name}네 (${peer.name})`;
-  return pet?.name || peer?.name || "새 친구";
+  if (pet?.name && peer?.name) return `${pet.name} & ${peer.name}`;
+  return pet?.name || peer?.name || "New friend";
 };
 
 const iconBtn: React.CSSProperties = {
@@ -146,7 +146,7 @@ export default function ChatPage() {
     ? convoName(c.matches.find((m) => m._id === c.current)!, c.myId)
     : "";
 
-  /* 메시지 + 날짜 구분선 rows */
+  /* Message rows + day separators */
   const rows: React.ReactNode[] = [];
   let lastDay = "";
   c.messages.forEach((m, i) => {
@@ -213,7 +213,7 @@ export default function ChatPage() {
     );
   });
 
-  /* 산책 초대 카드 (메시지 흐름 끝) */
+  /* Walk invite card (end of message flow) */
   if (c.invite) {
     const inv = c.invite;
     const mine = inv.from === c.myId;
@@ -269,7 +269,7 @@ export default function ChatPage() {
             }}
           >
             <Icon name="cal" size={14} />
-            산책 약속
+            Walk plan
           </div>
           <div
             style={{
@@ -298,28 +298,28 @@ export default function ChatPage() {
             {inv.status === "confirmed" ? (
               <>
                 <button type="button" style={ghost} onClick={() => c.setScheduleOpen(true)}>
-                  변경 요청
+                  Request change
                 </button>
                 <button type="button" style={solid} onClick={() => setShowInvite(true)}>
-                  수락됨 ✓
+                  Accepted ✓
                 </button>
               </>
             ) : mine ? (
               <>
                 <button type="button" style={ghost} onClick={() => c.respond("cancelled")}>
-                  취소
+                  Cancel
                 </button>
                 <button type="button" style={solid} onClick={() => c.setScheduleOpen(true)}>
-                  변경 요청
+                  Request change
                 </button>
               </>
             ) : (
               <>
                 <button type="button" style={ghost} onClick={() => c.respond("declined")}>
-                  거절
+                  Decline
                 </button>
                 <button type="button" style={solid} onClick={() => c.respond("confirmed")}>
-                  수락
+                  Accept
                 </button>
               </>
             )}
@@ -340,7 +340,7 @@ export default function ChatPage() {
   }
 
   return (
-    <Page title="채팅" subtitle="매칭된 친구들과 대화하고 약속을 잡아요.">
+    <Page title="Chat" subtitle="Talk with your matches and plan walks.">
       <style dangerouslySetInnerHTML={{ __html: `
         .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;gap:0;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;height:calc(100vh - 180px);min-height:520px}
         .pd-chatlist{border-right:1px solid var(--border);overflow-y:auto}
@@ -358,7 +358,7 @@ export default function ChatPage() {
       ` }} />
 
       <div className={`pd-chatwrap${c.showListOnMobile ? " pd-list-mode" : ""}`}>
-        {/* ---- 좌측: 대화 리스트 ---- */}
+        {/* ---- Left: conversation list ---- */}
         <div className="pd-chatlist pd-scroll">
           <div
             style={{
@@ -368,7 +368,7 @@ export default function ChatPage() {
               color: "var(--text)",
             }}
           >
-            메시지
+            Messages
           </div>
           {c.matches.length === 0 ? (
             <div style={{ padding: "28px 18px", textAlign: "center" }}>
@@ -381,7 +381,7 @@ export default function ChatPage() {
                   color: "var(--text)",
                 }}
               >
-                아직 대화가 없어요
+                No conversations yet
               </div>
               <p
                 style={{
@@ -390,10 +390,10 @@ export default function ChatPage() {
                   color: "var(--text-secondary)",
                 }}
               >
-                디스커버에서 친구를 만나면 채팅이 시작돼요.
+                Match with friends in Discover to start chatting.
               </p>
               <Button size="sm" onClick={() => router.push("/discover")}>
-                친구 찾으러 가기
+                Find friends
               </Button>
             </div>
           ) : (
@@ -446,7 +446,7 @@ export default function ChatPage() {
                         textOverflow: "ellipsis",
                       }}
                     >
-                      {m.lastMessage?.text || "대화를 시작해보세요"}
+                      {m.lastMessage?.text || "Say hello!"}
                     </span>
                   </span>
                   <span
@@ -491,7 +491,7 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* ---- 우측: 대화방 ---- */}
+        {/* ---- Right: chat room ---- */}
         <div className="pd-chatroom">
           {!c.current ? (
             <div
@@ -503,11 +503,11 @@ export default function ChatPage() {
                 color: "var(--text-secondary)",
               }}
             >
-              대화를 선택해주세요
+              Select a conversation
             </div>
           ) : (
             <>
-              {/* 대화방 헤더 */}
+              {/* Chat room header */}
               <div
                 style={{
                   background: "var(--surface)",
@@ -523,7 +523,7 @@ export default function ChatPage() {
                   className="pd-chat-back"
                   style={iconBtn}
                   onClick={c.backToList}
-                  title="목록으로"
+                  title="Back to list"
                 >
                   <Icon name="back" size={18} />
                 </button>
@@ -553,7 +553,7 @@ export default function ChatPage() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    {lastAt ? `마지막 메시지 ${listTimeKo(lastAt)}` : "새로운 대화"}
+                    {lastAt ? `Last message ${listTimeKo(lastAt)}` : "New conversation"}
                     {pet?.name ? ` · ${pet.name}` : ""}
                   </span>
                 </div>
@@ -561,7 +561,7 @@ export default function ChatPage() {
                   <button
                     type="button"
                     style={iconBtn}
-                    title="산책 약속"
+                    title="Walk plan"
                     onClick={() => (c.invite ? setShowInvite(true) : c.setScheduleOpen(true))}
                   >
                     <Icon name="cal" size={17} />
@@ -569,7 +569,7 @@ export default function ChatPage() {
                   <button
                     type="button"
                     style={iconBtn}
-                    title="신고 / 차단"
+                    title="Report / Block"
                     onClick={() => setSafety(true)}
                   >
                     <Icon name="flag" size={17} />
@@ -577,7 +577,7 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* 메시지 영역 */}
+              {/* Messages area */}
               <div
                 ref={msgsRef}
                 className="pd-scroll"
@@ -598,7 +598,7 @@ export default function ChatPage() {
                       color: "var(--text-secondary)",
                     }}
                   >
-                    대화를 시작해보세요!
+                    Say hello!
                   </div>
                 ) : (
                   rows
@@ -618,7 +618,7 @@ export default function ChatPage() {
               >
                 <button
                   type="button"
-                  title="산책 약속 만들기"
+                  title="Create walk plan"
                   onClick={() => c.setScheduleOpen(true)}
                   style={{ ...iconBtn, width: 36, height: 36 }}
                 >
@@ -633,7 +633,7 @@ export default function ChatPage() {
                       c.send();
                     }
                   }}
-                  placeholder="메시지 입력..."
+                  placeholder="Type a message..."
                   style={{
                     flex: 1,
                     minWidth: 0,
@@ -651,7 +651,7 @@ export default function ChatPage() {
                 <button
                   type="button"
                   onClick={c.send}
-                  title="전송"
+                  title="Send"
                   style={{
                     width: 42,
                     height: 42,
@@ -676,29 +676,29 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* 산책 약속 만들기 sheet */}
-      <Sheet open={c.scheduleOpen} onClose={() => c.setScheduleOpen(false)} title="산책 약속 만들기" desktop>
+      {/* Create walk plan sheet */}
+      <Sheet open={c.scheduleOpen} onClose={() => c.setScheduleOpen(false)} title="Create walk plan" desktop>
         <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <Field label="날짜">
+          <Field label="Date">
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </Field>
-          <Field label="시작 시간">
+          <Field label="Start time">
             <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </Field>
-          <Field label="장소">
-            <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="여의도 한강공원 2주차장 앞" />
+          <Field label="Place">
+            <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Yeouido Hangang Park, Parking Lot 2" />
           </Field>
-          <Field label="메모">
+          <Field label="Note">
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
           <Button fullWidth size="lg" disabled={!date || !time} onClick={submitSchedule}>
-            약속 보내기
+            Send plan
           </Button>
         </div>
       </Sheet>
 
-      {/* 산책 약속 상세 sheet */}
-      <Sheet open={showInvite && !!c.invite} onClose={() => setShowInvite(false)} title="산책 약속" desktop>
+      {/* Walk plan detail sheet */}
+      <Sheet open={showInvite && !!c.invite} onClose={() => setShowInvite(false)} title="Walk plan" desktop>
         {c.invite && (
           <div style={{ padding: "8px 20px 20px" }}>
             <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>
@@ -732,33 +732,33 @@ export default function ChatPage() {
               </span>
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" }}>
-              <Button onClick={() => { c.respond("confirmed"); setShowInvite(false); }}>수락</Button>
+              <Button onClick={() => { c.respond("confirmed"); setShowInvite(false); }}>Accept</Button>
               <Button variant="secondary" onClick={() => { c.respond("declined"); setShowInvite(false); }}>
-                거절
+                Decline
               </Button>
               <Button variant="dangerGhost" onClick={() => { c.respond("cancelled"); setShowInvite(false); }}>
-                약속 취소
+                Cancel plan
               </Button>
             </div>
           </div>
         )}
       </Sheet>
 
-      {/* 신고 / 차단 sheet */}
-      <Sheet open={safety} onClose={() => setSafety(false)} title="신고 / 차단" desktop>
+      {/* Report / Block sheet */}
+      <Sheet open={safety} onClose={() => setSafety(false)} title="Report / Block" desktop>
         <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
           <Button variant="danger" fullWidth onClick={block}>
-            이 사용자 차단하기
+            Block this user
           </Button>
-          <Field label="신고 사유">
+          <Field label="Reason">
             <Textarea
               value={reportText}
               onChange={(e) => setReportText(e.target.value)}
-              placeholder="신고 사유를 입력해주세요"
+              placeholder="Tell us why you're reporting this user"
             />
           </Field>
           <Button variant="secondary" fullWidth disabled={!reportText.trim()} onClick={report}>
-            신고 접수
+            Submit report
           </Button>
         </div>
       </Sheet>

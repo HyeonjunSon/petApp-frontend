@@ -64,7 +64,7 @@ export default function MatchModal({
             color: "var(--text)",
           }}
         >
-          매치됐어요! 🎉
+          It's a match! 🎉
         </h2>
         <p
           style={{
@@ -73,7 +73,7 @@ export default function MatchModal({
             color: "var(--text-secondary)",
           }}
         >
-          서로 좋아요를 눌렀어요.
+          You liked each other.
         </p>
 
         <div
@@ -83,7 +83,7 @@ export default function MatchModal({
             padding: 14,
           }}
         >
-          <ImagePlaceholder src={card.photos[0]} label="펫 사진" height={200} radius={10} />
+          <ImagePlaceholder src={card.photos[0]} label="Pet photo" height={200} radius={10} />
           <div style={{ marginTop: 12 }}>
             <span
               style={{
@@ -92,7 +92,7 @@ export default function MatchModal({
                 color: "var(--text)",
               }}
             >
-              {card.petName || "친구"}
+              {card.petName || "Friend"}
             </span>
             <span
               style={{
@@ -101,7 +101,7 @@ export default function MatchModal({
                 marginLeft: 8,
               }}
             >
-              {[card.breed, card.age != null ? `${card.age}살` : ""]
+              {[card.breed, card.age != null ? `${card.age} yrs` : ""]
                 .filter(Boolean)
                 .join(" · ")}
             </span>
@@ -116,7 +116,7 @@ export default function MatchModal({
         </div>
 
         <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <Avatar src={card.ownerFace} fallbackText="보호자" size={40} />
+          <Avatar src={card.ownerFace} fallbackText="Owner" size={40} />
           <div>
             <div
               style={{
@@ -125,7 +125,7 @@ export default function MatchModal({
                 color: "var(--text)",
               }}
             >
-              {card.ownerName || "보호자"}
+              {card.ownerName || "Owner"}
             </div>
             {card.location && (
               <div
@@ -157,7 +157,7 @@ export default function MatchModal({
               color: "var(--text-secondary)",
             }}
           >
-            나중에
+            Later
           </button>
           <button
             type="button"
@@ -168,7 +168,7 @@ export default function MatchModal({
               color: "var(--white)",
             }}
           >
-            채팅하기
+            Start chatting
           </button>
         </div>
       </div>

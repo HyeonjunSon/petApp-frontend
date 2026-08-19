@@ -3,13 +3,13 @@
 import LegalLayout, { H2, P, UL } from "../_legal/Layout";
 
 export const metadata = {
-  title: "개인정보처리방침 — PetDate",
+  title: "Privacy Policy — PetDate",
   description: "How PetDate collects, uses, and protects your data.",
 };
 
 export default function PrivacyPolicy() {
   return (
-    <LegalLayout title="개인정보처리방침" updated="2026-06-14">
+    <LegalLayout title="Privacy Policy" updated="2026-06-14">
       <P>
         This Privacy Policy describes how PetDate ("we", "our") collects,
         uses, and shares your information when you use the PetDate mobile or

@@ -114,68 +114,68 @@ export default function SettingsHubPage() {
     (user?.photos || []).find((p) => p.type === "owner_face")?.url;
 
   return (
-    <Page title="설정" subtitle="내 정보와 앱 환경을 관리해요." maxWidth={720}>
+    <Page title="Settings" subtitle="Manage your info and preferences." maxWidth={720}>
       <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
 
-      <SectionTitle>프로필</SectionTitle>
+      <SectionTitle>Profile</SectionTitle>
       <MenuCard>
         <MenuItem
-          leading={<Avatar src={face} fallbackText={(user?.name || "나")[0]} size={34} />}
-          label="내 프로필 수정"
+          leading={<Avatar src={face} fallbackText={(user?.name || "Me")[0]} size={34} />}
+          label="Edit my profile"
           onClick={() => router.push("/settings/profile")}
         />
         <MenuItem
           icon="paw"
           bg="var(--primary-10)"
           color="var(--primary)"
-          label="내 펫 프로필 수정"
+          label="Edit pet profile"
           onClick={() => router.push("/settings/pet")}
         />
       </MenuCard>
 
-      <SectionTitle>매칭 환경</SectionTitle>
+      <SectionTitle>Matching</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="filter"
           bg="var(--info-soft)"
           color="var(--info)"
-          label="노출 · 필터 설정"
+          label="Visibility & filters"
           onClick={() => router.push("/settings/exposure")}
         />
         <MenuItem
           icon="bell"
           bg="var(--warning-soft)"
           color="var(--warning)"
-          label="알림 설정"
+          label="Notifications"
           onClick={() => router.push("/settings/notifications")}
         />
       </MenuCard>
 
-      <SectionTitle>구독</SectionTitle>
+      <SectionTitle>Subscription</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="heart"
           bg="var(--primary-10)"
           color="var(--primary)"
-          label="프리미엄 구독 관리"
+          label="Manage Premium"
           onClick={() => router.push("/subscription/billing")}
         />
       </MenuCard>
 
-      <SectionTitle>계정</SectionTitle>
+      <SectionTitle>Account</SectionTitle>
       <MenuCard>
         <MenuItem
           icon="shield"
           bg="var(--success-soft)"
           color="var(--success)"
-          label="비밀번호 변경"
+          label="Change password"
           onClick={() => setPwOpen(true)}
         />
         <MenuItem
           icon="logout"
           bg="var(--danger-soft)"
           color="var(--danger)"
-          label="로그아웃"
+          label="Log out"
           danger
           onClick={async () => {
             try { await api.post("/auth/logout"); } catch {}
@@ -188,7 +188,7 @@ export default function SettingsHubPage() {
           icon="trash"
           bg="var(--danger-soft)"
           color="var(--danger)"
-          label="회원 탈퇴"
+          label="Delete account"
           danger
           onClick={() => setDelOpen(true)}
         />
@@ -217,31 +217,31 @@ function PasswordSheet({ open, onClose }: { open: boolean; onClose: () => void }
 
   const submit = async () => {
     setErr(null);
-    if (next.length < 6) return setErr("새 비밀번호는 6자 이상이어야 해요.");
+    if (next.length < 6) return setErr("New password must be at least 6 characters.");
     setBusy(true);
     try {
       await api.post("/auth/change-password", { currentPassword: cur, newPassword: next });
       setOk(true);
       setCur(""); setNext("");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "비밀번호를 변경하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Failed to change password.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="비밀번호 변경" desktop>
+    <Sheet open={open} onClose={onClose} title="Change password" desktop>
       <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         {err && <Banner tone="rose">{err}</Banner>}
-        {ok && <Banner tone="brand">비밀번호가 변경되었어요.</Banner>}
-        <Field label="현재 비밀번호">
+        {ok && <Banner tone="brand">Your password has been changed.</Banner>}
+        <Field label="Current password">
           <Input className="pdi" style={INPUT_STYLE} type="password" value={cur} onChange={(e) => setCur(e.target.value)} />
         </Field>
-        <Field label="새 비밀번호" hint="6자 이상 입력해 주세요.">
+        <Field label="New password" hint="Must be at least 6 characters.">
           <Input className="pdi" style={INPUT_STYLE} type="password" value={next} onChange={(e) => setNext(e.target.value)} />
         </Field>
-        <Button fullWidth size="lg" loading={busy} onClick={submit}>변경하기</Button>
+        <Button fullWidth size="lg" loading={busy} onClick={submit}>Change password</Button>
       </div>
     </Sheet>
   );
@@ -254,13 +254,13 @@ function DeleteSheet({ open, onClose, onDeleted }: { open: boolean; onClose: () 
     try { await api.delete("/account"); onDeleted(); } catch {} finally { setBusy(false); }
   };
   return (
-    <Sheet open={open} onClose={onClose} title="회원 탈퇴" desktop>
+    <Sheet open={open} onClose={onClose} title="Delete account" desktop>
       <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
         <p style={{ margin: 0, fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-          계정과 모든 데이터가 영구적으로 삭제돼요. 이 작업은 되돌릴 수 없어요.
+          Your account and all data will be permanently deleted. This action cannot be undone.
         </p>
         <Button variant="danger" fullWidth size="lg" loading={busy} onClick={submit}>
-          영구 삭제
+          Delete permanently
         </Button>
       </div>
     </Sheet>

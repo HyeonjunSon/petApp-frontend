@@ -63,7 +63,7 @@ export default function LegalLayout({
           className="mt-2"
           style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}
         >
-          마지막 업데이트 · {updated}
+          Last updated · {updated}
         </div>
 
         <div className="pd-card mt-8" style={{ padding: "12px 28px 28px" }}>
@@ -86,7 +86,7 @@ export default function LegalLayout({
           className="no-underline"
           style={{ color: "var(--text-secondary)" }}
         >
-          개인정보처리방침
+          Privacy Policy
         </Link>{" "}
         ·{" "}
         <Link
@@ -94,7 +94,7 @@ export default function LegalLayout({
           className="no-underline"
           style={{ color: "var(--text-secondary)" }}
         >
-          이용약관
+          Terms of Service
         </Link>{" "}
         ·{" "}
         <Link
@@ -102,7 +102,7 @@ export default function LegalLayout({
           className="no-underline"
           style={{ color: "var(--text-secondary)" }}
         >
-          콘텐츠 정책
+          Content Policy
         </Link>
       </footer>
     </div>

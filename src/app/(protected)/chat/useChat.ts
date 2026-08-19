@@ -104,8 +104,8 @@ export function useChat() {
         const { data } = await api.get<Message[]>(
           `/matches/${current}/messages`
         );
-        // 서버는 최신순(desc)으로 내려주므로 화면용으로 오래된 순으로 뒤집는다.
-        // createdAt이 같으면(시드 데이터 등) ObjectId가 시간순이므로 그걸로 판별.
+        // Server returns newest-first (desc); reverse to oldest-first for display.
+        // When createdAt ties (e.g. seed data), fall back to ObjectId, which is chronological.
         const asc = (data || [])
           .slice()
           .sort((a, b) => {

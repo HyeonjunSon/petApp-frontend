@@ -10,14 +10,14 @@ import { Page } from "@/components/shell/Page";
 import { Button, Input, Textarea, Select, Field, Avatar, Banner, Toast, type ToastData } from "@/components/ui";
 
 const REGIONS = [
-  { v: "Seoul", label: "서울" },
-  { v: "Busan", label: "부산" },
-  { v: "Incheon", label: "인천" },
-  { v: "Daegu", label: "대구" },
-  { v: "Daejeon", label: "대전" },
-  { v: "Gwangju", label: "광주" },
-  { v: "Gyeonggi", label: "경기" },
-  { v: "Other", label: "기타" },
+  { v: "Seoul", label: "Seoul" },
+  { v: "Busan", label: "Busan" },
+  { v: "Incheon", label: "Incheon" },
+  { v: "Daegu", label: "Daegu" },
+  { v: "Daejeon", label: "Daejeon" },
+  { v: "Gwangju", label: "Gwangju" },
+  { v: "Gyeonggi", label: "Gyeonggi" },
+  { v: "Other", label: "Other" },
 ];
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -92,9 +92,9 @@ export default function OwnerProfileEditPage() {
       const { data } = await api.get("/users/me");
       setUser(data);
       setFace((data?.faceUrl) || (data?.photos || []).find((p: any) => p.type === "owner_face")?.url);
-      setToast({ msg: "사진이 변경되었어요", type: "ok" });
+      setToast({ msg: "Photo updated", type: "ok" });
     } catch {
-      setToast({ msg: "사진 업로드에 실패했어요", type: "error" });
+      setToast({ msg: "Failed to upload photo", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -105,9 +105,9 @@ export default function OwnerProfileEditPage() {
     try {
       await api.delete("/users/me/photo");
       setFace(undefined);
-      setToast({ msg: "사진이 삭제되었어요", type: "ok" });
+      setToast({ msg: "Photo removed", type: "ok" });
     } catch {
-      setToast({ msg: "사진을 삭제하지 못했어요", type: "error" });
+      setToast({ msg: "Failed to remove photo", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -129,26 +129,26 @@ export default function OwnerProfileEditPage() {
       setUser(data);
       router.push("/settings");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "저장하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Failed to save.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Page title="프로필 수정" subtitle="다른 보호자에게 보여질 내 정보를 관리해요." maxWidth={860}>
+    <Page title="Edit profile" subtitle="Manage the info other owners will see." maxWidth={860}>
       <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onPick(e.target.files?.[0] || null)} />
 
       <Card>
-        <CardTitle>프로필 사진</CardTitle>
+        <CardTitle>Profile photo</CardTitle>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Avatar src={face} fallbackText={(name || "나")[0]} size={84} />
+          <Avatar src={face} fallbackText={(name || "Me")[0]} size={84} />
           <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
-            <Button fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>사진 업로드</Button>
-            <Button fullWidth variant="secondary" disabled={busy || !face} onClick={removePhoto}>사진 삭제</Button>
+            <Button fullWidth disabled={busy} onClick={() => fileRef.current?.click()}>Upload photo</Button>
+            <Button fullWidth variant="secondary" disabled={busy || !face} onClick={removePhoto}>Remove photo</Button>
           </div>
         </div>
       </Card>
@@ -156,20 +156,20 @@ export default function OwnerProfileEditPage() {
       <div style={{ height: 16 }} />
 
       <Card>
-        <CardTitle>기본 정보</CardTitle>
+        <CardTitle>Basic info</CardTitle>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="이름"><Input className="pdi" style={INPUT_STYLE} value={name} onChange={(e) => setName(e.target.value)} /></Field>
-          <Field label="나이"><Input className="pdi" style={INPUT_STYLE} value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" /></Field>
-          <Field label="지역">
+          <Field label="Name"><Input className="pdi" style={INPUT_STYLE} value={name} onChange={(e) => setName(e.target.value)} /></Field>
+          <Field label="Age"><Input className="pdi" style={INPUT_STYLE} value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" /></Field>
+          <Field label="Region">
             <Select className="pdi" style={INPUT_STYLE} value={region} onChange={(e) => setRegion(e.target.value)}>
               {REGIONS.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
             </Select>
           </Field>
-          <Field label="성별">
+          <Field label="Gender">
             <Select className="pdi" style={INPUT_STYLE} value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="undisclosed">비공개</option>
-              <option value="male">남성</option>
-              <option value="female">여성</option>
+              <option value="undisclosed">Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </Select>
           </Field>
         </div>
@@ -178,18 +178,18 @@ export default function OwnerProfileEditPage() {
       <div style={{ height: 16 }} />
 
       <Card>
-        <h2 style={{ margin: "0 0 6px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>소개</h2>
+        <h2 style={{ margin: "0 0 6px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>About</h2>
         <p style={{ margin: "0 0 12px", fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
-          라이프스타일, 산책 스타일, 관심사를 알려주세요.
+          Share your lifestyle, walk style, and interests.
         </p>
-        <Field label="한 줄 소개"><Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="나를 소개해 주세요" /></Field>
+        <Field label="Short bio"><Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Tell us about yourself" /></Field>
         <div style={{ height: 14 }} />
-        <Field label="산책 스타일"><Textarea className="pdi" style={AREA_STYLE} value={walkStyle} onChange={(e) => setWalkStyle(e.target.value)} placeholder="예: 아침 산책 선호, 30분~1시간, 공원 코스" /></Field>
+        <Field label="Walk style"><Textarea className="pdi" style={AREA_STYLE} value={walkStyle} onChange={(e) => setWalkStyle(e.target.value)} placeholder="e.g. Prefer morning walks, 30 min to 1 hour, park routes" /></Field>
       </Card>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-        <Button variant="secondary" onClick={() => router.push("/settings")}>취소</Button>
-        <Button onClick={save} loading={busy} icon="check">저장</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings")}>Cancel</Button>
+        <Button onClick={save} loading={busy} icon="check">Save</Button>
       </div>
 
       <Toast toast={toast} />

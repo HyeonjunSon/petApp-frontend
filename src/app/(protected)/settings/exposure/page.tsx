@@ -9,26 +9,26 @@ import { Page } from "@/components/shell/Page";
 import { Button, Select, Field, Chip, Banner, Toast, type ToastData } from "@/components/ui";
 
 const REGIONS = [
-  { v: "Seoul", label: "서울" },
-  { v: "Busan", label: "부산" },
-  { v: "Incheon", label: "인천" },
-  { v: "Daegu", label: "대구" },
-  { v: "Daejeon", label: "대전" },
-  { v: "Gwangju", label: "광주" },
-  { v: "Gyeonggi", label: "경기" },
-  { v: "Other", label: "기타" },
+  { v: "Seoul", label: "Seoul" },
+  { v: "Busan", label: "Busan" },
+  { v: "Incheon", label: "Incheon" },
+  { v: "Daegu", label: "Daegu" },
+  { v: "Daejeon", label: "Daejeon" },
+  { v: "Gwangju", label: "Gwangju" },
+  { v: "Gyeonggi", label: "Gyeonggi" },
+  { v: "Other", label: "Other" },
 ];
 
 const WALK_STYLES = [
-  { v: "Calm walk", label: "차분한 산책" },
-  { v: "Active walk", label: "활동적인 산책" },
-  { v: "Training focused", label: "훈련 위주" },
+  { v: "Calm walk", label: "Calm walk" },
+  { v: "Active walk", label: "Active walk" },
+  { v: "Training focused", label: "Training focused" },
 ];
 
 const VISIBILITY = [
-  { key: "public", title: "전체 공개", desc: "모든 사용자에게 내 프로필이 보여요" },
-  { key: "matched", title: "매칭 상대만", desc: "잘 맞는 상대에게만 프로필이 보여요" },
-  { key: "private", title: "비공개", desc: "내 프로필을 숨기고 탐색만 해요" },
+  { key: "public", title: "Public", desc: "Everyone can see your profile" },
+  { key: "matched", title: "Matches only", desc: "Only well-matched people can see your profile" },
+  { key: "private", title: "Private", desc: "Hide your profile and just browse" },
 ];
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -136,20 +136,20 @@ export default function ExposurePage() {
         walkStyles: styles,
         locationName: region,
       });
-      setToast({ msg: "설정이 저장되었어요", type: "ok" });
+      setToast({ msg: "Settings saved", type: "ok" });
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "저장하지 못했어요.");
+      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Failed to save.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Page title="노출 · 필터 설정" subtitle="프로필 공개 범위와 추천 필터를 관리해요." maxWidth={860}>
+    <Page title="Visibility & filters" subtitle="Manage your profile visibility and match filters." maxWidth={860}>
       <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
-      <SectionTitle first>프로필 공개 범위</SectionTitle>
+      <SectionTitle first>Profile visibility</SectionTitle>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {VISIBILITY.map((v) => (
           <RadioCard
@@ -162,33 +162,33 @@ export default function ExposurePage() {
         ))}
       </div>
 
-      <SectionTitle>상대 펫 필터</SectionTitle>
+      <SectionTitle>Pet filters</SectionTitle>
       <section className="pd-card" style={{ padding: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <Field label="지역">
+          <Field label="Region">
             <Select className="pdi" style={INPUT_STYLE} value={region} onChange={(e) => setRegion(e.target.value)}>
               {REGIONS.map((r) => <option key={r.v} value={r.v}>{r.label}</option>)}
             </Select>
           </Field>
-          <Field label="펫 나이대">
+          <Field label="Pet age range">
             <Select className="pdi" style={INPUT_STYLE} value={ageRange} onChange={(e) => setAgeRange(e.target.value)}>
-              <option value="0-2">0–2살</option>
-              <option value="3-5">3–5살</option>
-              <option value="6-9">6–9살</option>
-              <option value="10+">10살 이상</option>
+              <option value="0-2">0–2 years</option>
+              <option value="3-5">3–5 years</option>
+              <option value="6-9">6–9 years</option>
+              <option value="10+">10+ years</option>
             </Select>
           </Field>
-          <Field label="펫 크기">
+          <Field label="Pet size">
             <Select className="pdi" style={INPUT_STYLE} value={size} onChange={(e) => setSize(e.target.value)}>
-              <option value="s">소형 (7kg 이하)</option>
-              <option value="m">중형 (7–15kg)</option>
-              <option value="l">대형 (15kg 이상)</option>
+              <option value="s">Small (under 7kg)</option>
+              <option value="m">Medium (7–15kg)</option>
+              <option value="l">Large (over 15kg)</option>
             </Select>
           </Field>
         </div>
       </section>
 
-      <SectionTitle>산책 스타일 필터</SectionTitle>
+      <SectionTitle>Walk style filters</SectionTitle>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {WALK_STYLES.map((s) => (
           <Chip key={s.v} active={styles.includes(s.v)} onClick={() => toggleStyle(s.v)}>{s.label}</Chip>
@@ -196,8 +196,8 @@ export default function ExposurePage() {
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 28 }}>
-        <Button variant="secondary" onClick={() => router.push("/settings")}>취소</Button>
-        <Button onClick={save} loading={busy} icon="check">저장</Button>
+        <Button variant="secondary" onClick={() => router.push("/settings")}>Cancel</Button>
+        <Button onClick={save} loading={busy} icon="check">Save</Button>
       </div>
 
       <Toast toast={toast} />

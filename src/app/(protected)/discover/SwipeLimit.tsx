@@ -1,9 +1,9 @@
 "use client";
 
 const BENEFITS = [
-  { title: "무제한 스와이프", desc: "하루 종일 제한 없이 친구들을 만나요" },
-  { title: "프리미엄 필터", desc: "나이·크기·산책 스타일로 정밀하게 검색해요" },
-  { title: "우선 매칭", desc: "우리 펫과 잘 맞는 친구를 먼저 만나요" },
+  { title: "Unlimited swipes", desc: "Meet friends all day with no limits" },
+  { title: "Premium filters", desc: "Search precisely by age, size, and walk style" },
+  { title: "Priority matching", desc: "Meet the best matches for your pet first" },
 ];
 
 const btnBase: React.CSSProperties = {
@@ -58,7 +58,7 @@ export default function SwipeLimit({
                 color: "var(--text)",
               }}
             >
-              오늘의 스와이프 제한
+              Today's Swipe Limit
             </div>
             <div
               style={{
@@ -67,7 +67,7 @@ export default function SwipeLimit({
                 marginTop: 14,
               }}
             >
-              사용한 스와이프
+              Swipes used
             </div>
             <div
               style={{
@@ -81,7 +81,7 @@ export default function SwipeLimit({
             </div>
           </div>
           <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
-            자정에 초기화돼요
+            Resets at midnight
           </div>
         </div>
       </div>
@@ -94,7 +94,7 @@ export default function SwipeLimit({
           color: "var(--text)",
         }}
       >
-        프리미엄으로 업그레이드
+        Upgrade to Premium
       </h3>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -139,7 +139,7 @@ export default function SwipeLimit({
             color: "var(--text-secondary)",
           }}
         >
-          나중에
+          Later
         </button>
         <button
           type="button"
@@ -150,7 +150,7 @@ export default function SwipeLimit({
             color: "var(--white)",
           }}
         >
-          프리미엄 시작하기
+          Start Premium
         </button>
       </div>
     </div>

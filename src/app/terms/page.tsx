@@ -3,13 +3,13 @@
 import LegalLayout, { H2, P, UL } from "../_legal/Layout";
 
 export const metadata = {
-  title: "이용약관 — PetDate",
+  title: "Terms of Service — PetDate",
   description: "The rules for using the PetDate Service.",
 };
 
 export default function Terms() {
   return (
-    <LegalLayout title="이용약관" updated="2026-06-14">
+    <LegalLayout title="Terms of Service" updated="2026-06-14">
       <P>
         Welcome to PetDate. These Terms of Service ("Terms") govern your use
         of the PetDate mobile and web app (the "Service"). By creating an

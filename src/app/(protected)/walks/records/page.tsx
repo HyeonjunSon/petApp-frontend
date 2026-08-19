@@ -45,26 +45,28 @@ const btnGhostSm: React.CSSProperties = {
   gap: 6,
 };
 
-/** 분 → "1시간 10분" */
+/** minutes → "1h 10m" */
 function fmtDuration(min: number) {
-  if (!min) return "0분";
+  if (!min) return "0m";
   const h = Math.floor(min / 60);
   const m = min % 60;
-  if (h === 0) return `${m}분`;
-  return m ? `${h}시간 ${m}분` : `${h}시간`;
+  if (h === 0) return `${m}m`;
+  return m ? `${h}h ${m}m` : `${h}h`;
 }
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** ISO → { day, month, time } (달력 타일 + 메타용) */
 function dateParts(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return { day: "-", month: "", time: "" };
   const h = d.getHours();
-  const ampm = h < 12 ? "오전" : "오후";
+  const ampm = h < 12 ? "AM" : "PM";
   const h12 = h % 12 || 12;
   return {
     day: String(d.getDate()),
-    month: `${d.getMonth() + 1}월`,
-    time: `${ampm} ${h12}:${String(d.getMinutes()).padStart(2, "0")}`,
+    month: MONTHS[d.getMonth()],
+    time: `${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`,
   };
 }
 
@@ -89,7 +91,7 @@ export default function WalkRecordsPage() {
     });
   }, []);
 
-  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "반려동물";
+  const petName = (id: string) => pets.find((p) => p._id === id)?.name || "Pet";
 
   const stats = useMemo(() => {
     return pets
@@ -110,21 +112,21 @@ export default function WalkRecordsPage() {
 
   return (
     <Page
-      title="산책 기록"
-      subtitle="완료한 산책이 자동으로 쌓여요."
+      title="Records"
+      subtitle="Completed walks are saved automatically."
       right={
         <button type="button" style={btnGhostSm} onClick={() => router.push("/walks")}>
-          산책으로 돌아가기
+          Back to walks
         </button>
       }
     >
       {loading ? (
         <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}><Spinner /></div>
       ) : walks.length === 0 ? (
-        <EmptyState emoji="🐾" title="아직 산책 기록이 없어요" desc="산책 약속을 완료하면 기록이 자동으로 추가돼요." />
+        <EmptyState emoji="🐾" title="No walk records yet" desc="Complete a walk plan and a record is added automatically." />
       ) : (
         <>
-          <div style={{ ...sectionTitleStyle, marginTop: 0 }}>전체 기록</div>
+          <div style={{ ...sectionTitleStyle, marginTop: 0 }}>All records</div>
           <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
             {sorted.map((w, idx) => {
               const dp = dateParts(w.startedAt);
@@ -172,7 +174,7 @@ export default function WalkRecordsPage() {
                         color: "var(--text)",
                       }}
                     >
-                      {petName(w.pet)}의 산책
+                      {`${petName(w.pet)}'s walk`}
                     </b>
                     <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
                       {meta}
@@ -189,7 +191,7 @@ export default function WalkRecordsPage() {
                       flexShrink: 0,
                     }}
                   >
-                    완료
+                    Completed
                   </span>
                 </div>
               );
@@ -198,7 +200,7 @@ export default function WalkRecordsPage() {
 
           {stats.length > 0 && (
             <>
-              <div style={sectionTitleStyle}>펫별 통계</div>
+              <div style={sectionTitleStyle}>Stats by pet</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
                 {stats.map((s) => (
                   <div
@@ -217,13 +219,13 @@ export default function WalkRecordsPage() {
                           {s.pet.name}
                         </div>
                         <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
-                          {[s.pet.breed, s.pet.age != null ? `${s.pet.age}살` : ""].filter(Boolean).join(" · ")}
+                          {[s.pet.breed, s.pet.age != null ? `${s.pet.age} yrs` : ""].filter(Boolean).join(" · ")}
                         </div>
                       </div>
                     </div>
-                    <StatRow label="총 산책" value={`${s.count}회`} />
-                    <StatRow label="총 거리" value={`${s.dist}km`} />
-                    <StatRow label="평균 시간" value={fmtDuration(s.avg)} />
+                    <StatRow label="Total walks" value={`${s.count}`} />
+                    <StatRow label="Total distance" value={`${s.dist}km`} />
+                    <StatRow label="Avg time" value={fmtDuration(s.avg)} />
                   </div>
                 ))}
               </div>

@@ -39,8 +39,8 @@ export default function PasswordSheet({
 
   const submit = async () => {
     setErr(null);
-    if (next !== confirm) return setErr("새 비밀번호가 서로 일치하지 않아요.");
-    if (next.length < 8) return setErr("비밀번호는 8자 이상이어야 해요.");
+    if (next !== confirm) return setErr("New passwords do not match.");
+    if (next.length < 8) return setErr("Password must be at least 8 characters.");
     setBusy(true);
     try {
       await api.post("/auth/change-password", {
@@ -50,18 +50,18 @@ export default function PasswordSheet({
       reset();
       onDone();
     } catch (e: any) {
-      setErr(e?.response?.data?.message || "비밀번호를 변경하지 못했어요.");
+      setErr(e?.response?.data?.message || "Failed to change password.");
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <Sheet open={open} onClose={close} title="비밀번호 변경">
+    <Sheet open={open} onClose={close} title="Change password">
       <div className="flex flex-col gap-3 px-5 pt-2 pb-6">
         <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
         {err && <Banner tone="rose">{err}</Banner>}
-        <Field label="현재 비밀번호" required>
+        <Field label="Current password" required>
           <Input
             className="pdi"
             style={INPUT_STYLE}
@@ -71,7 +71,7 @@ export default function PasswordSheet({
             onChange={(e) => setCurrent(e.target.value)}
           />
         </Field>
-        <Field label="새 비밀번호" required hint="8자 이상 입력해 주세요.">
+        <Field label="New password" required hint="Must be at least 8 characters.">
           <Input
             className="pdi"
             style={INPUT_STYLE}
@@ -81,7 +81,7 @@ export default function PasswordSheet({
             onChange={(e) => setNext(e.target.value)}
           />
         </Field>
-        <Field label="새 비밀번호 확인" required>
+        <Field label="Confirm new password" required>
           <Input
             className="pdi"
             style={INPUT_STYLE}
@@ -93,14 +93,14 @@ export default function PasswordSheet({
         </Field>
         <div className="mt-1 flex justify-end gap-2">
           <Button variant="secondary" onClick={close}>
-            취소
+            Cancel
           </Button>
           <Button
             loading={busy}
             disabled={!current || !next || !confirm}
             onClick={submit}
           >
-            변경하기
+            Change password
           </Button>
         </div>
       </div>

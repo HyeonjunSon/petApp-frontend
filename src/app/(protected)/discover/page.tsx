@@ -49,7 +49,7 @@ export default function DiscoverPage() {
         .map(adapt);
       setDeck(mapped);
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "불러오지 못했어요.");
+      setError(e?.response?.data?.message || e?.message || "Failed to load.");
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export default function DiscoverPage() {
           setMatch(card);
         } else {
           setToast({
-            msg: `${card.petName || card.ownerName || "친구"}에게 좋아요를 보냈어요`,
+            msg: `You liked ${card.petName || card.ownerName || "this friend"}`,
             type: "ok",
           });
         }
@@ -92,7 +92,7 @@ export default function DiscoverPage() {
         setShowLimit(true);
         setUsed(SWIPE_LIMIT);
       } else {
-        setToast({ msg: "문제가 발생했어요. 다시 시도해 주세요.", type: "error" });
+        setToast({ msg: "Something went wrong. Please try again.", type: "error" });
       }
     } finally {
       setActingId(null);
@@ -104,11 +104,11 @@ export default function DiscoverPage() {
 
   return (
     <Page
-      title="디스커버"
+      title="Discover"
       subtitle={
         myLocation
-          ? `${myLocation} · 가까운 동네의 친구들이에요.`
-          : "가까운 동네의 친구들이에요."
+          ? `${myLocation} · Friends in your neighborhood.`
+          : "Friends in your neighborhood."
       }
     >
       {!showLimit && !detail && <Filters onApply={fetchDeck} />}
@@ -130,11 +130,11 @@ export default function DiscoverPage() {
       ) : error ? (
         <EmptyState
           emoji="⚠️"
-          title="문제가 발생했어요"
+          title="Something went wrong"
           desc={error}
           action={
             <Button icon="refresh" onClick={fetchDeck}>
-              다시 시도
+              Try again
             </Button>
           }
         />
@@ -148,15 +148,15 @@ export default function DiscoverPage() {
       ) : deck.length === 0 ? (
         <EmptyState
           emoji="🐾"
-          title="더 보여줄 친구가 없어요"
-          desc="필터를 넓히거나 잠시 후 다시 확인해 주세요."
+          title="No more friends to show"
+          desc="Widen your filters or check back later."
           action={
             <Button
               icon="filter"
               variant="secondary"
               onClick={() => router.push("/settings/exposure")}
             >
-              필터 넓히기
+              Widen filters
             </Button>
           }
         />

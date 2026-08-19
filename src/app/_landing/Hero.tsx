@@ -7,21 +7,21 @@ export default function Hero() {
     <section className="ld-hero">
       <div>
         <h1>
-          우리 강아지의
+          Find your dog&apos;s perfect
           <br />
-          <em>산책 친구</em>를 찾아보세요
+          <em>walking mate</em>
         </h1>
         <p className="sub">
-          가까운 동네 보호자와 펫을 만나 같이 걷고,
+          Meet nearby owners and pets — walk together,
           <br />
-          친구가 되고, 데이트까지 이어져요.
+          become friends, and maybe more.
         </p>
         <div className="btns">
           <Link href="/register" className="ld-btn-hero">
-            무료로 시작하기
+            Start for free
           </Link>
           <Link href="/login" className="ld-btn-hero ghost">
-            둘러보기
+            Take a look
           </Link>
         </div>
       </div>
@@ -31,16 +31,16 @@ export default function Hero() {
             🐩<span className="dist">0.8km</span>
           </div>
           <div className="bd">
-            <div className="nm">보리 · 2살</div>
-            <div className="mt">푸들 · 여아 · 김민지 보호자</div>
+            <div className="nm">Bori · 2 yrs</div>
+            <div className="mt">Poodle · Female · Owner Minji</div>
             <div className="tags">
-              <span className="tag">아침 산책</span>
-              <span className="tag">공놀이</span>
+              <span className="tag">Morning walks</span>
+              <span className="tag">Fetch</span>
             </div>
           </div>
           <div className="acts">
-            <span className="pass">패스</span>
-            <span className="like">좋아요</span>
+            <span className="pass">Pass</span>
+            <span className="like">Like</span>
           </div>
         </div>
       </div>

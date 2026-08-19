@@ -70,7 +70,7 @@ export default function DetailView({
             color: "var(--text)",
           }}
         >
-          프로필 상세
+          Profile Details
         </h2>
         <button
           type="button"
@@ -83,7 +83,7 @@ export default function DetailView({
           }}
         >
           <Icon name="back" size={16} />
-          디스커버로 돌아가기
+          Back to Discover
         </button>
       </div>
 
@@ -97,7 +97,7 @@ export default function DetailView({
         className="pd-detail-grid"
       >
         <div>
-          <ImagePlaceholder src={card.photos[0]} label="대표 사진" height={380} />
+          <ImagePlaceholder src={card.photos[0]} label="Main photo" height={380} />
           {thumbs.length > 0 && (
             <div
               style={{
@@ -124,9 +124,9 @@ export default function DetailView({
                 color: "var(--text)",
               }}
             >
-              {[card.petName, card.breed, card.age != null ? `${card.age}살` : ""]
+              {[card.petName, card.breed, card.age != null ? `${card.age} yrs` : ""]
                 .filter(Boolean)
-                .join(" · ") || "이름 미공개"}
+                .join(" · ") || "Name not shared"}
             </h3>
             {((card.temperament || []).length > 0 || card.size) && (
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
@@ -145,10 +145,10 @@ export default function DetailView({
               }}
             >
               <Stat
-                label="크기"
+                label="Size"
                 value={card.size ? SIZE_KO[card.size] || card.size : "—"}
               />
-              <Stat label="나이" value={card.age != null ? `${card.age}살` : "—"} />
+              <Stat label="Age" value={card.age != null ? `${card.age} yrs` : "—"} />
             </div>
             {card.petAbout && (
               <div style={{ marginTop: 18 }}>
@@ -158,7 +158,7 @@ export default function DetailView({
                     color: "var(--text-secondary)",
                   }}
                 >
-                  소개
+                  About
                 </div>
                 <p
                   style={{
@@ -183,10 +183,10 @@ export default function DetailView({
                 color: "var(--text)",
               }}
             >
-              보호자 정보
+              Owner Info
             </h3>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <Avatar src={card.ownerFace} fallbackText="보호자" size={44} />
+              <Avatar src={card.ownerFace} fallbackText="Owner" size={44} />
               <div>
                 <div
                   style={{
@@ -195,7 +195,7 @@ export default function DetailView({
                     color: "var(--text)",
                   }}
                 >
-                  {card.ownerName || "보호자"}
+                  {card.ownerName || "Owner"}
                 </div>
                 {card.location && (
                   <div
@@ -243,7 +243,7 @@ export default function DetailView({
           }}
         >
           <Icon name="heart" size={16} fill />
-          좋아요 보내기
+          Send Like
         </button>
         <button
           type="button"
@@ -254,7 +254,7 @@ export default function DetailView({
             color: "var(--text-secondary)",
           }}
         >
-          다음 카드
+          Next Card
         </button>
       </div>
     </div>

@@ -32,11 +32,11 @@ export default function LikesMePage() {
 
   return (
     <Page
-      title="좋아요"
-      subtitle="나를 좋아요한 친구들을 확인해요."
+      title="Likes you"
+      subtitle="See the friends who liked you."
       right={
         <button type="button" style={btnGhostSm} onClick={() => router.push("/matches")}>
-          매치로 돌아가기
+          Back to matches
         </button>
       }
     >
@@ -54,10 +54,10 @@ export default function LikesMePage() {
         }}
       >
         <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-          프리미엄으로 업그레이드하면 나를 좋아요한 친구를 모두 볼 수 있어요.
+          Upgrade to Premium to see everyone who liked you.
         </div>
         <button type="button" style={btnPrimarySm} onClick={() => router.push("/subscription")}>
-          전체 보기
+          See all
         </button>
       </div>
 
@@ -95,7 +95,7 @@ export default function LikesMePage() {
             </div>
             <div style={{ padding: 16, flex: 1 }}>
               <div style={{ fontSize: "var(--fs-body)", fontWeight: 800, color: "var(--text)" }}>
-                🔒 프리미엄 전용
+                🔒 Premium only
               </div>
               <p
                 style={{
@@ -104,7 +104,7 @@ export default function LikesMePage() {
                   color: "var(--text-secondary)",
                 }}
               >
-                구독하면 이 프로필을 볼 수 있어요.
+                Subscribe to see this profile.
               </p>
             </div>
             <div style={{ display: "flex", padding: "0 16px 16px" }}>
@@ -124,7 +124,7 @@ export default function LikesMePage() {
                   fontFamily: "inherit",
                 }}
               >
-                프리미엄 시작하기
+                Start Premium
               </button>
             </div>
           </div>

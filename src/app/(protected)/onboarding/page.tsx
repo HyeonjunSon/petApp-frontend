@@ -20,21 +20,21 @@ const apiErr = (e: any) =>
   e?.response?.data?.error ||
   e?.response?.data?.message ||
   e?.message ||
-  "문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+  "Something went wrong. Please try again later.";
 
 const PURPOSES = [
-  { v: "Socializing", label: "친목 · 교류" },
-  { v: "Exercise & health", label: "운동 · 건강" },
-  { v: "Pup socialization", label: "퍼피 사회화" },
-  { v: "Regular walk partner", label: "정기 산책 메이트" },
-  { v: "One-time walk", label: "일회성 산책" },
+  { v: "Socializing", label: "Socializing" },
+  { v: "Exercise & health", label: "Exercise & health" },
+  { v: "Pup socialization", label: "Pup socialization" },
+  { v: "Regular walk partner", label: "Regular walk partner" },
+  { v: "One-time walk", label: "One-time walk" },
 ];
 const TEMPERAMENTS = [
-  { v: "Energetic", label: "활발함" },
-  { v: "Gentle", label: "온순함" },
-  { v: "Shy", label: "낯가림" },
-  { v: "Friendly", label: "친화적" },
-  { v: "Independent", label: "독립적" },
+  { v: "Energetic", label: "Energetic" },
+  { v: "Gentle", label: "Gentle" },
+  { v: "Shy", label: "Shy" },
+  { v: "Friendly", label: "Friendly" },
+  { v: "Independent", label: "Independent" },
 ];
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -178,50 +178,50 @@ export default function OnboardingPage() {
 
       {step === 1 ? (
         <section className="pd-card" style={{ padding: 24 }}>
-          <StepPill>1 / 2 단계</StepPill>
+          <StepPill>Step 1 of 2</StepPill>
           <h1 style={{ margin: 0, fontSize: "var(--fs-h1)", fontWeight: 800, color: "var(--text)" }}>
-            보호자 정보
+            About you
           </h1>
           <p style={{ margin: "6px 0 18px", fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-            산책 매칭을 위해 보호자님에 대해 알려주세요.
+            Tell us about yourself for walk matching.
           </p>
 
-          <SectionLabel>기본 정보</SectionLabel>
+          <SectionLabel>Basic info</SectionLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Field label="이름">
+            <Field label="Name">
               <Input className="pdi" style={INPUT_STYLE} value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <Field label="출생 연도" className="flex-1">
+              <Field label="Birth year" className="flex-1">
                 <Input className="pdi" style={INPUT_STYLE} value={birthYear} onChange={(e) => setBirthYear(e.target.value)} inputMode="numeric" placeholder="1995" />
               </Field>
-              <Field label="성별">
+              <Field label="Gender">
                 <Select className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={gender} onChange={(e) => setGender(e.target.value)}>
-                  <option value="male">남성</option>
-                  <option value="female">여성</option>
-                  <option value="undisclosed">비공개</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="undisclosed">Prefer not to say</option>
                 </Select>
               </Field>
             </div>
-            <Field label="지역">
-              <Input className="pdi" style={INPUT_STYLE} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="서울 마포구" />
+            <Field label="Location">
+              <Input className="pdi" style={INPUT_STYLE} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Mapo-gu, Seoul" />
             </Field>
-            <Field label="한 줄 소개">
-              <Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="나를 소개해 주세요" />
+            <Field label="Short bio">
+              <Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Tell us about yourself" />
             </Field>
           </div>
 
-          <SectionLabel>연락처</SectionLabel>
+          <SectionLabel>Contact</SectionLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Field label="휴대폰 번호">
+            <Field label="Phone number">
               <Input className="pdi" style={INPUT_STYLE} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" />
             </Field>
-            <Field label="이메일">
+            <Field label="Email">
               <Input className="pdi" style={INPUT_STYLE} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} type="email" />
             </Field>
           </div>
 
-          <SectionLabel>산책 목적</SectionLabel>
+          <SectionLabel>Walk goals</SectionLabel>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {PURPOSES.map((p) => (
               <Chip key={p.v} active={purposes.includes(p.v)} onClick={() => toggle(purposes, setPurposes, p.v)}>
@@ -232,18 +232,18 @@ export default function OnboardingPage() {
 
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24 }}>
             <Button onClick={submit1} loading={busy} icon="fwd">
-              다음 — 펫 프로필 만들기
+              Next — Create pet profile
             </Button>
           </div>
         </section>
       ) : (
         <section className="pd-card" style={{ padding: 24 }}>
-          <StepPill>2 / 2 단계</StepPill>
+          <StepPill>Step 2 of 2</StepPill>
           <h1 style={{ margin: 0, fontSize: "var(--fs-h1)", fontWeight: 800, color: "var(--text)" }}>
-            펫 프로필 만들기
+            Create pet profile
           </h1>
           <p style={{ margin: "6px 0 18px", fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
-            우리 아이를 소개해 주세요.
+            Introduce your pet.
           </p>
 
           <input
@@ -262,41 +262,41 @@ export default function OnboardingPage() {
             onClick={() => fileRef.current?.click()}
             style={{ display: "block", width: "100%", border: "none", background: "transparent", padding: 0, cursor: "pointer" }}
           >
-            <ImagePlaceholder src={petPreview || undefined} label="펫 사진" height={180} />
+            <ImagePlaceholder src={petPreview || undefined} label="Pet photo" height={180} />
           </button>
 
-          <SectionLabel>기본 정보</SectionLabel>
+          <SectionLabel>Basic info</SectionLabel>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <Field label="이름">
+            <Field label="Name">
               <Input className="pdi" style={INPUT_STYLE} value={petName} onChange={(e) => setPetName(e.target.value)} />
             </Field>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <Field label="견종" className="flex-1">
-                <Input className="pdi" style={INPUT_STYLE} value={breed} onChange={(e) => setBreed(e.target.value)} placeholder="포메라니안" />
+              <Field label="Breed" className="flex-1">
+                <Input className="pdi" style={INPUT_STYLE} value={breed} onChange={(e) => setBreed(e.target.value)} placeholder="Pomeranian" />
               </Field>
-              <Field label="나이 (살)">
+              <Field label="Age (years)">
                 <Input className="pdi" style={{ ...INPUT_STYLE, width: 120 }} value={age} onChange={(e) => setAge(e.target.value)} inputMode="numeric" />
               </Field>
             </div>
-            <Field label="성별">
+            <Field label="Sex">
               <Select className="pdi" style={INPUT_STYLE} value={sex} onChange={(e) => setSex(e.target.value)}>
-                <option value="male">남아</option>
-                <option value="female">여아</option>
-                <option value="unknown">모름</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="unknown">Unknown</option>
               </Select>
             </Field>
-            <Field label="크기">
+            <Field label="Size">
               <Select className="pdi" style={INPUT_STYLE} value={size} onChange={(e) => setSize(e.target.value)}>
-                <option value="s">소형 (7kg 이하)</option>
-                <option value="m">중형 (7–15kg)</option>
-                <option value="l">대형 (15kg 이상)</option>
+                <option value="s">Small (under 7kg)</option>
+                <option value="m">Medium (7–15kg)</option>
+                <option value="l">Large (over 15kg)</option>
               </Select>
             </Field>
           </div>
 
-          <SectionLabel>성격 · 특징</SectionLabel>
-          <Field label="한 줄 소개">
-            <Textarea className="pdi" style={AREA_STYLE} value={petAbout} onChange={(e) => setPetAbout(e.target.value)} placeholder="우리 아이를 소개해 주세요" />
+          <SectionLabel>Temperament & traits</SectionLabel>
+          <Field label="Short bio">
+            <Textarea className="pdi" style={AREA_STYLE} value={petAbout} onChange={(e) => setPetAbout(e.target.value)} placeholder="Tell us about your pet" />
           </Field>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
             {TEMPERAMENTS.map((tp) => (
@@ -308,10 +308,10 @@ export default function OnboardingPage() {
 
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 24 }}>
             <Button variant="secondary" icon="back" onClick={() => setStep(1)} disabled={busy}>
-              이전
+              Back
             </Button>
             <Button onClick={submit2} loading={busy} icon="check">
-              완료
+              Done
             </Button>
           </div>
         </section>

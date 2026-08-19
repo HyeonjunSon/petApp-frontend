@@ -33,7 +33,7 @@ export default function SideNav() {
   const face =
     (user as any)?.faceUrl ||
     (user?.photos || []).find((p) => p.type === "owner_face")?.url;
-  const name = user?.name || "사용자";
+  const name = user?.name || "User";
   const initial = (name[0] || "P").toString();
 
   return (
@@ -128,8 +128,8 @@ export default function SideNav() {
           type="button"
           onClick={onLogout}
           disabled={busy}
-          title="로그아웃"
-          aria-label="로그아웃"
+          title="Log out"
+          aria-label="Log out"
           className="hidden md:grid"
           style={{
             border: "none",

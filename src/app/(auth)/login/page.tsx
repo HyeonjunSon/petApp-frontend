@@ -12,7 +12,7 @@ const apiErr = (e: any) =>
   e?.response?.data?.error ||
   e?.response?.data?.message ||
   e?.message ||
-  "문제가 발생했어요. 잠시 후 다시 시도해 주세요.";
+  "Something went wrong. Please try again in a moment.";
 
 const css = `
 .au-wrap{display:flex;min-height:100dvh;background:var(--background);color:var(--text)}
@@ -59,42 +59,42 @@ function BrandPanel() {
       </div>
       <div>
         <h1>
-          우리 강아지의
+          Find your dog&apos;s
           <br />
-          산책 친구를
+          perfect
           <br />
-          찾아보세요
+          walking mate
         </h1>
         <p className="sub">
-          가까운 동네 보호자와 펫을 만나 같이 걷고,
+          Meet nearby owners and pets — walk together,
           <br />
-          친구가 되고, 데이트까지 이어져요.
+          become friends, and maybe more.
         </p>
         <ul className="au-feats">
           <li>
             <span className="ic">💜</span>
             <span className="tx">
-              <b>취향 매칭</b>
-              <span>취향과 동네가 맞는 펫을 발견해요</span>
+              <b>Smart matching</b>
+              <span>Discover pets that match your vibe and neighborhood</span>
             </span>
           </li>
           <li>
             <span className="ic">🐕</span>
             <span className="tx">
-              <b>같이 산책하기</b>
-              <span>약속을 잡고 산책 기록을 남겨요</span>
+              <b>Walk together</b>
+              <span>Plan meetups and keep a log of your walks</span>
             </span>
           </li>
           <li>
             <span className="ic">🛡️</span>
             <span className="tx">
-              <b>안전한 만남</b>
-              <span>인증 배지 · 신고 · 차단으로 안심해요</span>
+              <b>Safe meetups</b>
+              <span>Verified badges, report and block for peace of mind</span>
             </span>
           </li>
         </ul>
       </div>
-      <p className="foot">© 2026 PetDate · 반려동물 산책 메이트</p>
+      <p className="foot">© 2026 PetDate · Walking mates for your pet</p>
       <span className="bigpaw" aria-hidden>
         🐾
       </span>
@@ -147,14 +147,14 @@ export default function LoginPage() {
   const doForgotSend = () =>
     run(async () => {
       await api.post("/auth/forgot-password", { email });
-      setMsg("재설정 코드를 이메일로 보내드렸어요.");
+      setMsg("We sent a reset code to your email.");
       setForgotStep(2);
     });
 
   const doReset = () =>
     run(async () => {
       await api.post("/auth/reset-password", { email, code, newPassword: newPw });
-      setMsg("비밀번호가 변경되었어요. 다시 로그인해 주세요.");
+      setMsg("Your password has been changed. Please log in again.");
       setMode("login");
       setForgotStep(1);
       setCode("");
@@ -170,13 +170,13 @@ export default function LoginPage() {
         <div className="au-card">
           {mode === "login" ? (
             <>
-              <h2>다시 만나서 반가워요</h2>
-              <p className="hint">로그인하고 산책 친구를 만나보세요.</p>
+              <h2>Welcome back</h2>
+              <p className="hint">Log in and meet walking mates.</p>
             </>
           ) : (
             <>
-              <h2>비밀번호 재설정</h2>
-              <p className="hint">가입한 이메일로 재설정 코드를 보내드려요.</p>
+              <h2>Reset password</h2>
+              <p className="hint">We&apos;ll send a reset code to your email.</p>
             </>
           )}
 
@@ -199,7 +199,7 @@ export default function LoginPage() {
               }}
             >
               <div className="au-field">
-                <label htmlFor="login-email">이메일</label>
+                <label htmlFor="login-email">Email</label>
                 <input
                   id="login-email"
                   type="email"
@@ -210,7 +210,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="au-field">
-                <label htmlFor="login-pw">비밀번호</label>
+                <label htmlFor="login-pw">Password</label>
                 <div className="au-pw">
                   <input
                     id="login-pw"
@@ -221,12 +221,12 @@ export default function LoginPage() {
                     placeholder="••••••••"
                   />
                   <button type="button" onClick={() => setShowPw((v) => !v)}>
-                    {showPw ? "숨김" : "표시"}
+                    {showPw ? "Hide" : "Show"}
                   </button>
                 </div>
               </div>
               <button type="submit" className="au-btn" disabled={busy}>
-                {busy ? "로그인 중..." : "로그인"}
+                {busy ? "Logging in..." : "Log in"}
               </button>
               <div className="au-links">
                 <button
@@ -238,10 +238,10 @@ export default function LoginPage() {
                     setMsg(null);
                   }}
                 >
-                  비밀번호를 잊으셨나요?
+                  Forgot password?
                 </button>
                 <span>
-                  계정이 없나요? <Link href="/register">회원가입</Link>
+                  No account? <Link href="/register">Sign up</Link>
                 </span>
               </div>
             </form>
@@ -254,7 +254,7 @@ export default function LoginPage() {
               }}
             >
               <div className="au-field">
-                <label htmlFor="forgot-email">이메일</label>
+                <label htmlFor="forgot-email">Email</label>
                 <input
                   id="forgot-email"
                   type="email"
@@ -268,17 +268,17 @@ export default function LoginPage() {
               {forgotStep === 2 && (
                 <>
                   <div className="au-field">
-                    <label htmlFor="forgot-code">인증 코드</label>
+                    <label htmlFor="forgot-code">Verification code</label>
                     <input
                       id="forgot-code"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       inputMode="numeric"
-                      placeholder="6자리 코드"
+                      placeholder="6-digit code"
                     />
                   </div>
                   <div className="au-field">
-                    <label htmlFor="forgot-newpw">새 비밀번호</label>
+                    <label htmlFor="forgot-newpw">New password</label>
                     <input
                       id="forgot-newpw"
                       type="password"
@@ -286,12 +286,12 @@ export default function LoginPage() {
                       onChange={(e) => setNewPw(e.target.value)}
                       autoComplete="new-password"
                     />
-                    <p className="sub-hint">6자 이상 입력해 주세요.</p>
+                    <p className="sub-hint">Use at least 6 characters.</p>
                   </div>
                 </>
               )}
               <button type="submit" className="au-btn" disabled={busy}>
-                {forgotStep === 1 ? "재설정 코드 보내기" : "비밀번호 변경"}
+                {forgotStep === 1 ? "Send reset code" : "Change password"}
               </button>
               <button
                 type="button"
@@ -303,7 +303,7 @@ export default function LoginPage() {
                   setMsg(null);
                 }}
               >
-                로그인으로 돌아가기
+                Back to log in
               </button>
             </form>
           )}

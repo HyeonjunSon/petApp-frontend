@@ -5,10 +5,10 @@ import { Icon, Select } from "@/components/ui";
 
 /* 시안 칩: 기존 크기 필터 옵션(전체/소형/중형/대형)을 한국어 칩으로 */
 const SIZE_CHIPS = [
-  { value: "all", label: "전체" },
-  { value: "small", label: "🐕 소형견" },
-  { value: "medium", label: "중형견" },
-  { value: "large", label: "🦮 대형견" },
+  { value: "all", label: "All" },
+  { value: "small", label: "🐕 Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "🦮 Large" },
 ];
 
 function Labeled({ label, children }: { label: string; children: React.ReactNode }) {
@@ -88,7 +88,7 @@ export default function Filters({ onApply }: { onApply: () => void }) {
           }}
         >
           <Icon name="filter" size={16} />
-          필터
+          Filters
         </button>
       </div>
 
@@ -106,20 +106,20 @@ export default function Filters({ onApply }: { onApply: () => void }) {
             flexWrap: "wrap",
           }}
         >
-          <Labeled label="거리">
+          <Labeled label="Distance">
             <Select value={dist} onChange={(e) => setDist(e.target.value)} style={selStyle}>
-              <option value="500">500m 이내</option>
-              <option value="1000">1km 이내</option>
-              <option value="3000">3km 이내</option>
-              <option value="10000">10km 이내</option>
+              <option value="500">Within 500m</option>
+              <option value="1000">Within 1km</option>
+              <option value="3000">Within 3km</option>
+              <option value="10000">Within 10km</option>
             </Select>
           </Labeled>
-          <Labeled label="성격">
+          <Labeled label="Temperament">
             <Select value={temper} onChange={(e) => setTemper(e.target.value)} style={selStyle}>
-              <option value="all">전체</option>
-              <option value="active">활발해요</option>
-              <option value="calm">차분해요</option>
-              <option value="social">사교적이에요</option>
+              <option value="all">All</option>
+              <option value="active">Energetic</option>
+              <option value="calm">Calm</option>
+              <option value="social">Friendly</option>
             </Select>
           </Labeled>
           <button
@@ -140,7 +140,7 @@ export default function Filters({ onApply }: { onApply: () => void }) {
               cursor: "pointer",
             }}
           >
-            필터 적용
+            Apply Filters
           </button>
         </div>
       )}

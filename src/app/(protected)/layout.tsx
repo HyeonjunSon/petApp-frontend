@@ -54,7 +54,7 @@ export default function ProtectedLayout({
         className="grid min-h-dvh place-items-center text-sm"
         style={{ color: "var(--text-secondary)" }}
       >
-        불러오는 중…
+        Loading…
       </div>
     );
   }

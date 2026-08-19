@@ -10,16 +10,16 @@ export default function TopNav() {
           🐾 PetDate
         </Link>
         <nav className="ld-nav">
-          <a href="#feats">기능</a>
-          <a href="#how">이용 방법</a>
-          <a href="#safety">안전</a>
+          <a href="#feats">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#safety">Safety</a>
         </nav>
         <span className="cta">
           <Link href="/login" className="lg">
-            로그인
+            Log in
           </Link>
           <Link href="/register" className="ld-btn-sm">
-            시작하기
+            Get started
           </Link>
         </span>
       </div>
