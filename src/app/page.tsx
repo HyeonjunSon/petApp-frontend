@@ -33,6 +33,7 @@ const css = `
 .ld-hero .visual{display:flex;justify-content:center}
 .ld-match{width:300px;transform:rotate(2.5deg);background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card-strong);overflow:hidden;display:flex;flex-direction:column}
 .ld-match .ph{height:190px;background:var(--input-bg);display:grid;place-items:center;font-size:64px;position:relative}
+.ld-match .ph img{width:100%;height:100%;object-fit:cover;display:block}
 .ld-match .dist{position:absolute;left:12px;top:12px;background:rgba(0,0,0,.45);color:var(--white);font-size:var(--fs-micro);font-weight:var(--fw-semibold);border-radius:var(--radius-pill);padding:3px 10px}
 .ld-match .bd{padding:16px;flex:1}
 .ld-match .nm{font-size:var(--fs-body);font-weight:var(--fw-extrabold);color:var(--text)}

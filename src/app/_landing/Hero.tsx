@@ -28,11 +28,13 @@ export default function Hero() {
       <div className="visual" aria-hidden>
         <div className="ld-match">
           <div className="ph">
-            🐩<span className="dist">0.8km</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/img/hero-bori.jpg" alt="" />
+            <span className="dist">0.8km</span>
           </div>
           <div className="bd">
             <div className="nm">Bori · 2 yrs</div>
-            <div className="mt">Poodle · Female · Owner Minji</div>
+            <div className="mt">Welsh Corgi · Female · Owner Minji</div>
             <div className="tags">
               <span className="tag">Morning walks</span>
               <span className="tag">Fetch</span>
