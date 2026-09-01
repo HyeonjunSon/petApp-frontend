@@ -16,7 +16,7 @@ export default function Segmented<T extends string>({
   return (
     <div
       className="flex gap-1 p-1"
-      style={{ background: "var(--input-bg)", borderRadius: "var(--radius-lg)" }}
+      style={{ background: "var(--paper)", borderRadius: 999 }}
     >
       {items.map((it) => {
         const active = it.v === value;
@@ -27,15 +27,14 @@ export default function Segmented<T extends string>({
             onClick={() => onChange(it.v)}
             className="flex flex-1 items-center justify-center gap-1.5 px-2 py-2.5"
             style={{
-              background: active ? "var(--surface)" : "transparent",
-              color: active ? "var(--text)" : "var(--text-secondary)",
+              background: active ? "var(--ink)" : "transparent",
+              color: active ? "var(--paper)" : "var(--fence)",
               fontSize: "var(--fs-meta)",
-              fontWeight: active ? 700 : 500,
+              fontWeight: active ? 600 : 500,
               border: "none",
-              borderRadius: "var(--radius-md)",
+              borderRadius: 999,
               cursor: "pointer",
               fontFamily: "inherit",
-              boxShadow: active ? "var(--shadow-card)" : "none",
             }}
           >
             {it.icon && <Icon name={it.icon} size={14} />}

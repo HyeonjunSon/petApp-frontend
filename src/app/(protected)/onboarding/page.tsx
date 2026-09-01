@@ -39,14 +39,14 @@ const TEMPERAMENTS = [
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 const AREA_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
 };
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -70,8 +70,8 @@ function StepPill({ children }: { children: React.ReactNode }) {
       style={{
         display: "inline-flex",
         alignItems: "center",
-        background: "var(--primary-10)",
-        color: "var(--primary)",
+        background: "var(--ball)",
+        color: "var(--ball-ink)",
         fontSize: "var(--fs-micro)",
         fontWeight: 700,
         borderRadius: "var(--radius-pill)",
@@ -173,11 +173,11 @@ export default function OnboardingPage() {
 
   return (
     <Page maxWidth={860}>
-      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+      <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
       {step === 1 ? (
-        <section className="pd-card" style={{ padding: 24 }}>
+        <section className="card" style={{ padding: 24 }}>
           <StepPill>Step 1 of 2</StepPill>
           <h1 style={{ margin: 0, fontSize: "var(--fs-h1)", fontWeight: 800, color: "var(--text)" }}>
             About you
@@ -237,7 +237,7 @@ export default function OnboardingPage() {
           </div>
         </section>
       ) : (
-        <section className="pd-card" style={{ padding: 24 }}>
+        <section className="card" style={{ padding: 24 }}>
           <StepPill>Step 2 of 2</StepPill>
           <h1 style={{ margin: 0, fontSize: "var(--fs-h1)", fontWeight: 800, color: "var(--text)" }}>
             Create pet profile

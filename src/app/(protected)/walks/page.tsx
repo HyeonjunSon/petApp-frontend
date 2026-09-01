@@ -2,7 +2,7 @@
 
 /** Walk Plans — meetup (walk-invite) list. Completed plans auto-create records. */
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
@@ -26,68 +26,6 @@ type WalkRecord = {
   startedAt: string;
 };
 
-/* ── 시안 스타일 (petdate-website.html #page-walks) ── */
-const cardStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  borderRadius: "var(--radius-xl)",
-  boxShadow: "var(--shadow-card)",
-  overflow: "hidden",
-};
-const sectionTitleStyle: React.CSSProperties = {
-  margin: "28px 0 12px",
-  fontSize: "var(--fs-h3)",
-  fontWeight: 800,
-  color: "var(--text)",
-};
-const btnPrimarySm: React.CSSProperties = {
-  background: "var(--primary)",
-  color: "var(--white)",
-  fontSize: "var(--fs-meta)",
-  fontWeight: 700,
-  borderRadius: "var(--radius-md)",
-  padding: "10px 16px",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-};
-const btnGhostSm: React.CSSProperties = {
-  ...btnPrimarySm,
-  background: "var(--input-bg)",
-  color: "var(--text-secondary)",
-  fontWeight: 600,
-};
-
-const PILL_TONES: Record<string, { bg: string; fg: string }> = {
-  proposed: { bg: "var(--warning-soft)", fg: "var(--warning)" },
-  confirmed: { bg: "var(--success-soft)", fg: "var(--success)" },
-  completed: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
-  declined: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
-  cancelled: { bg: "var(--input-bg)", fg: "var(--text-secondary)" },
-};
-
-function Pill({ status }: { status: string }) {
-  const t = PILL_TONES[status] || PILL_TONES.completed;
-  return (
-    <span
-      style={{
-        fontSize: "var(--fs-micro)",
-        fontWeight: 700,
-        borderRadius: "var(--radius-pill)",
-        padding: "4px 12px",
-        background: t.bg,
-        color: t.fg,
-        whiteSpace: "nowrap",
-        flexShrink: 0,
-      }}
-    >
-      {STATUS[status] || status}
-    </span>
-  );
-}
-
 /** "HH:MM" → "10:00 AM" */
 function fmtTime(t?: string) {
   if (!t) return "";
@@ -100,15 +38,13 @@ function fmtTime(t?: string) {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/** "YYYY-MM-DD" → { day: "11", month: "Aug" } */
-function calParts(date?: string) {
+/** "YYYY-MM-DD" → "Aug 11" */
+function fmtDay(date?: string) {
   const d = String(date || "");
   const day = Number(d.slice(8, 10));
   const month = Number(d.slice(5, 7));
-  return {
-    day: Number.isNaN(day) ? "-" : String(day),
-    month: Number.isNaN(month) ? "" : MONTHS[month - 1] || "",
-  };
+  if (Number.isNaN(day) || Number.isNaN(month)) return "—";
+  return `${MONTHS[month - 1] || ""} ${day}`;
 }
 
 /** minutes → "6h 40m" */
@@ -129,6 +65,7 @@ export default function WalksPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [records, setRecords] = useState<WalkRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     const today = new Date();
@@ -146,6 +83,16 @@ export default function WalksPage() {
       setLoading(false);
     });
   }, []);
+
+  /** Accept a received pending invite (same logic as the detail page). */
+  const accept = async (id: string) => {
+    setBusyId(id);
+    try {
+      const { data } = await api.patch<WalkInvite>(`/walk-invites/${id}`, { status: "confirmed" });
+      setInvites((prev) => prev.map((x) => (x._id === id ? data : x)));
+    } catch {}
+    setBusyId(null);
+  };
 
   const peerName = (matchId: string) => {
     const m = matches.find((x) => x._id === matchId);
@@ -171,18 +118,13 @@ export default function WalksPage() {
     [invites]
   );
 
-  /* 이번 달 산책 / 총 거리 / 총 시간 (산책 기록 기준) */
+  /* 산책 통계 — 세 값 모두 같은 기간(가져온 최근 1년 기록)으로 계산 */
   const stats = useMemo(() => {
-    const now = new Date();
-    const monthCount = records.filter((w) => {
-      const d = new Date(w.startedAt);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    }).length;
     const dist = records.reduce((s, w) => s + (w.distanceKm || 0), 0);
     const mins = records.reduce((s, w) => s + (w.durationMin || 0), 0);
     return {
-      count: `${monthCount}`,
-      dist: `${Math.round(dist * 10) / 10}km`,
+      count: `${records.length}`,
+      dist: `${Math.round(dist * 10) / 10} km`,
       time: fmtDuration(mins),
     };
   }, [records]);
@@ -202,71 +144,53 @@ export default function WalksPage() {
     return i.place ? `Walk with ${n.pet} at ${i.place}` : `Walk with ${n.pet}`;
   };
 
-  const Row = ({ i, metaOverride }: { i: WalkInvite; metaOverride?: string }) => {
-    const n = peerName(i.match);
-    const cal = calParts(i.date);
-    const meta =
-      metaOverride ||
-      [fmtTime(i.time), i.place || `with ${n.owner}`].filter(Boolean).join(" · ");
-    return (
-      <button
-        type="button"
-        onClick={() => router.push(`/walks/${i._id}`)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "16px 18px",
-          width: "100%",
-          textAlign: "left",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "inherit",
-        }}
-      >
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: "var(--radius-lg)",
-            background: "var(--primary-10)",
-            color: "var(--primary)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <b style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>{cal.day}</b>
-          <span style={{ fontSize: "var(--fs-nano)", fontWeight: 700 }}>{cal.month}</span>
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <b
-            style={{
-              display: "block",
-              fontSize: "var(--fs-body)",
-              fontWeight: 700,
-              color: "var(--text)",
+  /** 우측 상태: confirmed/completed → .pill, 수신 pending → Accept 버튼, 그 외 .tag */
+  const StatusEnd = ({ i }: { i: WalkInvite }) => {
+    if (i.status === "confirmed" || i.status === "completed") {
+      return <span className="pill">{STATUS[i.status]}</span>;
+    }
+    if (i.status === "proposed") {
+      if (i.from !== myId) {
+        return (
+          <button
+            type="button"
+            className="btn btn-ball btn-sm"
+            disabled={busyId === i._id}
+            onClick={(e) => {
+              e.stopPropagation();
+              accept(i._id);
             }}
           >
-            {rowTitle(i)}
-          </b>
-          <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
-            {meta}
-          </span>
-        </div>
-        <Pill status={i.status} />
-      </button>
-    );
+            Accept
+          </button>
+        );
+      }
+      return <span className="tag">Pending</span>;
+    }
+    return <span className="tag">{STATUS[i.status] || i.status}</span>;
   };
 
-  const RowList = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
-      {React.Children.map(children, (child, idx) => (
-        <div style={idx > 0 ? { borderTop: "1px solid var(--border)" } : undefined}>{child}</div>
-      ))}
+  /** 스캐폴드 .walk-row: 좌측 큰 시간/날짜 + 제목/메타 + 우측 상태 */
+  const Row = ({ i, timeLabel, meta }: { i: WalkInvite; timeLabel: string; meta: string }) => (
+    <div
+      className="walk-row"
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/walks/${i._id}`)}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === "Enter" || e.key === " ") router.push(`/walks/${i._id}`);
+      }}
+      style={{ cursor: "pointer" }}
+    >
+      <span className="walk-row-time">{timeLabel}</span>
+      <span className="walk-row-info">
+        {rowTitle(i)}
+        <small>{meta}</small>
+      </span>
+      <span className="end">
+        <StatusEnd i={i} />
+      </span>
     </div>
   );
 
@@ -276,17 +200,17 @@ export default function WalksPage() {
       subtitle="Upcoming plans and past records."
       right={
         <>
-          <button type="button" style={btnGhostSm} onClick={() => router.push("/walks/records")}>
+          <button type="button" className="btn btn-ghost" onClick={() => router.push("/walks/records")}>
             Records
           </button>
-          <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
-            + New plan
+          <button type="button" className="btn btn-ball" onClick={() => router.push("/walks/new")}>
+            Plan a walk
           </button>
         </>
       }
     >
       {loading ? (
-        <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}>
+        <div className="flex justify-center pt-16" style={{ color: "var(--fence)" }}>
           <Spinner />
         </div>
       ) : invites.length === 0 ? (
@@ -295,78 +219,53 @@ export default function WalksPage() {
           title="No walk plans yet"
           desc="Make your first walk plan with a matched friend."
           action={
-            <button type="button" style={btnPrimarySm} onClick={() => router.push("/walks/new")}>
-              + New plan
+            <button type="button" className="btn btn-ball" onClick={() => router.push("/walks/new")}>
+              Plan a walk
             </button>
           }
         />
       ) : (
         <>
-          {/* 통계 */}
+          {/* 이번 달 통계 — 한 장의 카드 + display 큰 숫자 */}
           <div
+            className="card"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: 14,
-              marginBottom: 8,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "baseline",
+              gap: 12,
+              flexWrap: "wrap",
             }}
           >
-            {[
-              { v: stats.count, l: "Walks this month" },
-              { v: stats.dist, l: "Total distance" },
-              { v: stats.time, l: "Total time" },
-            ].map((s) => (
-              <div
-                key={s.l}
-                style={{
-                  background: "var(--surface)",
-                  borderRadius: "var(--radius-2xl)",
-                  boxShadow: "var(--shadow-card)",
-                  padding: 20,
-                }}
-              >
-                <div style={{ fontSize: 26, fontWeight: 800, color: "var(--primary)" }}>{s.v}</div>
-                <div
-                  style={{
-                    marginTop: 2,
-                    fontSize: "var(--fs-caption)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {s.l}
-                </div>
-              </div>
-            ))}
+            <span>This month</span>
+            <span className="display" style={{ fontSize: 28 }}>
+              {stats.count} walks · {stats.dist} · {stats.time}
+            </span>
           </div>
 
           {/* 다가오는 약속 */}
-          <div style={sectionTitleStyle}>Upcoming</div>
+          <h2 style={{ fontSize: 18, margin: "10px 0 0" }}>Upcoming</h2>
           {upcoming.length === 0 ? (
-            <div style={{ ...cardStyle, padding: "16px 18px" }}>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "var(--fs-body-sm)",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                No upcoming plans.
-              </p>
+            <div className="card">
+              <p style={{ margin: 0, fontSize: 15, color: "var(--fence)" }}>No upcoming plans.</p>
             </div>
           ) : (
-            <RowList>
-              {upcoming.map((i) => (
-                <Row key={i._id} i={i} />
-              ))}
-            </RowList>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {upcoming.map((i) => {
+                const n = peerName(i.match);
+                const meta = [fmtDay(i.date), i.place || `with ${n.owner}`].filter(Boolean).join(" · ");
+                return <Row key={i._id} i={i} timeLabel={fmtTime(i.time) || "—"} meta={meta} />;
+              })}
+            </div>
           )}
 
           {/* 지난 산책 */}
           {past.length > 0 && (
             <>
-              <div style={sectionTitleStyle}>Past walks</div>
-              <RowList>
+              <h2 style={{ fontSize: 18, margin: "10px 0 0" }}>Past walks</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {past.slice(0, 5).map((i) => {
+                  const n = peerName(i.match);
                   const rec = recordByDate.get(i.date);
                   const meta = rec
                     ? [
@@ -375,13 +274,12 @@ export default function WalksPage() {
                       ]
                         .filter(Boolean)
                         .join(" · ")
-                    : undefined;
-                  return <Row key={i._id} i={i} metaOverride={meta} />;
+                    : [fmtTime(i.time), i.place || `with ${n.owner}`].filter(Boolean).join(" · ");
+                  return <Row key={i._id} i={i} timeLabel={fmtDay(i.date)} meta={meta} />;
                 })}
-              </RowList>
+              </div>
             </>
           )}
-
         </>
       )}
     </Page>

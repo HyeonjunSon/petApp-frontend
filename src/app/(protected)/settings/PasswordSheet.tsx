@@ -6,8 +6,8 @@ import { Banner, Button, Field, Input, Sheet } from "@/components/ui";
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 
@@ -59,7 +59,7 @@ export default function PasswordSheet({
   return (
     <Sheet open={open} onClose={close} title="Change password">
       <div className="flex flex-col gap-3 px-5 pt-2 pb-6">
-        <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+        <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
         {err && <Banner tone="rose">{err}</Banner>}
         <Field label="Current password" required>
           <Input

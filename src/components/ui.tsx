@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * PetDate UI components.
+ * Offleash UI components.
  * Single source of truth: docs/DESIGN.md (sections 6 & 7).
  *
  * Owner: [DS] for spec, [FE common] for implementation.

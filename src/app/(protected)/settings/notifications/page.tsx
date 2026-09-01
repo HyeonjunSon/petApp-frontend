@@ -49,13 +49,13 @@ function Group({
   return (
     <div>
       <SectionTitle>{title}</SectionTitle>
-      <div className="pd-card" style={{ padding: "6px 16px" }}>
+      <div className="card" style={{ padding: "6px 16px" }}>
         {items.map(([k, label], i) => (
           <div
             key={k}
             style={{
               padding: "13px 0",
-              borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
+              borderTop: i === 0 ? "none" : "1px solid var(--line)",
             }}
           >
             <Switch on={state[k] ?? true} onChange={(v) => setState(k, v)} label={label} />
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
       <SectionTitle first>Notification consent</SectionTitle>
-      <div className="pd-card" style={{ padding: 16 }}>
+      <div className="card" style={{ padding: 16 }}>
         <Switch on={master} onChange={setMaster} label="Receive all notifications" />
         <p style={{ margin: "8px 0 0", fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
           Turn this on to receive all notifications below.

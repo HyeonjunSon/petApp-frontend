@@ -7,22 +7,11 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
-import { Button, Input, Textarea, Select, Field, Banner } from "@/components/ui";
+import { Input, Textarea, Select, Field, Banner, Spinner } from "@/components/ui";
 import { type Match, peerOf, pickPet } from "../../chat/types";
 
-/* 시안 카드: surface + radius-2xl + shadow-card, 보더 없음 */
-const cardStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  borderRadius: "var(--radius-2xl)",
-  boxShadow: "var(--shadow-card)",
-  padding: 20,
-};
-const cardTitleStyle: React.CSSProperties = {
-  margin: "0 0 16px",
-  fontSize: "var(--fs-h3)",
-  fontWeight: 800,
-  color: "var(--text)",
-};
+/* v2 인풋: --paper 배경 + radius 12 (보더는 공용 컴포넌트의 --line 그대로) */
+const inputBg: React.CSSProperties = { background: "var(--paper)" };
 
 export default function NewWalkInvitePage() {
   const router = useRouter();
@@ -88,20 +77,20 @@ export default function NewWalkInvitePage() {
   };
 
   return (
-    <Page title="New plan" subtitle="Set up a new walk with a friend." maxWidth={880}>
-      {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
+    <Page title="New plan" subtitle="Set up a new walk with a friend.">
+      {err && <Banner tone="rose">{err}</Banner>}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>Basic info</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 880 }}>
+        <div className="card">
+          <h2 style={{ fontSize: 18, margin: "0 0 14px" }}>Basic info</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <Field label="Partner" required>
               {matches.length === 0 ? (
-                <p style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)", margin: 0 }}>
+                <p style={{ fontSize: 14, color: "var(--fence)", margin: 0 }}>
                   No matches yet. Make a friend in Discover first.
                 </p>
               ) : (
-                <Select value={matchId} onChange={(e) => setMatchId(e.target.value)}>
+                <Select value={matchId} onChange={(e) => setMatchId(e.target.value)} style={inputBg}>
                   {matches.map((m) => (
                     <option key={m._id} value={m._id}>{partnerLabel(m)}</option>
                   ))}
@@ -109,20 +98,20 @@ export default function NewWalkInvitePage() {
               )}
             </Field>
             <Field label="Title">
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Weekend morning walk" />
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Weekend morning walk" style={inputBg} />
             </Field>
             <Field label="Place">
-              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Seoul Forest" />
+              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Seoul Forest" style={inputBg} />
             </Field>
             <Field label="Address · Meeting point">
-              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter an address or meeting point" />
+              <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter an address or meeting point" style={inputBg} />
             </Field>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <Field label="Estimated duration (min)">
-                <Input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={{ width: 140 }} />
+                <Input value={duration} onChange={(e) => setDuration(e.target.value)} inputMode="numeric" style={{ ...inputBg, width: 140 }} />
               </Field>
               <Field label="Max people">
-                <Select value={maxPeople} onChange={(e) => setMaxPeople(e.target.value)} style={{ width: 110 }}>
+                <Select value={maxPeople} onChange={(e) => setMaxPeople(e.target.value)} style={{ ...inputBg, width: 110 }}>
                   {["2", "3", "4", "5"].map((n) => <option key={n} value={n}>{n}</option>)}
                 </Select>
               </Field>
@@ -130,18 +119,18 @@ export default function NewWalkInvitePage() {
           </div>
         </div>
 
-        <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>Schedule</h2>
+        <div className="card">
+          <h2 style={{ fontSize: 18, margin: "0 0 14px" }}>Schedule</h2>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Field label="Date" required>
-              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ width: 180 }} />
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={{ ...inputBg, width: 180 }} />
             </Field>
             <Field label="Start time" required>
-              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={{ width: 180 }} />
+              <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} style={{ ...inputBg, width: 180 }} />
             </Field>
           </div>
           <Field label="Pet condition" className="mt-4">
-            <Select value={petCond} onChange={(e) => setPetCond(e.target.value)}>
+            <Select value={petCond} onChange={(e) => setPetCond(e.target.value)} style={inputBg}>
               <option value="any">Any</option>
               <option value="small">Small dogs only</option>
               <option value="medium">Medium dogs only</option>
@@ -150,10 +139,10 @@ export default function NewWalkInvitePage() {
           </Field>
         </div>
 
-        <div style={cardStyle}>
-          <h2 style={cardTitleStyle}>Participation</h2>
+        <div className="card">
+          <h2 style={{ fontSize: 18, margin: "0 0 14px" }}>Participation</h2>
           <Field label="Approval">
-            <Select value={approval} onChange={(e) => setApproval(e.target.value)}>
+            <Select value={approval} onChange={(e) => setApproval(e.target.value)} style={inputBg}>
               <option value="auto">Auto-accept</option>
               <option value="manual">Manual approval</option>
             </Select>
@@ -161,10 +150,18 @@ export default function NewWalkInvitePage() {
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <Button variant="secondary" onClick={() => router.push("/walks")}>Cancel</Button>
-          <Button onClick={submit} loading={busy} disabled={matches.length === 0}>
+          <button type="button" className="btn btn-ghost" onClick={() => router.push("/walks")}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={submit}
+            disabled={busy || matches.length === 0}
+          >
+            {busy && <Spinner />}
             Create plan
-          </Button>
+          </button>
         </div>
       </div>
     </Page>

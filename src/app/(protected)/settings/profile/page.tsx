@@ -22,19 +22,19 @@ const REGIONS = [
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 const AREA_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
 };
 
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <section className="pd-card" style={{ padding: 20, ...style }}>
+    <section className="card" style={{ padding: 20, ...style }}>
       {children}
     </section>
   );
@@ -137,7 +137,7 @@ export default function OwnerProfileEditPage() {
 
   return (
     <Page title="Edit profile" subtitle="Manage the info other owners will see." maxWidth={860}>
-      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+      <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
 
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onPick(e.target.files?.[0] || null)} />

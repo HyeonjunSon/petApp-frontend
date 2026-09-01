@@ -1,79 +1,51 @@
 import React from "react";
 
 /**
- * Page — standard content frame for app screens.
- * Big bold title (wireframe) + optional right-aligned actions.
+ * Page — Offleash v2 content frame. Renders as the shell's main column
+ * (spanning the rail slot too) with a display-font title row.
  */
 export function Page({
   title,
   subtitle,
   right,
   children,
-  maxWidth = 1080,
 }: {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
   right?: React.ReactNode;
   children: React.ReactNode;
+  /** kept for compatibility with older call sites; unused in v2 */
   maxWidth?: number;
 }) {
   return (
-    <div style={{ padding: "32px 40px 64px" }}>
-      <div style={{ maxWidth, margin: "0 auto" }}>
-        {(title || right) && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 16,
-              flexWrap: "wrap",
-              marginBottom: 24,
-            }}
-          >
-            <div>
-              {title && (
-                <h1
-                  style={{
-                    margin: 0,
-                    fontSize: "var(--fs-h1)",
-                    fontWeight: 800,
-                    color: "var(--text)",
-                    letterSpacing: "var(--ls-snug)",
-                  }}
-                >
-                  {title}
-                </h1>
-              )}
-              {subtitle && (
-                <p
-                  style={{
-                    margin: "4px 0 0",
-                    fontSize: "var(--fs-meta)",
-                    color: "var(--text-secondary)",
-                  }}
-                >
-                  {subtitle}
-                </p>
-              )}
-            </div>
-            {right && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  flexWrap: "wrap",
-                }}
-              >
-                {right}
-              </div>
+    <main className="shell-main wide">
+      {(title || right) && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            gap: 16,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            {title && <h1 style={{ fontSize: 28 }}>{title}</h1>}
+            {subtitle && (
+              <p style={{ margin: "4px 0 0", fontSize: 14, color: "var(--fence)" }}>
+                {subtitle}
+              </p>
             )}
           </div>
-        )}
-        {children}
-      </div>
-    </div>
+          {right && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {right}
+            </div>
+          )}
+        </div>
+      )}
+      {children}
+    </main>
   );
 }
 
@@ -92,41 +64,22 @@ export function CenteredPage({
   width?: number;
 }) {
   return (
-    <div style={{ padding: "48px 24px 64px" }}>
-      <div style={{ maxWidth: width, margin: "0 auto" }}>
-        {title && (
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 22,
-              fontWeight: 800,
-              color: "var(--ink)",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {title}
-          </h1>
-        )}
+    <main className="shell-main wide">
+      <div style={{ maxWidth: width, width: "100%", margin: "0 auto" }}>
+        {title && <h1 style={{ fontSize: 24 }}>{title}</h1>}
         {subtitle && (
-          <p
-            style={{
-              margin: "8px 0 0",
-              fontSize: 14,
-              color: "var(--ink-soft)",
-            }}
-          >
+          <p style={{ margin: "8px 0 0", fontSize: 14, color: "var(--fence)" }}>
             {subtitle}
           </p>
         )}
-        <div style={{ marginTop: title ? 24 : 0 }}>{children}</div>
+        <div style={{ marginTop: title ? 20 : 0 }}>{children}</div>
       </div>
-    </div>
+    </main>
   );
 }
 
 /**
- * ImagePlaceholder — the gray "X" placeholder boxes used throughout the
- * wireframes for not-yet-uploaded pet/profile photos.
+ * ImagePlaceholder — photo box with graceful fallback.
  */
 export function ImagePlaceholder({
   label,
@@ -169,12 +122,12 @@ export function ImagePlaceholder({
         width: "100%",
         height,
         borderRadius: radius,
-        background: "var(--surface-2)",
-        border: "1px dashed var(--border-strong)",
+        background: "var(--paper)",
+        border: "1px dashed var(--line)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: "var(--ink-faint)",
+        color: "var(--fence)",
         fontSize: 13,
         textAlign: "center",
         padding: 12,

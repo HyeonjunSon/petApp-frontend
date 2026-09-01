@@ -738,8 +738,8 @@ const DICT: Record<string, Entry> = {
   "pay.title": { en: "Membership", ko: "멤버십" },
   "pay.kicker": { en: "Premium", ko: "프리미엄" },
   "pay.heading": {
-    en: "Walk further with PetDate.",
-    ko: "PetDate와 더 멀리.",
+    en: "Walk further with Offleash.",
+    ko: "Offleash와 더 멀리.",
   },
   "pay.sub": {
     en: "Unlock unlimited swipes, see who liked you, and boost your profile.",

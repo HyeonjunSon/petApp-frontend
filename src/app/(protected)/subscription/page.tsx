@@ -75,12 +75,12 @@ export default function SubscriptionPage() {
 
   return (
     <Page title="Premium" subtitle="Unlock more matches and premium features." maxWidth={920}>
-      <section className="pd-card" style={{ padding: 20 }}>
+      <section className="card" style={{ padding: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Current plan</div>
             <div style={{ fontSize: "var(--fs-h2)", fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
-              {premium ? "PetDate Premium" : "Free plan"}
+              {premium ? "Offleash Premium" : "Free plan"}
             </div>
             <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)", marginTop: 4 }}>
               {premium ? "Enjoying all premium benefits" : "5 swipes per day · limited match messages"}
@@ -114,7 +114,7 @@ export default function SubscriptionPage() {
       <h2 style={{ margin: "32px 0 14px", fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)" }}>Frequently asked questions</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {FAQ.map(([q, a]) => (
-          <section className="pd-card" key={q} style={{ padding: 20 }}>
+          <section className="card" key={q} style={{ padding: 20 }}>
             <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>{q}</div>
             <p style={{ margin: "8px 0 0", fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>{a}</p>
           </section>
@@ -141,13 +141,11 @@ function PlanCard({
 }) {
   return (
     <div
-      className="pd-card"
+      className="card"
       style={{
-        padding: 24,
+        padding: highlight ? 23 : 24,
         position: "relative",
-        boxShadow: highlight
-          ? "var(--shadow-card), inset 0 0 0 2px var(--primary)"
-          : "var(--shadow-card)",
+        border: highlight ? "2px solid var(--ink)" : "1px solid var(--line)",
       }}
     >
       {highlight && (
@@ -156,8 +154,8 @@ function PlanCard({
             position: "absolute",
             top: 20,
             right: 20,
-            background: "var(--primary-10)",
-            color: "var(--primary)",
+            background: "var(--ball)",
+            color: "var(--ball-ink)",
             fontSize: "var(--fs-micro)",
             fontWeight: 700,
             borderRadius: "var(--radius-pill)",
@@ -184,7 +182,7 @@ function PlanCard({
               gap: 8,
             }}
           >
-            <span style={{ color: highlight ? "var(--primary)" : "var(--text-secondary)", display: "flex" }}>
+            <span style={{ color: highlight ? "var(--ink)" : "var(--text-secondary)", display: "flex" }}>
               <Icon name="check" size={15} />
             </span>
             {f}

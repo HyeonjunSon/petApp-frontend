@@ -17,46 +17,46 @@ const apiErr = (e: any) =>
 const RESEND_COOLDOWN = 60; // seconds
 
 const css = `
-.au-wrap{display:flex;min-height:100dvh;background:var(--background);color:var(--text)}
-.au-brand{flex:0 0 44%;min-width:400px;background:linear-gradient(150deg,var(--primary) 0%,#6A61C9 100%);color:var(--white);display:flex;flex-direction:column;justify-content:space-between;padding:56px;position:relative;overflow:hidden}
-.au-brand .wordmark{font-size:var(--fs-h1);font-weight:var(--fw-extrabold);letter-spacing:var(--ls-snug);display:flex;align-items:center;gap:10px}
-.au-brand .pawtile{width:40px;height:40px;border-radius:var(--radius-lg);background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:20px}
-.au-brand h1{font-size:34px;font-weight:var(--fw-extrabold);line-height:var(--lh-snug);letter-spacing:var(--ls-tight)}
-.au-brand .sub{margin-top:14px;font-size:var(--fs-body);color:rgba(255,255,255,.85);line-height:var(--lh-relaxed)}
+.au-wrap{display:flex;min-height:100dvh;background:var(--paper);color:var(--ink)}
+.au-brand{flex:0 0 44%;min-width:400px;background:var(--ink);color:var(--paper);display:flex;flex-direction:column;justify-content:space-between;padding:56px;position:relative;overflow:hidden}
+.au-brand .wordmark{font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:-.03em;display:flex;align-items:center;gap:10px}
+.au-brand .wordmark .logo-dot{border-color:var(--paper)}
+.au-brand h1{font-size:38px}
+.au-brand .sub{margin-top:14px;font-size:15px;color:color-mix(in srgb,var(--paper) 72%,transparent);line-height:var(--lh-relaxed)}
 .au-feats{margin-top:36px;display:flex;flex-direction:column;gap:18px;list-style:none;padding:0;margin-bottom:0}
 .au-feats li{display:flex;align-items:center;gap:14px}
-.au-feats .ic{width:44px;height:44px;border-radius:var(--radius-lg);background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:20px;flex-shrink:0}
-.au-feats .tx b{display:block;font-size:var(--fs-body);font-weight:var(--fw-bold)}
-.au-feats .tx span{display:block;font-size:var(--fs-meta);color:rgba(255,255,255,.75)}
-.au-brand .foot{font-size:var(--fs-caption);color:rgba(255,255,255,.6)}
-.au-brand .bigpaw{position:absolute;right:-40px;bottom:-40px;font-size:220px;opacity:.1;pointer-events:none;line-height:1}
+.au-feats .ic{width:44px;height:44px;border-radius:14px;background:color-mix(in srgb,var(--paper) 12%,transparent);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.au-feats .tx b{display:block;font-size:15px;font-weight:600}
+.au-feats .tx span{display:block;font-size:14px;color:color-mix(in srgb,var(--paper) 65%,transparent)}
+.au-brand .foot{font-size:13px;color:color-mix(in srgb,var(--paper) 55%,transparent)}
+.au-brand .bigdot{position:absolute;right:-70px;bottom:-70px;width:240px;height:240px;border-radius:50%;background:var(--ball);opacity:.18;pointer-events:none}
 .au-form-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
-.au-card{width:100%;max-width:400px;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card-strong);padding:32px}
-.au-card h2{font-size:var(--fs-h2);font-weight:var(--fw-extrabold);letter-spacing:var(--ls-snug)}
-.au-card .hint{margin-top:4px;font-size:var(--fs-meta);color:var(--text-secondary)}
+.au-card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:32px}
+.au-card h2{font-size:22px}
+.au-card .hint{margin-top:6px;font-size:14px;color:var(--fence)}
 .au-field{margin-top:16px}
-.au-field label{display:block;font-size:var(--fs-meta);font-weight:var(--fw-semibold);margin-bottom:6px}
-.au-field input{width:100%;height:46px;border:0;border-radius:var(--radius-md);background:var(--input-bg);padding:0 14px;font-size:var(--fs-body);outline:none;color:var(--text)}
-.au-field input:focus{box-shadow:0 0 0 2px var(--primary)}
+.au-field label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.au-field input{width:100%;height:46px;border:0;border-radius:var(--radius-input);background:var(--paper);padding:0 14px;font-size:15px;outline:none;color:var(--ink);font-family:inherit}
+.au-field input:focus{box-shadow:0 0 0 2px var(--ink)}
 .au-field input:disabled{opacity:.6}
-.au-field .sub-hint{margin-top:6px;font-size:var(--fs-caption);color:var(--text-secondary)}
+.au-field .sub-hint{margin-top:6px;font-size:13px;color:var(--fence)}
 .au-code-row{display:flex;gap:8px}
 .au-code-row .grow{flex:1}
-.au-send{flex:none;height:46px;padding:0 14px;border-radius:var(--radius-md);background:var(--primary-10);color:var(--primary);font-size:var(--fs-meta);font-weight:var(--fw-bold);border:0;cursor:pointer;white-space:nowrap;transition:opacity 120ms}
-.au-send:active{opacity:.8}
-.au-send:disabled{opacity:.5;cursor:default}
+.au-send{flex:none;height:46px;padding:0 16px;border-radius:999px;background:var(--ball);color:var(--ball-ink);font-size:14px;font-weight:600;border:0;cursor:pointer;white-space:nowrap;font-family:inherit}
+.au-send:active{transform:scale(.98)}
+.au-send:disabled{opacity:.55;cursor:default}
 .au-pw{position:relative}
 .au-pw input{padding-right:56px}
-.au-pw button{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:var(--fs-caption);font-weight:var(--fw-bold);color:var(--text-secondary);background:none;border:0;cursor:pointer;padding:0}
+.au-pw button{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--fence);background:none;border:0;cursor:pointer;padding:0}
 .au-agree{margin-top:18px;display:flex;flex-direction:column;gap:12px}
 .au-agree .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.au-agree .lb{font-size:var(--fs-meta);font-weight:var(--fw-semibold)}
-.au-agree .lb a{color:var(--primary);font-weight:var(--fw-bold);text-decoration:none}
-.au-btn{width:100%;margin-top:20px;height:50px;background:var(--primary);color:var(--white);font-size:var(--fs-body);font-weight:var(--fw-bold);border-radius:var(--radius-lg);border:0;cursor:pointer;transition:opacity 120ms}
-.au-btn:active{opacity:.85}
-.au-btn:disabled{opacity:.6;cursor:default}
-.au-links{margin-top:16px;display:flex;justify-content:center;font-size:var(--fs-meta);color:var(--text-secondary)}
-.au-links a{font-weight:var(--fw-bold);color:var(--primary);text-decoration:none}
+.au-agree .lb{font-size:14px;font-weight:600}
+.au-agree .lb a{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.au-btn{width:100%;margin-top:20px;height:50px;background:var(--ink);color:var(--paper);font-size:15px;font-weight:600;border-radius:999px;border:0;cursor:pointer;font-family:inherit}
+.au-btn:active{transform:scale(.99)}
+.au-btn:disabled{opacity:.55;cursor:default}
+.au-links{margin-top:16px;display:flex;justify-content:center;font-size:14px;color:var(--fence)}
+.au-links a{font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 @media(max-width:900px){.au-brand{display:none}}
 `;
 
@@ -64,49 +64,46 @@ function BrandPanel() {
   return (
     <aside className="au-brand">
       <div className="wordmark">
-        <span className="pawtile">🐾</span>PetDate
+        <span className="logo-dot" />
+        Offleash
       </div>
       <div>
         <h1>
-          Find your dog&apos;s
+          Your neighbourhood,
           <br />
-          perfect
-          <br />
-          walking mate
+          off the leash
         </h1>
         <p className="sub">
-          Meet nearby owners and pets — walk together,
+          The block&apos;s dogs, walks, and people — one feed
           <br />
-          become friends, and maybe more.
+          for your neighbourhood pack.
         </p>
         <ul className="au-feats">
           <li>
-            <span className="ic">💜</span>
+            <span className="ic">📣</span>
             <span className="tx">
-              <b>Smart matching</b>
-              <span>Discover pets that match your vibe and neighborhood</span>
+              <b>Neighbourhood feed</b>
+              <span>Lost-dog alerts, walk-mate calls, and local tips</span>
             </span>
           </li>
           <li>
             <span className="ic">🐕</span>
             <span className="tx">
               <b>Walk together</b>
-              <span>Plan meetups and keep a log of your walks</span>
+              <span>Post a walk, see who&apos;s in, meet at the corner</span>
             </span>
           </li>
           <li>
-            <span className="ic">🛡️</span>
+            <span className="ic">🎾</span>
             <span className="tx">
-              <b>Safe meetups</b>
-              <span>Verified badges, report and block for peace of mind</span>
+              <b>Meet the pack</b>
+              <span>Every dog within walking distance, sorted by distance</span>
             </span>
           </li>
         </ul>
       </div>
-      <p className="foot">© 2026 PetDate · Walking mates for your pet</p>
-      <span className="bigpaw" aria-hidden>
-        🐾
-      </span>
+      <p className="foot">© 2026 Offleash · Your neighbourhood, off the leash</p>
+      <span className="bigdot" aria-hidden />
     </aside>
   );
 }

@@ -3,16 +3,16 @@
 import LegalLayout, { H2, P, UL } from "../_legal/Layout";
 
 export const metadata = {
-  title: "Privacy Policy — PetDate",
-  description: "How PetDate collects, uses, and protects your data.",
+  title: "Privacy Policy — Offleash",
+  description: "How Offleash collects, uses, and protects your data.",
 };
 
 export default function PrivacyPolicy() {
   return (
     <LegalLayout title="Privacy Policy" updated="2026-06-14">
       <P>
-        This Privacy Policy describes how PetDate ("we", "our") collects,
-        uses, and shares your information when you use the PetDate mobile or
+        This Privacy Policy describes how Offleash ("we", "our") collects,
+        uses, and shares your information when you use the Offleash mobile or
         web app (the "Service"). By using the Service you agree to this
         Policy.
       </P>
@@ -93,7 +93,7 @@ export default function PrivacyPolicy() {
 
       <H2>7. Children</H2>
       <P>
-        PetDate is not directed to children under 13. We do not knowingly
+        Offleash is not directed to children under 13. We do not knowingly
         collect data from anyone under 13. If you believe a minor has provided
         us data, contact us and we will delete it.
       </P>

@@ -7,42 +7,43 @@ export default function Hero() {
     <section className="ld-hero">
       <div>
         <h1>
-          Find your dog&apos;s perfect
+          Your neighbourhood,
           <br />
-          <em>walking mate</em>
+          <em>off the leash</em>
         </h1>
         <p className="sub">
-          Meet nearby owners and pets — walk together,
-          <br />
-          become friends, and maybe more.
+          The block&apos;s dogs, walks, and people — one feed for your
+          neighbourhood pack.
         </p>
         <div className="btns">
-          <Link href="/register" className="ld-btn-hero">
-            Start for free
+          <Link href="/register" className="btn">
+            Bring your dog to the block
           </Link>
-          <Link href="/login" className="ld-btn-hero ghost">
+          <Link href="/login" className="btn btn-ghost">
             Take a look
           </Link>
         </div>
       </div>
       <div className="visual" aria-hidden>
-        <div className="ld-match">
-          <div className="ph">
+        <div className="ld-stack">
+          <div className="ld-shot">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/img/hero-bori.jpg" alt="" />
-            <span className="dist">0.8km</span>
-          </div>
-          <div className="bd">
-            <div className="nm">Bori · 2 yrs</div>
-            <div className="mt">Welsh Corgi · Female · Owner Minji</div>
-            <div className="tags">
-              <span className="tag">Morning walks</span>
-              <span className="tag">Fetch</span>
+            <div className="bd">
+              <div className="nm">
+                Bori <small>240 m</small>
+              </div>
+              <div className="mt">Welsh Corgi · two blocks over</div>
+              <div className="tags">
+                <span className="tag tag-want">Walk mates wanted</span>
+                <span className="tag">Morning walks</span>
+              </div>
             </div>
           </div>
-          <div className="acts">
-            <span className="pass">Pass</span>
-            <span className="like">Like</span>
+          <div className="walk-card ld-walk">
+            <div className="walk-when">7:30</div>
+            <div className="walk-with">Evening loop · Bori +2 going</div>
+            <div className="walk-where">Meet at the park gate</div>
           </div>
         </div>
       </div>

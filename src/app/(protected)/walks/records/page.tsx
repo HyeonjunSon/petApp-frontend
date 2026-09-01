@@ -2,7 +2,7 @@
 
 /** Walk Records — Walk records + per-pet stats. */
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Page } from "@/components/shell/Page";
@@ -17,34 +17,6 @@ type Walk = {
   startedAt: string;
 };
 
-/* ── 시안 스타일 (petdate-website.html .walk-row / .pill / .stat) ── */
-const cardStyle: React.CSSProperties = {
-  background: "var(--surface)",
-  borderRadius: "var(--radius-xl)",
-  boxShadow: "var(--shadow-card)",
-  overflow: "hidden",
-};
-const sectionTitleStyle: React.CSSProperties = {
-  margin: "28px 0 12px",
-  fontSize: "var(--fs-h3)",
-  fontWeight: 800,
-  color: "var(--text)",
-};
-const btnGhostSm: React.CSSProperties = {
-  background: "var(--input-bg)",
-  color: "var(--text-secondary)",
-  fontSize: "var(--fs-meta)",
-  fontWeight: 600,
-  borderRadius: "var(--radius-md)",
-  padding: "10px 16px",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-};
-
 /** minutes → "1h 10m" */
 function fmtDuration(min: number) {
   if (!min) return "0m";
@@ -56,16 +28,15 @@ function fmtDuration(min: number) {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/** ISO → { day, month, time } (달력 타일 + 메타용) */
+/** ISO → { day: "Aug 24", time: "6:30 PM" } */
 function dateParts(iso: string) {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return { day: "-", month: "", time: "" };
+  if (Number.isNaN(d.getTime())) return { day: "—", time: "" };
   const h = d.getHours();
   const ampm = h < 12 ? "AM" : "PM";
   const h12 = h % 12 || 12;
   return {
-    day: String(d.getDate()),
-    month: MONTHS[d.getMonth()],
+    day: `${MONTHS[d.getMonth()]} ${d.getDate()}`,
     time: `${h12}:${String(d.getMinutes()).padStart(2, "0")} ${ampm}`,
   };
 }
@@ -115,20 +86,20 @@ export default function WalkRecordsPage() {
       title="Records"
       subtitle="Completed walks are saved automatically."
       right={
-        <button type="button" style={btnGhostSm} onClick={() => router.push("/walks")}>
+        <button type="button" className="btn btn-ghost" onClick={() => router.push("/walks")}>
           Back to walks
         </button>
       }
     >
       {loading ? (
-        <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}><Spinner /></div>
+        <div className="flex justify-center pt-16" style={{ color: "var(--fence)" }}><Spinner /></div>
       ) : walks.length === 0 ? (
         <EmptyState emoji="🐾" title="No walk records yet" desc="Complete a walk plan and a record is added automatically." />
       ) : (
         <>
-          <div style={{ ...sectionTitleStyle, marginTop: 0 }}>All records</div>
-          <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
-            {sorted.map((w, idx) => {
+          <h2 style={{ fontSize: 18, margin: 0 }}>All records</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {sorted.map((w) => {
               const dp = dateParts(w.startedAt);
               const meta = [
                 dp.time,
@@ -138,60 +109,14 @@ export default function WalkRecordsPage() {
                 .filter(Boolean)
                 .join(" · ");
               return (
-                <div
-                  key={w._id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                    padding: "16px 18px",
-                    borderTop: idx > 0 ? "1px solid var(--border)" : "none",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: "var(--radius-lg)",
-                      background: "var(--primary-10)",
-                      color: "var(--primary)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <b style={{ fontSize: 18, fontWeight: 800, lineHeight: 1.1 }}>{dp.day}</b>
-                    <span style={{ fontSize: "var(--fs-nano)", fontWeight: 700 }}>{dp.month}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <b
-                      style={{
-                        display: "block",
-                        fontSize: "var(--fs-body)",
-                        fontWeight: 700,
-                        color: "var(--text)",
-                      }}
-                    >
-                      {`${petName(w.pet)}'s walk`}
-                    </b>
-                    <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
-                      {meta}
-                    </span>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: "var(--fs-micro)",
-                      fontWeight: 700,
-                      borderRadius: "var(--radius-pill)",
-                      padding: "4px 12px",
-                      background: "var(--input-bg)",
-                      color: "var(--text-secondary)",
-                      flexShrink: 0,
-                    }}
-                  >
-                    Completed
+                <div key={w._id} className="walk-row">
+                  <span className="walk-row-time">{dp.day}</span>
+                  <span className="walk-row-info">
+                    {`${petName(w.pet)}'s walk`}
+                    <small>{meta}</small>
+                  </span>
+                  <span className="end">
+                    <span className="pill">Completed</span>
                   </span>
                 </div>
               );
@@ -200,25 +125,17 @@ export default function WalkRecordsPage() {
 
           {stats.length > 0 && (
             <>
-              <div style={sectionTitleStyle}>Stats by pet</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+              <h2 style={{ fontSize: 18, margin: "10px 0 0" }}>Stats by pet</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
                 {stats.map((s) => (
-                  <div
-                    key={s.pet._id}
-                    style={{
-                      background: "var(--surface)",
-                      borderRadius: "var(--radius-2xl)",
-                      boxShadow: "var(--shadow-card)",
-                      padding: 20,
-                    }}
-                  >
+                  <div key={s.pet._id} className="card">
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                       <Avatar fallbackText={(s.pet.name || "?")[0]} size={44} />
                       <div>
-                        <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>
+                        <div style={{ fontSize: 15, fontWeight: 600, color: "var(--ink)" }}>
                           {s.pet.name}
                         </div>
-                        <div style={{ fontSize: "var(--fs-meta)", color: "var(--text-secondary)" }}>
+                        <div style={{ fontSize: 13, color: "var(--fence)" }}>
                           {[s.pet.breed, s.pet.age != null ? `${s.pet.age} yrs` : ""].filter(Boolean).join(" · ")}
                         </div>
                       </div>
@@ -244,11 +161,11 @@ function StatRow({ label, value }: { label: string; value: string }) {
         display: "flex",
         justifyContent: "space-between",
         padding: "6px 0",
-        fontSize: "var(--fs-body-sm)",
+        fontSize: 15,
       }}
     >
-      <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-      <span style={{ color: "var(--text)", fontWeight: 600 }}>{value}</span>
+      <span style={{ color: "var(--fence)" }}>{label}</span>
+      <span style={{ color: "var(--ink)", fontWeight: 600 }}>{value}</span>
     </div>
   );
 }

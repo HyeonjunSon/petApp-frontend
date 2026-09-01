@@ -19,14 +19,14 @@ const TEMPERAMENTS = [
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 const AREA_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
 };
 
 type Pet = {
@@ -42,7 +42,7 @@ type Pet = {
 };
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <section className="pd-card" style={{ padding: 20 }}>{children}</section>;
+  return <section className="card" style={{ padding: 20 }}>{children}</section>;
 }
 
 function CardTitle({ children }: { children: React.ReactNode }) {
@@ -160,7 +160,7 @@ export default function PetEditPage() {
 
   return (
     <Page title="Edit pet profile" subtitle="Manage your pet's info." maxWidth={860}>
-      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+      <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
       {err && <div style={{ marginBottom: 16 }}><Banner tone="rose">{err}</Banner></div>}
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => onPick(e.target.files?.[0] || null)} />
 

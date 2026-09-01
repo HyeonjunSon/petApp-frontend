@@ -10,8 +10,8 @@ import { Button, Input, Field, Badge, Toast, type ToastData } from "@/components
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 
@@ -67,15 +67,15 @@ export default function BillingPortalPage() {
 
   return (
     <Page title="Manage subscription" subtitle="Manage your subscription status and payment method." maxWidth={880}>
-      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+      <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
 
       <SectionTitle first>Subscription status</SectionTitle>
-      <section className="pd-card" style={{ padding: 20 }}>
+      <section className="card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <div>
             <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Current plan</div>
             <div style={{ fontSize: "var(--fs-h3)", fontWeight: 800, color: "var(--text)", marginTop: 4 }}>
-              {premium ? "PetDate Premium" : "Free plan"}
+              {premium ? "Offleash Premium" : "Free plan"}
             </div>
           </div>
           <Badge tone={premium ? "brand" : "slate"}>{premium ? "Active" : "Inactive"}</Badge>
@@ -95,7 +95,7 @@ export default function BillingPortalPage() {
       </section>
 
       <SectionTitle>Payment method</SectionTitle>
-      <section className="pd-card" style={{ padding: 20 }}>
+      <section className="card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16 }}>
           <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
             No payment method on file.
@@ -107,7 +107,7 @@ export default function BillingPortalPage() {
       </section>
 
       <SectionTitle>Add payment method</SectionTitle>
-      <section className="pd-card" style={{ padding: 20 }}>
+      <section className="card" style={{ padding: 20 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Field label="Card number">
             <Input className="pdi" style={INPUT_STYLE} value={cardNo} onChange={(e) => setCardNo(e.target.value)} inputMode="numeric" placeholder="0000 0000 0000 0000" />
@@ -128,7 +128,7 @@ export default function BillingPortalPage() {
       </section>
 
       <SectionTitle>Cancel subscription</SectionTitle>
-      <section className="pd-card" style={{ padding: 20 }}>
+      <section className="card" style={{ padding: 20 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
           <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
             Your benefits stay active until the expiration date even after canceling.

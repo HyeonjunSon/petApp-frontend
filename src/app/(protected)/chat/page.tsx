@@ -1,6 +1,6 @@
 "use client";
 
-/** Chat — 2-column layout from the wireframe (petdate-website.html #page-chat). Logic in useChat hook. */
+/** Chat — Offleash v2 restyle (offleash-web scaffold: bubbles = .card radius, invites = .walk-card). Logic in useChat hook. */
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,6 @@ import { toAbs } from "@/lib/card";
 import { peerOf, pickPet, type Match } from "./types";
 import { Page } from "@/components/shell/Page";
 import {
-  Button,
   Input,
   Textarea,
   Field,
@@ -58,18 +57,24 @@ const dayKo = (iso?: string) =>
       })
     : "";
 
-/** "YYYY-MM-DD" + "HH:MM" → "Fri, Aug 21 · 10:00 AM" */
-const inviteWhenKo = (date: string, time: string) => {
+/** "YYYY-MM-DD" + "HH:MM" → { day: "Fri, Aug 21", clock: "10:00 AM" } */
+const inviteParts = (date: string, time: string) => {
   const d = new Date(`${date}T00:00:00`);
   const day = Number.isNaN(d.getTime())
     ? date
     : `${d.toLocaleDateString("en-US", { weekday: "short" })}, ${d.toLocaleDateString("en-US", { month: "short" })} ${d.getDate()}`;
   const [hRaw, mRaw] = (time || "").split(":");
   const h = parseInt(hRaw, 10);
-  if (Number.isNaN(h)) return `${day} ${time}`;
-  const ampm = h < 12 ? "AM" : "PM";
-  const h12 = h % 12 || 12;
-  return `${day} · ${h12}:${mRaw || "00"} ${ampm}`;
+  const clock = Number.isNaN(h)
+    ? time
+    : `${h % 12 || 12}:${mRaw || "00"} ${h < 12 ? "AM" : "PM"}`;
+  return { day, clock };
+};
+
+/** "YYYY-MM-DD" + "HH:MM" → "Fri, Aug 21 · 10:00 AM" */
+const inviteWhenKo = (date: string, time: string) => {
+  const p = inviteParts(date, time);
+  return `${p.day} · ${p.clock}`;
 };
 
 /** Wireframe naming: "Bori & Minji" */
@@ -83,9 +88,9 @@ const convoName = (match: Match, myId: string) => {
 const iconBtn: React.CSSProperties = {
   width: 34,
   height: 34,
-  borderRadius: "var(--radius-pill)",
-  background: "var(--input-bg)",
-  color: "var(--text-secondary)",
+  borderRadius: 999,
+  background: "var(--paper)",
+  color: "var(--fence)",
   display: "grid",
   placeItems: "center",
   border: "none",
@@ -154,7 +159,7 @@ export default function ChatPage() {
     if (day && day !== lastDay) {
       lastDay = day;
       rows.push(
-        <span key={`sep-${day}`} className="pd-day-sep">
+        <span key={`sep-${day}`} className="pill pd-day-sep">
           {dayKo(m.createdAt)}
         </span>
       );
@@ -167,7 +172,7 @@ export default function ChatPage() {
             src={partnerPhoto}
             fallbackText={partnerInitial}
             size={32}
-            style={{ background: "var(--primary)", fontSize: 13, alignSelf: "flex-start" }}
+            style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 13, alignSelf: "flex-start" }}
           />
         )}
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -175,34 +180,21 @@ export default function ChatPage() {
             <span
               style={{
                 fontSize: "var(--fs-micro)",
-                color: "var(--text-secondary)",
+                color: "var(--fence)",
                 marginLeft: 2,
               }}
             >
               {c.partner?.name || pet?.name || ""}
             </span>
           )}
-          <div
-            style={{
-              background: mine ? "var(--primary)" : "var(--surface)",
-              color: mine ? "var(--white)" : "var(--text)",
-              borderRadius: "var(--radius-3xl)",
-              borderBottomLeftRadius: mine ? "var(--radius-3xl)" : 4,
-              borderBottomRightRadius: mine ? 4 : "var(--radius-3xl)",
-              boxShadow: mine ? undefined : "var(--shadow-card)",
-              padding: "10px 14px",
-              fontSize: "var(--fs-body-sm)",
-              lineHeight: "var(--lh-normal)",
-              wordBreak: "break-word",
-            }}
-          >
+          <div className={mine ? "pd-bubble me" : "pd-bubble them"}>
             {m.text}
           </div>
         </div>
         <time
           style={{
             fontSize: "var(--fs-nano)",
-            color: "var(--text-secondary)",
+            color: "var(--fence)",
             whiteSpace: "nowrap",
             marginBottom: 2,
           }}
@@ -213,27 +205,13 @@ export default function ChatPage() {
     );
   });
 
-  /* Walk invite card (end of message flow) */
+  /* Walk invite card (end of message flow) — v2 signature .walk-card */
   if (c.invite) {
     const inv = c.invite;
     const mine = inv.from === c.myId;
-    const ghost: React.CSSProperties = {
-      flex: 1,
-      height: 36,
-      borderRadius: "var(--radius-md)",
-      fontSize: "var(--fs-meta)",
-      fontWeight: 700,
-      border: "none",
-      cursor: "pointer",
-      fontFamily: "inherit",
-      background: "var(--input-bg)",
-      color: "var(--text-secondary)",
-    };
-    const solid: React.CSSProperties = {
-      ...ghost,
-      background: "var(--primary)",
-      color: "var(--white)",
-    };
+    const when = inviteParts(inv.date, inv.time);
+    const ghostBtn: React.CSSProperties = { flex: 1, justifyContent: "center", background: "transparent" };
+    const solidBtn: React.CSSProperties = { flex: 1, justifyContent: "center" };
     rows.push(
       <div key={`invite-${inv._id}`} className={mine ? "pd-mrow me" : "pd-mrow"}>
         {!mine && (
@@ -241,7 +219,7 @@ export default function ChatPage() {
             src={partnerPhoto}
             fallbackText={partnerInitial}
             size={32}
-            style={{ background: "var(--primary)", fontSize: 13, alignSelf: "flex-start" }}
+            style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 13, alignSelf: "flex-start" }}
           />
         )}
         <div
@@ -249,20 +227,13 @@ export default function ChatPage() {
           tabIndex={0}
           onClick={() => setShowInvite(true)}
           onKeyDown={(e) => e.key === "Enter" && setShowInvite(true)}
-          style={{
-            background: "var(--surface)",
-            borderRadius: "var(--radius-2xl)",
-            boxShadow: "var(--shadow-card)",
-            padding: 14,
-            width: 260,
-            cursor: "pointer",
-          }}
+          className="walk-card"
+          style={{ width: 280, cursor: "pointer" }}
         >
           <div
             style={{
               fontSize: "var(--fs-caption)",
-              fontWeight: 800,
-              color: "var(--primary)",
+              fontWeight: 600,
               display: "flex",
               alignItems: "center",
               gap: 6,
@@ -271,54 +242,36 @@ export default function ChatPage() {
             <Icon name="cal" size={14} />
             Walk plan
           </div>
-          <div
-            style={{
-              margin: "8px 0 10px",
-              fontSize: "var(--fs-body-sm)",
-              fontWeight: 700,
-              color: "var(--text)",
-            }}
-          >
-            {inviteWhenKo(inv.date, inv.time)}
-            {inv.place && (
-              <span
-                style={{
-                  display: "block",
-                  fontSize: "var(--fs-caption)",
-                  fontWeight: 400,
-                  color: "var(--text-secondary)",
-                  marginTop: 2,
-                }}
-              >
-                {inv.place}
-              </span>
-            )}
+          <div className="walk-when" style={{ marginTop: 10 }}>
+            {when.clock}
           </div>
-          <div style={{ display: "flex", gap: 8 }} onClick={(e) => e.stopPropagation()}>
+          <div className="walk-with">{when.day}</div>
+          {inv.place && <div className="walk-where">{inv.place}</div>}
+          <div className="post-actions" onClick={(e) => e.stopPropagation()}>
             {inv.status === "confirmed" ? (
               <>
-                <button type="button" style={ghost} onClick={() => c.setScheduleOpen(true)}>
+                <button type="button" className="btn btn-ghost btn-sm" style={ghostBtn} onClick={() => c.setScheduleOpen(true)}>
                   Request change
                 </button>
-                <button type="button" style={solid} onClick={() => setShowInvite(true)}>
+                <button type="button" className="btn btn-sm" style={solidBtn} onClick={() => setShowInvite(true)}>
                   Accepted ✓
                 </button>
               </>
             ) : mine ? (
               <>
-                <button type="button" style={ghost} onClick={() => c.respond("cancelled")}>
+                <button type="button" className="btn btn-ghost btn-sm" style={ghostBtn} onClick={() => c.respond("cancelled")}>
                   Cancel
                 </button>
-                <button type="button" style={solid} onClick={() => c.setScheduleOpen(true)}>
+                <button type="button" className="btn btn-sm" style={solidBtn} onClick={() => c.setScheduleOpen(true)}>
                   Request change
                 </button>
               </>
             ) : (
               <>
-                <button type="button" style={ghost} onClick={() => c.respond("declined")}>
+                <button type="button" className="btn btn-ghost btn-sm" style={ghostBtn} onClick={() => c.respond("declined")}>
                   Decline
                 </button>
-                <button type="button" style={solid} onClick={() => c.respond("confirmed")}>
+                <button type="button" className="btn btn-sm" style={solidBtn} onClick={() => c.respond("confirmed")}>
                   Accept
                 </button>
               </>
@@ -328,7 +281,7 @@ export default function ChatPage() {
         <time
           style={{
             fontSize: "var(--fs-nano)",
-            color: "var(--text-secondary)",
+            color: "var(--fence)",
             whiteSpace: "nowrap",
             marginBottom: 2,
           }}
@@ -342,12 +295,15 @@ export default function ChatPage() {
   return (
     <Page title="Chat" subtitle="Talk with your matches and plan walks.">
       <style dangerouslySetInnerHTML={{ __html: `
-        .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;grid-template-rows:minmax(0,1fr);gap:0;background:var(--surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;height:calc(100dvh - 214px);min-height:380px}
-        .pd-chatlist{border-right:1px solid var(--border);overflow-y:auto;min-height:0}
-        .pd-chatroom{display:flex;flex-direction:column;background:var(--background);min-width:0;min-height:0;overflow:hidden}
-        .pd-day-sep{align-self:center;background:rgba(0,0,0,.06);color:var(--text-secondary);font-size:var(--fs-micro);border-radius:var(--radius-pill);padding:4px 14px;margin:8px 0}
+        .pd-chatwrap{display:grid;grid-template-columns:320px 1fr;grid-template-rows:minmax(0,1fr);gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);overflow:hidden;height:calc(100dvh - 240px);min-height:380px}
+        .pd-chatlist{border-right:1px solid var(--line);overflow-y:auto;min-height:0}
+        .pd-chatroom{display:flex;flex-direction:column;background:var(--paper);min-width:0;min-height:0;overflow:hidden}
+        .pd-day-sep{align-self:center;margin:8px 0;cursor:default;font-size:var(--fs-micro);color:var(--fence)}
         .pd-mrow{display:flex;align-items:flex-end;gap:8px;max-width:70%}
         .pd-mrow.me{align-self:flex-end;flex-direction:row-reverse}
+        .pd-bubble{padding:10px 14px;font-size:var(--fs-body-sm);line-height:var(--lh-normal);word-break:break-word;border-radius:18px}
+        .pd-bubble.them{background:var(--surface);border:1px solid var(--line);color:var(--ink);border-bottom-left-radius:4px}
+        .pd-bubble.me{background:var(--ink);color:var(--paper);border-bottom-right-radius:4px}
         .pd-chat-back{display:none!important}
         @media (max-width:900px){
           .pd-chatwrap{grid-template-columns:1fr}
@@ -363,9 +319,11 @@ export default function ChatPage() {
           <div
             style={{
               padding: "18px 18px 12px",
+              fontFamily: "var(--font-display)",
               fontSize: "var(--fs-h3)",
-              fontWeight: 800,
-              color: "var(--text)",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+              color: "var(--ink)",
             }}
           >
             Messages
@@ -377,8 +335,8 @@ export default function ChatPage() {
                 style={{
                   marginTop: 8,
                   fontSize: "var(--fs-body-sm)",
-                  fontWeight: 700,
-                  color: "var(--text)",
+                  fontWeight: 600,
+                  color: "var(--ink)",
                 }}
               >
                 No conversations yet
@@ -387,14 +345,14 @@ export default function ChatPage() {
                 style={{
                   margin: "4px 0 14px",
                   fontSize: "var(--fs-caption)",
-                  color: "var(--text-secondary)",
+                  color: "var(--fence)",
                 }}
               >
                 Match with friends in Discover to start chatting.
               </p>
-              <Button size="sm" onClick={() => router.push("/discover")}>
+              <button type="button" className="btn btn-sm" onClick={() => router.push("/discover")}>
                 Find friends
-              </Button>
+              </button>
             </div>
           ) : (
             c.matches.map((m) => {
@@ -416,22 +374,22 @@ export default function ChatPage() {
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    background: on ? "var(--primary-10)" : "transparent",
+                    background: on ? "var(--paper)" : "transparent",
                   }}
                 >
                   <Avatar
                     src={toAbs(mPet?.photos?.[0]?.url) || peer?.faceUrl}
                     fallbackText={(mPet?.name || peer?.name || "?")[0]}
                     size={46}
-                    style={{ background: "var(--primary)", fontSize: 19 }}
+                    style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 19 }}
                   />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <b
                       style={{
                         display: "block",
                         fontSize: "var(--fs-body-sm)",
-                        fontWeight: 700,
-                        color: "var(--text)",
+                        fontWeight: 600,
+                        color: "var(--ink)",
                       }}
                     >
                       {convoName(m, c.myId)}
@@ -440,7 +398,7 @@ export default function ChatPage() {
                       style={{
                         display: "block",
                         fontSize: "var(--fs-caption)",
-                        color: "var(--text-secondary)",
+                        color: "var(--fence)",
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -461,24 +419,19 @@ export default function ChatPage() {
                     <time
                       style={{
                         fontSize: "var(--fs-micro)",
-                        color: "var(--text-secondary)",
+                        color: "var(--fence)",
                       }}
                     >
                       {listTimeKo(m.lastMessage?.createdAt)}
                     </time>
                     {!!m.unreadCount && (
                       <span
+                        className="tag tag-want"
                         style={{
-                          background: "var(--danger)",
-                          color: "var(--white)",
                           fontSize: "var(--fs-nano)",
-                          fontWeight: 700,
-                          borderRadius: "var(--radius-pill)",
+                          padding: "2px 7px",
                           minWidth: 18,
-                          height: 18,
-                          display: "grid",
-                          placeItems: "center",
-                          padding: "0 5px",
+                          textAlign: "center",
                         }}
                       >
                         {m.unreadCount}
@@ -500,7 +453,7 @@ export default function ChatPage() {
                 display: "grid",
                 placeItems: "center",
                 fontSize: "var(--fs-meta)",
-                color: "var(--text-secondary)",
+                color: "var(--fence)",
               }}
             >
               Select a conversation
@@ -511,7 +464,7 @@ export default function ChatPage() {
               <div
                 style={{
                   background: "var(--surface)",
-                  borderBottom: "1px solid var(--border)",
+                  borderBottom: "1px solid var(--line)",
                   padding: "14px 20px",
                   display: "flex",
                   alignItems: "center",
@@ -531,15 +484,17 @@ export default function ChatPage() {
                   src={partnerPhoto}
                   fallbackText={partnerInitial}
                   size={38}
-                  style={{ background: "var(--primary)", fontSize: 16 }}
+                  style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 16 }}
                 />
                 <div style={{ minWidth: 0 }}>
                   <b
                     style={{
+                      fontFamily: "var(--font-display)",
                       fontSize: "var(--fs-body)",
                       fontWeight: 700,
+                      letterSpacing: "-0.02em",
                       display: "block",
-                      color: "var(--text)",
+                      color: "var(--ink)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -550,7 +505,7 @@ export default function ChatPage() {
                   <span
                     style={{
                       fontSize: "var(--fs-caption)",
-                      color: "var(--text-secondary)",
+                      color: "var(--fence)",
                     }}
                   >
                     {lastAt ? `Last message ${listTimeKo(lastAt)}` : "New conversation"}
@@ -595,7 +550,7 @@ export default function ChatPage() {
                     style={{
                       margin: "auto",
                       fontSize: "var(--fs-meta)",
-                      color: "var(--text-secondary)",
+                      color: "var(--fence)",
                     }}
                   >
                     Say hello!
@@ -609,7 +564,7 @@ export default function ChatPage() {
               <div
                 style={{
                   background: "var(--surface)",
-                  borderTop: "1px solid var(--border)",
+                  borderTop: "1px solid var(--line)",
                   padding: "12px 16px",
                   display: "flex",
                   alignItems: "center",
@@ -619,8 +574,9 @@ export default function ChatPage() {
                 <button
                   type="button"
                   title="Create walk plan"
+                  className="pill"
                   onClick={() => c.setScheduleOpen(true)}
-                  style={{ ...iconBtn, width: 36, height: 36 }}
+                  style={{ width: 38, height: 38, padding: 0, justifyContent: "center", flexShrink: 0 }}
                 >
                   <Icon name="plus" size={18} />
                 </button>
@@ -639,12 +595,12 @@ export default function ChatPage() {
                     minWidth: 0,
                     height: 42,
                     border: 0,
-                    borderRadius: "var(--radius-pill)",
-                    background: "var(--input-bg)",
+                    borderRadius: 999,
+                    background: "var(--paper)",
                     padding: "0 18px",
                     fontSize: "var(--fs-body-sm)",
                     outline: "none",
-                    color: "var(--text)",
+                    color: "var(--ink)",
                     fontFamily: "inherit",
                   }}
                 />
@@ -655,9 +611,9 @@ export default function ChatPage() {
                   style={{
                     width: 42,
                     height: 42,
-                    borderRadius: "var(--radius-pill)",
-                    background: "var(--primary)",
-                    color: "var(--white)",
+                    borderRadius: 999,
+                    background: "var(--ink)",
+                    color: "var(--paper)",
                     display: "grid",
                     placeItems: "center",
                     fontSize: 18,
@@ -691,9 +647,15 @@ export default function ChatPage() {
           <Field label="Note">
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
-          <Button fullWidth size="lg" disabled={!date || !time} onClick={submitSchedule}>
+          <button
+            type="button"
+            className="btn"
+            style={{ width: "100%", justifyContent: "center" }}
+            disabled={!date || !time}
+            onClick={submitSchedule}
+          >
             Send plan
-          </Button>
+          </button>
         </div>
       </Sheet>
 
@@ -701,44 +663,47 @@ export default function ChatPage() {
       <Sheet open={showInvite && !!c.invite} onClose={() => setShowInvite(false)} title="Walk plan" desktop>
         {c.invite && (
           <div style={{ padding: "8px 20px 20px" }}>
-            <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text)" }}>
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: "var(--fs-h2)",
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                color: "var(--ink)",
+              }}
+            >
               {inviteWhenKo(c.invite.date, c.invite.time)}
             </div>
             {c.invite.place && (
-              <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)", marginTop: 6 }}>
+              <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--fence)", marginTop: 6 }}>
                 {c.invite.place}
               </div>
             )}
             {c.invite.note && (
-              <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)", marginTop: 10 }}>
+              <p style={{ fontSize: "var(--fs-body-sm)", color: "var(--fence)", marginTop: 10 }}>
                 {c.invite.note}
               </p>
             )}
             <div style={{ marginTop: 12 }}>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  height: 22,
-                  padding: "0 10px",
-                  borderRadius: "var(--radius-pill)",
-                  fontSize: "var(--fs-micro)",
-                  fontWeight: 700,
-                  background: "var(--primary-10)",
-                  color: "var(--primary)",
-                }}
-              >
+              <span className={c.invite.status === "confirmed" ? "tag tag-want" : "tag"}>
                 {STATUS_LABEL[c.invite.status] || c.invite.status}
               </span>
             </div>
             <div style={{ display: "flex", gap: 10, marginTop: 18, flexWrap: "wrap" }}>
-              <Button onClick={() => { c.respond("confirmed"); setShowInvite(false); }}>Accept</Button>
-              <Button variant="secondary" onClick={() => { c.respond("declined"); setShowInvite(false); }}>
+              <button type="button" className="btn" onClick={() => { c.respond("confirmed"); setShowInvite(false); }}>
+                Accept
+              </button>
+              <button type="button" className="btn btn-ghost" onClick={() => { c.respond("declined"); setShowInvite(false); }}>
                 Decline
-              </Button>
-              <Button variant="dangerGhost" onClick={() => { c.respond("cancelled"); setShowInvite(false); }}>
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                style={{ color: "var(--collar)", borderColor: "var(--collar)" }}
+                onClick={() => { c.respond("cancelled"); setShowInvite(false); }}
+              >
                 Cancel plan
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -747,9 +712,14 @@ export default function ChatPage() {
       {/* Report / Block sheet */}
       <Sheet open={safety} onClose={() => setSafety(false)} title="Report / Block" desktop>
         <div style={{ padding: "8px 20px 20px", display: "flex", flexDirection: "column", gap: 14 }}>
-          <Button variant="danger" fullWidth onClick={block}>
+          <button
+            type="button"
+            className="btn btn-danger"
+            style={{ width: "100%", justifyContent: "center" }}
+            onClick={block}
+          >
             Block this user
-          </Button>
+          </button>
           <Field label="Reason">
             <Textarea
               value={reportText}
@@ -757,9 +727,15 @@ export default function ChatPage() {
               placeholder="Tell us why you're reporting this user"
             />
           </Field>
-          <Button variant="secondary" fullWidth disabled={!reportText.trim()} onClick={report}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ width: "100%", justifyContent: "center" }}
+            disabled={!reportText.trim()}
+            onClick={report}
+          >
             Submit report
-          </Button>
+          </button>
         </div>
       </Sheet>
     </Page>

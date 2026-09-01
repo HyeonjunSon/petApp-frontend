@@ -2,16 +2,16 @@
 
 const STEPS = [
   {
-    title: "Create a pet profile",
-    desc: "Add photos, personality, and favorite walking routes.",
+    title: "Claim your home turf",
+    desc: "Add your dog and pick the neighbourhood you walk.",
   },
   {
-    title: "Match with neighbors",
-    desc: "Get suggestions within 3km and like each other to match.",
+    title: "Follow the feed",
+    desc: "See alerts, walk calls, and posts from within walking distance.",
   },
   {
-    title: "Plan a walk",
-    desc: "Pick a time and place in chat, then walk together.",
+    title: "Head outside",
+    desc: "Join a walk or call one of your own — the pack meets outside.",
   },
 ];
 

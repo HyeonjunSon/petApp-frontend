@@ -2,27 +2,30 @@
 
 const CARDS = [
   {
-    em: "💜",
-    title: "Smart matching",
-    desc: "Get matched with neighbors whose breed, age, and walk times fit yours. Like the ones you love, pass on the rest.",
+    em: "📣",
+    title: "Neighbourhood feed",
+    desc: "Lost-dog alerts, walk-mate calls, and recommendations from people who actually walk your streets.",
   },
   {
     em: "🐕",
     title: "Walk together",
-    desc: "Plan a walk right from chat, then log it with distance, time, and photos.",
+    desc: "Post a walk with a time and a meeting spot, see who's in, and head out as a pack.",
   },
   {
-    em: "🛡️",
-    title: "Safe meetups",
-    desc: "Verified-owner badges, manner ratings, and report/block tools keep every meetup safe.",
+    em: "🎾",
+    title: "Meet the pack",
+    desc: "Browse the dogs around you by distance and put names to the faces you pass every day.",
   },
 ];
 
 export default function Features() {
   return (
     <section className="ld-sect" id="feats" style={{ paddingTop: 0 }}>
-      <h2>For every moment you need a walking mate</h2>
-      <p className="lead">From matching to walk logs — all in one place.</p>
+      <h2>Everything happening on your block</h2>
+      <p className="lead">
+        No swiping, no matching — just your neighbourhood&apos;s dogs and their
+        people.
+      </p>
       <div className="ld-feats">
         {CARDS.map((c) => (
           <div className="ld-feat" key={c.title}>

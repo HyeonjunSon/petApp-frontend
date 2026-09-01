@@ -15,27 +15,8 @@ import {
   formatTime,
 } from "../chat/types";
 
-/* 시안 .match-card 문법: 흰 카드 radius 16, 사진 190px, 태그 pill primary-10 */
-const btnGhostSm: React.CSSProperties = {
-  background: "var(--input-bg)",
-  color: "var(--text-secondary)",
-  fontSize: "var(--fs-meta)",
-  fontWeight: 600,
-  borderRadius: "var(--radius-md)",
-  padding: "10px 16px",
-  border: "none",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 6,
-};
-const btnPrimarySm: React.CSSProperties = {
-  ...btnGhostSm,
-  background: "var(--primary)",
-  color: "var(--white)",
-  fontWeight: 700,
-};
+/* v2 인풋: --paper 배경 (radius 12는 공용 컴포넌트) */
+const inputBg: React.CSSProperties = { background: "var(--paper)" };
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -68,26 +49,22 @@ export default function MatchesPage() {
       title="Matches"
       subtitle="Friends who liked you back."
       right={
-        <button type="button" style={btnGhostSm} onClick={() => router.push("/matches/likes")}>
+        <button type="button" className="btn btn-ghost" onClick={() => router.push("/matches/likes")}>
           Likes you
         </button>
       }
     >
-      <div style={{ display: "flex", gap: 16, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
         <div>
-          <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)", marginBottom: 4 }}>
-            Sort
-          </div>
-          <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ width: 150, height: 40, fontSize: "var(--fs-meta)" }}>
+          <div style={{ fontSize: 13, color: "var(--fence)", marginBottom: 4 }}>Sort</div>
+          <Select value={sort} onChange={(e) => setSort(e.target.value)} style={{ ...inputBg, width: 160, height: 40, fontSize: 14 }}>
             <option value="recent">Newest matches</option>
             <option value="message">Latest messages</option>
           </Select>
         </div>
         <div>
-          <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)", marginBottom: 4 }}>
-            Status
-          </div>
-          <Select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ width: 110, height: 40, fontSize: "var(--fs-meta)" }}>
+          <div style={{ fontSize: 13, color: "var(--fence)", marginBottom: 4 }}>Status</div>
+          <Select value={filter} onChange={(e) => setFilter(e.target.value)} style={{ ...inputBg, width: 140, height: 40, fontSize: 14 }}>
             <option value="all">All</option>
             <option value="new">New messages</option>
           </Select>
@@ -95,28 +72,22 @@ export default function MatchesPage() {
       </div>
 
       {loading ? (
-        <div className="flex justify-center pt-16" style={{ color: "var(--text-secondary)" }}>
+        <div className="flex justify-center pt-16" style={{ color: "var(--fence)" }}>
           <Spinner />
         </div>
       ) : rows.length === 0 ? (
         <EmptyState
-          emoji="💜"
+          emoji="🐾"
           title="No matches yet"
           desc="Send a like to a friend you love in Discover."
           action={
-            <button type="button" style={btnPrimarySm} onClick={() => router.push("/discover")}>
+            <button type="button" className="btn" onClick={() => router.push("/discover")}>
               Go to Discover
             </button>
           }
         />
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: 16,
-          }}
-        >
+        <div className="pack-grid">
           {rows.map((m) => {
             const peer = peerOf(m, myId);
             const pet = pickPet(peer);
@@ -124,34 +95,16 @@ export default function MatchesPage() {
             const isNew = (m.unreadCount || 0) > 0;
             const last = m.lastMessage?.text;
             return (
-              <div
-                key={m._id}
-                style={{
-                  background: "var(--surface)",
-                  borderRadius: "var(--radius-2xl)",
-                  boxShadow: "var(--shadow-card)",
-                  overflow: "hidden",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
+              <div key={m._id} className="dog-card" style={{ display: "flex", flexDirection: "column" }}>
                 <div
-                  style={{
-                    height: 190,
-                    background: "var(--input-bg)",
-                    display: "grid",
-                    placeItems: "center",
-                    fontSize: 64,
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
+                  className="dog-photo"
+                  style={!photo ? { display: "grid", placeItems: "center", fontSize: 56 } : undefined}
                 >
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={photo}
                       alt={pet?.name || ""}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       onError={(e) => {
                         const img = e.currentTarget;
                         if (img.dataset.fb === "1") return;
@@ -163,60 +116,27 @@ export default function MatchesPage() {
                     <span aria-hidden>🐕</span>
                   )}
                 </div>
-                <div style={{ padding: 16, flex: 1 }}>
-                  <div style={{ fontSize: "var(--fs-body)", fontWeight: 800, color: "var(--text)" }}>
+                <div className="dog-info" style={{ flex: 1 }}>
+                  <div className="dog-name">
                     {pet?.name || peer?.name || "Friend"}
+                    {isNew && <small>{m.unreadCount} new</small>}
                   </div>
-                  <div style={{ marginTop: 3, fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>
+                  <div className="dog-breed">
                     {peer?.name ? `${peer.name} (owner)` : "Owner"}
                     {m.lastMessage?.createdAt ? ` · ${formatTime(m.lastMessage.createdAt)}` : ""}
                   </div>
-                  <div
-                    className="pd-line1"
-                    style={{ marginTop: 8, fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}
-                  >
+                  <div className="pd-line1" style={{ marginTop: 8, fontSize: 13, color: "var(--fence)" }}>
                     {last || "You liked each other. Start the conversation!"}
                   </div>
-                  {isNew && (
-                    <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          background: "var(--primary-10)",
-                          color: "var(--primary)",
-                          borderRadius: "var(--radius-pill)",
-                          padding: "3px 10px",
-                          fontSize: "var(--fs-micro)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {m.unreadCount} new
-                      </span>
-                    </div>
-                  )}
                 </div>
-                <div style={{ display: "flex", gap: 10, padding: "0 16px 16px" }}>
+                <div className="dog-acts">
                   <button
                     type="button"
+                    className="btn btn-sm"
+                    style={{ flex: 1, justifyContent: "center" }}
                     onClick={() => router.push(`/chat?open=${m._id}`)}
-                    style={{
-                      flex: 1,
-                      height: 40,
-                      borderRadius: "var(--radius-md)",
-                      fontSize: "var(--fs-meta)",
-                      fontWeight: 700,
-                      background: "var(--primary)",
-                      color: "var(--white)",
-                      border: "none",
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 6,
-                    }}
                   >
-                    Start chatting
+                    Open chat
                   </button>
                 </div>
               </div>

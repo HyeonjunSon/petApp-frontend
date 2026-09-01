@@ -3,7 +3,6 @@
 /** 정적 법적 고지 페이지 공통 레이아웃 — 브랜드 바 + 본문 카드. */
 
 import Link from "next/link";
-import { Icon } from "@/components/ui";
 
 export default function LegalLayout({
   title,
@@ -32,16 +31,17 @@ export default function LegalLayout({
             href="/"
             className="flex items-center gap-2 no-underline"
           >
-            <Icon name="paw" size={22} fill color="var(--primary)" />
+            <span className="logo-dot" />
             <span
               className="text-base"
               style={{
                 color: "var(--text)",
-                fontWeight: 800,
+                fontFamily: "var(--font-display)",
+                fontWeight: 700,
                 letterSpacing: "-0.02em",
               }}
             >
-              PetDate
+              Offleash
             </span>
           </Link>
         </div>
@@ -80,7 +80,7 @@ export default function LegalLayout({
           fontSize: "var(--fs-caption)",
         }}
       >
-        © {new Date().getFullYear()} PetDate ·{" "}
+        © {new Date().getFullYear()} Offleash ·{" "}
         <Link
           href="/privacy"
           className="no-underline"

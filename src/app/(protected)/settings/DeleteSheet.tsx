@@ -6,8 +6,8 @@ import { Banner, Button, Field, Input, Sheet } from "@/components/ui";
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 
@@ -47,7 +47,7 @@ export default function DeleteSheet({
   return (
     <Sheet open={open} onClose={close} title="Delete account">
       <div className="flex flex-col gap-3 px-5 pt-2 pb-6">
-        <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+        <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
         <Banner tone="rose">
           Deleting your account permanently removes your account and all data. This action cannot be undone.
         </Banner>

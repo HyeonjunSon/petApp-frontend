@@ -3,16 +3,16 @@
 import LegalLayout, { H2, P, UL } from "../_legal/Layout";
 
 export const metadata = {
-  title: "Terms of Service — PetDate",
-  description: "The rules for using the PetDate Service.",
+  title: "Terms of Service — Offleash",
+  description: "The rules for using the Offleash Service.",
 };
 
 export default function Terms() {
   return (
     <LegalLayout title="Terms of Service" updated="2026-06-14">
       <P>
-        Welcome to PetDate. These Terms of Service ("Terms") govern your use
-        of the PetDate mobile and web app (the "Service"). By creating an
+        Welcome to Offleash. These Terms of Service ("Terms") govern your use
+        of the Offleash mobile and web app (the "Service"). By creating an
         account or using the Service you agree to these Terms.
       </P>
 
@@ -78,7 +78,7 @@ export default function Terms() {
 
       <H2>5. Content ownership</H2>
       <P>
-        You own the photos and text you upload. By uploading you grant PetDate
+        You own the photos and text you upload. By uploading you grant Offleash
         a worldwide, royalty-free license to host, display, and distribute
         them as needed to operate the Service. You can delete your content at
         any time and the license ends, except where the law requires us to
@@ -95,7 +95,7 @@ export default function Terms() {
 
       <H2>7. Limitation of liability</H2>
       <P>
-        To the maximum extent permitted by law, PetDate is not liable for any
+        To the maximum extent permitted by law, Offleash is not liable for any
         indirect, incidental, special, consequential, or punitive damages
         arising out of your use of the Service.
       </P>

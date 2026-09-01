@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/store/auth";
 import { api } from "@/lib/api";
-import SideNav from "@/components/shell/SideNav";
+import SiteHeader from "@/components/shell/SiteHeader";
+import Sidebar from "@/components/shell/Sidebar";
 
 export default function ProtectedLayout({
   children,
@@ -52,7 +53,7 @@ export default function ProtectedLayout({
     return (
       <div
         className="grid min-h-dvh place-items-center text-sm"
-        style={{ color: "var(--text-secondary)" }}
+        style={{ color: "var(--fence)" }}
       >
         Loading…
       </div>
@@ -60,14 +61,12 @@ export default function ProtectedLayout({
   }
 
   return (
-    <div
-      className="flex h-dvh"
-      style={{ background: "var(--background)", color: "var(--text)" }}
-    >
-      <SideNav />
-      <main className="pd-scroll min-w-0 flex-1 overflow-y-auto">
+    <>
+      <SiteHeader />
+      <div className="shell">
+        <Sidebar />
         {children}
-      </main>
-    </div>
+      </div>
+    </>
   );
 }

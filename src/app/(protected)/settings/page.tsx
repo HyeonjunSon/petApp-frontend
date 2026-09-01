@@ -11,8 +11,8 @@ import { Avatar, Sheet, Field, Input, Banner, Button, Icon, type IconName } from
 
 const INPUT_STYLE: React.CSSProperties = {
   border: "none",
-  background: "var(--input-bg)",
-  borderRadius: 10,
+  background: "var(--paper)",
+  borderRadius: "var(--radius-input)",
   height: 46,
 };
 
@@ -34,8 +34,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function MenuCard({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="pd-card pd-menu"
-      style={{ borderRadius: "var(--radius-xl)", overflow: "hidden" }}
+      className="card pd-menu"
+      style={{ padding: 0, overflow: "hidden" }}
     >
       {children}
     </div>
@@ -115,7 +115,7 @@ export default function SettingsHubPage() {
 
   return (
     <Page title="Settings" subtitle="Manage your info and preferences." maxWidth={720}>
-      <style>{`.pdi:focus{box-shadow:0 0 0 2px var(--primary)}`}</style>
+      <style>{`.pdi:focus{outline:2px solid var(--ink) !important}`}</style>
 
       <SectionTitle>Profile</SectionTitle>
       <MenuCard>
