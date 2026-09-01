@@ -19,6 +19,8 @@ export type Card = {
   temperament?: string[];
   petAbout?: string;
   photos: string[];
+  /** meters from me — present when both sides have saved coordinates */
+  distanceM?: number;
 };
 
 const API_BASE =
@@ -81,5 +83,6 @@ export function adapt(u: any): Card {
     temperament: Array.isArray(pet?.temperament) ? pet.temperament : [],
     petAbout: pet?.about || pet?.bio || "",
     photos,
+    distanceM: typeof u.distanceM === "number" ? u.distanceM : undefined,
   };
 }

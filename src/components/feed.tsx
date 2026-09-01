@@ -1,12 +1,40 @@
 "use client";
 
-/** Offleash v2 feed pieces — PostCard, BallWalkCard, NearYouRail. */
+/** Offleash v2 feed pieces — PostCard, BallWalkCard, NearYouRail.
+    PostCard consumes a normalized FeedPost (real API or demo fallback). */
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Post } from "@/lib/feed-demo";
-import { busySpots } from "@/lib/feed-demo";
+import { busySpots, fmtDistance, type PostType } from "@/lib/feed-demo";
 import type { Card } from "@/lib/card";
 import type { WalkInvite } from "@/app/(protected)/chat/types";
+
+export interface FeedPost {
+  id: string;
+  author: string;
+  initial: string;
+  type: PostType;
+  timeAgo: string;
+  distance: string; // "600 m" | ""
+  body: string;
+  reactions: number;
+  reacted?: boolean;
+  comments: number;
+  topComment?: { author: string; initial: string; body: string; timeAgo: string };
+  live?: boolean; // 실데이터 여부 (핸들러 활성화)
+}
+
+export function timeAgo(iso?: string) {
+  if (!iso) return "";
+  const s = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 90) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "yesterday" : `${d} d`;
+}
 
 export function InitialAvatar({
   initial,
@@ -24,30 +52,75 @@ export function InitialAvatar({
   );
 }
 
-const tagFor: Record<Post["type"], { label: string; cls: string }> = {
+const tagFor: Record<PostType, { label: string; cls: string }> = {
   lost: { label: "Lost", cls: "tag tag-lost" },
   "walk-request": { label: "Walk mate", cls: "tag tag-want" },
   recommend: { label: "Recommend", cls: "tag" },
   question: { label: "Question", cls: "tag" },
 };
 
-export function PostCard({ post }: { post: Post }) {
+const actionLabel: Partial<Record<PostType, { label: string; cls: string }>> = {
+  lost: { label: "I saw them", cls: "btn btn-danger btn-sm" },
+  "walk-request": { label: "I'll walk with you", cls: "btn btn-ball btn-sm" },
+  question: { label: "Answer", cls: "btn btn-ghost btn-sm" },
+};
+
+export function PostCard({
+  post,
+  onReact,
+  onComment,
+}: {
+  post: FeedPost;
+  onReact?: (p: FeedPost) => void;
+  onComment?: (p: FeedPost, body: string) => Promise<void> | void;
+}) {
   const tag = tagFor[post.type];
+  const act = actionLabel[post.type];
+  const [commenting, setCommenting] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const submitComment = async () => {
+    const v = draft.trim();
+    if (!v || !onComment || busy) return;
+    setBusy(true);
+    try {
+      await onComment(post, v);
+      setDraft("");
+      setCommenting(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <article className={`card${post.type === "lost" ? " card-lost" : ""}`}>
       <div className="post-meta">
         <InitialAvatar initial={post.initial} size="sm" />
         <b>{post.author}</b> · {post.timeAgo}
         <span className={tag.cls}>{tag.label}</span>
-        <span className="post-dist">{post.distance}</span>
+        {post.distance && <span className="post-dist">{post.distance}</span>}
       </div>
       <p className="post-body">{post.body}</p>
       <div className="post-actions">
-        {post.type === "lost" && <button className="btn btn-danger btn-sm">I saw them</button>}
-        {post.type === "walk-request" && <button className="btn btn-ball btn-sm">I&apos;ll walk with you</button>}
-        {post.type === "question" && <button className="btn btn-ghost btn-sm">Answer</button>}
-        <button className="btn btn-ghost btn-sm">🐾 {post.reactions}</button>
-        <span className="post-count">{post.comments} comments</span>
+        {act && (
+          <button
+            className={act.cls}
+            onClick={() => (post.live && onComment ? setCommenting((v) => !v) : undefined)}
+          >
+            {act.label}
+          </button>
+        )}
+        <button
+          className={`btn btn-sm ${post.reacted ? "btn-ball" : "btn-ghost"}`}
+          onClick={() => post.live && onReact?.(post)}
+          aria-pressed={post.reacted || false}
+        >
+          🐾 {post.reactions}
+        </button>
+        <span className="post-count">
+          {post.comments} comment{post.comments === 1 ? "" : "s"}
+        </span>
       </div>
       {post.topComment && (
         <div className="post-comment">
@@ -56,6 +129,29 @@ export function PostCard({ post }: { post: Post }) {
             <b>{post.topComment.author}</b> {post.topComment.body}
             <small>{post.topComment.timeAgo}</small>
           </div>
+        </div>
+      )}
+      {commenting && (
+        <div className="post-comment" style={{ alignItems: "center" }}>
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && submitComment()}
+            placeholder="Write a reply…"
+            style={{
+              flex: 1,
+              background: "var(--paper)",
+              border: 0,
+              borderRadius: 999,
+              padding: "10px 14px",
+              font: "inherit",
+              color: "var(--ink)",
+              outline: "none",
+            }}
+          />
+          <button className="btn btn-sm" disabled={busy || !draft.trim()} onClick={submitComment}>
+            Reply
+          </button>
         </div>
       )}
     </article>
@@ -105,7 +201,7 @@ export function BallWalkCard({
   );
 }
 
-/** 우측 레일 — 근처 강아지(실데이터) + 이번 주 인기 장소(데모). */
+/** 우측 레일 — 근처 강아지(실데이터, 거리 포함) + 이번 주 인기 장소(데모). */
 export function NearYouRail({ dogs }: { dogs: Card[] }) {
   const router = useRouter();
   return (
@@ -134,7 +230,9 @@ export function NearYouRail({ dogs }: { dogs: Card[] }) {
                   .join(" · ") || "Neighbour"}
               </small>
             </span>
-            {d.location && <span className="near-dist" style={{ fontSize: 13 }}>{d.location.split("·").pop()?.trim()}</span>}
+            {typeof d.distanceM === "number" && (
+              <span className="near-dist">{fmtDistance(d.distanceM)}</span>
+            )}
           </button>
         ))}
         {dogs.length > 4 && (

@@ -11,6 +11,7 @@ import { Toast, type ToastData } from "@/components/ui";
 import MatchModal from "../discover/MatchModal";
 import SwipeLimit from "../discover/SwipeLimit";
 import { NearYouRail } from "@/components/feed";
+import { fmtDistance } from "@/lib/feed-demo";
 
 const SWIPE_LIMIT = 30; // matches backend FREE_DAILY_LIKE_LIMIT
 const SIZE_CHIP: Record<string, string> = { s: "Small", m: "Medium", l: "Large" };
@@ -129,7 +130,11 @@ export default function PackPage() {
                 <div className="dog-info">
                   <div className="dog-name">
                     {d.petName || d.ownerName || "New friend"}
-                    {d.size && <small>{SIZE_CHIP[d.size] || d.size}</small>}
+                    {typeof d.distanceM === "number" ? (
+                      <small>{fmtDistance(d.distanceM)}</small>
+                    ) : (
+                      d.size && <small>{SIZE_CHIP[d.size] || d.size}</small>
+                    )}
                   </div>
                   <div className="dog-breed">
                     {[d.breed, d.age != null ? `${d.age} y` : "", d.ownerName]

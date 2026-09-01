@@ -121,6 +121,38 @@ export default function ExposurePage() {
   const toggleStyle = (v: string) =>
     setStyles((s) => (s.includes(v) ? s.filter((x) => x !== v) : [...s, v]));
 
+  /* 실제 좌표 저장 → Pack 거리 정렬/표시가 살아난다 */
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoDone, setGeoDone] = useState(false);
+  const useMyLocation = () => {
+    if (!navigator.geolocation) {
+      setErr("This browser doesn't support location.");
+      return;
+    }
+    setGeoBusy(true);
+    setErr(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await api.patch("/users/update", {
+            location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          });
+          setGeoDone(true);
+          setToast({ msg: "Location saved — Pack now sorts by distance", type: "ok" });
+        } catch {
+          setErr("Couldn't save your location. Please try again.");
+        } finally {
+          setGeoBusy(false);
+        }
+      },
+      () => {
+        setGeoBusy(false);
+        setErr("Location permission was denied.");
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
   const save = async () => {
     setBusy(true);
     setErr(null);
@@ -158,6 +190,20 @@ export default function ExposurePage() {
           />
         ))}
       </div>
+
+      <SectionTitle>My location</SectionTitle>
+      <section className="card" style={{ padding: 20, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ fontWeight: 600 }}>Sort the Pack by real distance</div>
+          <div style={{ fontSize: "var(--fs-meta)", color: "var(--fence)", marginTop: 4 }}>
+            Save your location once and nearby dogs show how far they really are.
+            Only distances are shown to others — never your exact spot.
+          </div>
+        </div>
+        <button type="button" className={`btn btn-sm ${geoDone ? "btn-ghost" : "btn-ball"}`} onClick={useMyLocation} disabled={geoBusy}>
+          {geoBusy ? "Locating…" : geoDone ? "Location saved ✓" : "Use my location"}
+        </button>
+      </section>
 
       <SectionTitle>Pet filters</SectionTitle>
       <section className="card" style={{ padding: 20 }}>
