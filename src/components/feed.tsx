@@ -193,7 +193,11 @@ export function BallWalkCard({
         <button className="btn btn-sm" onClick={() => router.push(`/chat?open=${invite.match}`)}>
           Open chat
         </button>
-        <button className="btn btn-ghost btn-sm" onClick={() => router.push("/walks")}>
+        <button
+          className="btn btn-ghost btn-sm"
+          style={{ background: "transparent", color: "var(--ball-ink)" }}
+          onClick={() => router.push("/walks")}
+        >
           All walks
         </button>
       </div>
