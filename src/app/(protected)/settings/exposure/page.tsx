@@ -9,13 +9,13 @@ import { Page } from "@/components/shell/Page";
 import { Button, Select, Field, Chip, Banner, Toast, type ToastData } from "@/components/ui";
 
 const REGIONS = [
-  { v: "Seoul", label: "Seoul" },
-  { v: "Busan", label: "Busan" },
-  { v: "Incheon", label: "Incheon" },
-  { v: "Daegu", label: "Daegu" },
-  { v: "Daejeon", label: "Daejeon" },
-  { v: "Gwangju", label: "Gwangju" },
-  { v: "Gyeonggi", label: "Gyeonggi" },
+  { v: "Toronto", label: "Toronto" },
+  { v: "East York", label: "East York" },
+  { v: "Scarborough", label: "Scarborough" },
+  { v: "North York", label: "North York" },
+  { v: "Etobicoke", label: "Etobicoke" },
+  { v: "Mississauga", label: "Mississauga" },
+  { v: "Vancouver", label: "Vancouver" },
   { v: "Other", label: "Other" },
 ];
 
@@ -98,7 +98,7 @@ function RadioCard({
 export default function ExposurePage() {
   const router = useRouter();
   const [visibility, setVisibility] = useState("public");
-  const [region, setRegion] = useState("Seoul");
+  const [region, setRegion] = useState("Toronto");
   const [ageRange, setAgeRange] = useState("0-2");
   const [size, setSize] = useState("s");
   const [styles, setStyles] = useState<string[]>([]);

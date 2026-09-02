@@ -103,7 +103,7 @@ export default function NewWalkInvitePage() {
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Weekend morning walk" style={inputBg} />
             </Field>
             <Field label="Place">
-              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Seoul Forest" style={inputBg} />
+              <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Withrow Park" style={inputBg} />
             </Field>
             <Field label="Address · Meeting point">
               <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter an address or meeting point" style={inputBg} />

@@ -238,7 +238,7 @@ export default function OnboardingPage() {
                   style={{ ...INPUT_STYLE, flex: 1, minWidth: 200 }}
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Mapo-gu, Seoul"
+                  placeholder="Leslieville, Toronto"
                 />
                 <button
                   type="button"

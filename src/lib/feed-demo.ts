@@ -46,9 +46,9 @@ export const posts: Post[] = [
 ];
 
 export const busySpots = [
-  { name: "Riverside off-leash", walks: 31 },
-  { name: "Maple Park", walks: 18 },
-  { name: "Lakeshore trail", walks: 9 },
+  { name: "Greenwood off-leash", walks: 31 },
+  { name: "Jimmie Simpson Park", walks: 18 },
+  { name: "Cherry Beach", walks: 9 },
 ];
 
 export function fmtDistance(m: number) {

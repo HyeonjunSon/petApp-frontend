@@ -657,7 +657,7 @@ export default function ChatPage() {
             <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </Field>
           <Field label="Place">
-            <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Yeouido Hangang Park, Parking Lot 2" />
+            <Input value={place} onChange={(e) => setPlace(e.target.value)} placeholder="Jimmie Simpson Park, east gate" />
           </Field>
           <Field label="Note">
             <Textarea value={note} onChange={(e) => setNote(e.target.value)} />

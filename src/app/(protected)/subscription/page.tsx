@@ -20,7 +20,7 @@ const PREMIUM_FEATURES = [
 
 const FAQ = [
   ["Can I cancel anytime?", "Yes, you can cancel anytime. Your benefits stay active until the expiration date."],
-  ["Which payment methods are supported?", "We support credit/debit cards, KakaoPay, and Naver Pay."],
+  ["Which payment methods are supported?", "We support credit/debit cards, Apple Pay, and Google Pay."],
   ["Do benefits apply right away?", "Yes, they apply immediately once payment is complete."],
 ];
 
@@ -82,13 +82,13 @@ export default function SubscriptionPage() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
         <PlanCard
           title="Free"
-          price="₩0"
+          price="$0"
           features={FREE_FEATURES}
           cta={<Button variant="secondary" fullWidth disabled>{premium ? "Downgrade not available" : "Current plan"}</Button>}
         />
         <PlanCard
           title="Premium"
-          price="₩9,900"
+          price="$9.99"
           highlight
           features={PREMIUM_FEATURES}
           cta={

@@ -10,13 +10,13 @@ import { Page } from "@/components/shell/Page";
 import { Button, Input, Textarea, Select, Field, Avatar, Banner, Toast, type ToastData } from "@/components/ui";
 
 const REGIONS = [
-  { v: "Seoul", label: "Seoul" },
-  { v: "Busan", label: "Busan" },
-  { v: "Incheon", label: "Incheon" },
-  { v: "Daegu", label: "Daegu" },
-  { v: "Daejeon", label: "Daejeon" },
-  { v: "Gwangju", label: "Gwangju" },
-  { v: "Gyeonggi", label: "Gyeonggi" },
+  { v: "Toronto", label: "Toronto" },
+  { v: "East York", label: "East York" },
+  { v: "Scarborough", label: "Scarborough" },
+  { v: "North York", label: "North York" },
+  { v: "Etobicoke", label: "Etobicoke" },
+  { v: "Mississauga", label: "Mississauga" },
+  { v: "Vancouver", label: "Vancouver" },
   { v: "Other", label: "Other" },
 ];
 
@@ -55,7 +55,7 @@ export default function OwnerProfileEditPage() {
 
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
-  const [region, setRegion] = useState("Seoul");
+  const [region, setRegion] = useState("Toronto");
   const [gender, setGender] = useState("undisclosed");
   const [about, setAbout] = useState("");
   const [walkStyle, setWalkStyle] = useState("");
@@ -68,7 +68,7 @@ export default function OwnerProfileEditPage() {
     api.get("/users/me").then(({ data }) => {
       setName(data?.name || "");
       setAge(data?.age ? String(data.age) : data?.birthYear ? String(data.birthYear) : "");
-      setRegion(data?.locationName || "Seoul");
+      setRegion(data?.locationName || "Toronto");
       setGender(data?.gender || "undisclosed");
       setAbout(data?.about || "");
       setWalkStyle(data?.walkStyle || "");

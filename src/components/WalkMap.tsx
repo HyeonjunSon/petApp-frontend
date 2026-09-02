@@ -14,7 +14,7 @@ export type MapPin = {
   label?: string;
 };
 
-const SEOUL: [number, number] = [37.5563, 126.9236]; // fallback center
+const TORONTO: [number, number] = [43.6595, -79.34]; // fallback center (east end)
 
 const ballIcon = () =>
   L.divIcon({
@@ -53,7 +53,7 @@ export default function WalkMap({
     if (!elRef.current || mapRef.current) return;
     const first = pins[0];
     const c: [number, number] =
-      center || (first ? [first.lat, first.lng] : SEOUL);
+      center || (first ? [first.lat, first.lng] : TORONTO);
     const map = L.map(elRef.current, { scrollWheelZoom: false }).setView(c, 13);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,

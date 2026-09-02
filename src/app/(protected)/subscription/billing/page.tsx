@@ -102,7 +102,7 @@ export default function BillingPortalPage() {
             </div>
             <div style={{ textAlign: "right" }}>
               <div style={{ fontSize: "var(--fs-caption)", color: "var(--text-secondary)" }}>Billing amount</div>
-              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>₩9,900 / month</div>
+              <div style={{ fontSize: "var(--fs-body)", color: "var(--text)", marginTop: 4 }}>$9.99 / month</div>
             </div>
           </div>
         )}
