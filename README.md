@@ -1,5 +1,7 @@
 # Offleash — your neighbourhood, off the leash 🎾
 
+[![CI](https://github.com/HyeonjunSon/petApp-frontend/actions/workflows/ci.yml/badge.svg)](https://github.com/HyeonjunSon/petApp-frontend/actions/workflows/ci.yml)
+
 A neighbourhood community for dog owners: a local feed, walk plans on a map, and the dogs
 around you sorted by real distance. This repo is the **web frontend**; the API lives in
 [`petApp-server`](https://github.com/HyeonjunSon/petApp-server).

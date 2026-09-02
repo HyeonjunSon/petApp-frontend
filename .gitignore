@@ -12,3 +12,7 @@ EOF
 # local caches
 .expo/
 tsconfig.tsbuildinfo
+
+# test artifacts
+/test-results/
+/playwright-report/
