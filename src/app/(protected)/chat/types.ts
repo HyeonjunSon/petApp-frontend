@@ -35,6 +35,8 @@ export type WalkInvite = {
   date: string;
   time: string;
   place?: string;
+  /** 만날 장소 좌표 (GeoJSON [lng, lat]) — 지도 픽커로 만든 약속에만 존재 */
+  meetPoint?: { type: "Point"; coordinates: [number, number] };
   note?: string;
   status: "proposed" | "confirmed" | "declined" | "cancelled" | "completed";
   createdAt?: string;

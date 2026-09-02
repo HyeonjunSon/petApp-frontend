@@ -117,6 +117,34 @@ export default function OnboardingPage() {
   const toggle = (arr: string[], setArr: (v: string[]) => void, v: string) =>
     setArr(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
+  /* 좌표 저장 → Pack 거리 정렬이 첫날부터 동작 */
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [geoDone, setGeoDone] = useState(false);
+  const useMyLocation = () => {
+    if (!navigator.geolocation) return setErr("This browser doesn't support location.");
+    setGeoBusy(true);
+    setErr(null);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          await api.patch("/users/update", {
+            location: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          });
+          setGeoDone(true);
+        } catch {
+          setErr("Couldn't save your location. You can retry in Settings later.");
+        } finally {
+          setGeoBusy(false);
+        }
+      },
+      () => {
+        setGeoBusy(false);
+        setErr("Location permission was denied. You can add it later in Settings.");
+      },
+      { enableHighAccuracy: false, timeout: 10000 }
+    );
+  };
+
   const submit1 = async () => {
     setBusy(true);
     setErr(null);
@@ -204,7 +232,27 @@ export default function OnboardingPage() {
               </Field>
             </div>
             <Field label="Location">
-              <Input className="pdi" style={INPUT_STYLE} value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Mapo-gu, Seoul" />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                <Input
+                  className="pdi"
+                  style={{ ...INPUT_STYLE, flex: 1, minWidth: 200 }}
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Mapo-gu, Seoul"
+                />
+                <button
+                  type="button"
+                  className={`btn btn-sm ${geoDone ? "btn-ghost" : "btn-ball"}`}
+                  onClick={useMyLocation}
+                  disabled={geoBusy}
+                  style={{ alignSelf: "center" }}
+                >
+                  {geoBusy ? "Locating…" : geoDone ? "Location saved ✓" : "📍 Use my location"}
+                </button>
+              </div>
+              <span style={{ display: "block", fontSize: 13, color: "var(--fence)", marginTop: 6 }}>
+                Saving your location sorts the Pack by real distance. Only distances are shown — never your exact spot.
+              </span>
             </Field>
             <Field label="Short bio">
               <Textarea className="pdi" style={AREA_STYLE} value={about} onChange={(e) => setAbout(e.target.value)} placeholder="Tell us about yourself" />

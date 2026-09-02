@@ -4,6 +4,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Leaflet은 window를 만지므로 SSR 제외
+const WalkMap = dynamic(() => import("@/components/WalkMap"), { ssr: false });
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
@@ -242,6 +246,21 @@ export default function WalksPage() {
               {stats.count} walks · {stats.dist} · {stats.time}
             </span>
           </div>
+
+          {/* 지도 — 만날 장소가 지정된 다가오는 약속 핀 */}
+          {(() => {
+            const pins = upcoming
+              .filter((i) => Array.isArray(i.meetPoint?.coordinates))
+              .map((i) => ({
+                id: i._id,
+                lat: i.meetPoint!.coordinates[1],
+                lng: i.meetPoint!.coordinates[0],
+                label: `${fmtTime(i.time)} · ${i.place || peerName(i.match).pet}`,
+              }));
+            return pins.length > 0 ? (
+              <WalkMap pins={pins} height={240} onPinClick={(id) => router.push(`/walks/${id}`)} />
+            ) : null;
+          })()}
 
           {/* 다가오는 약속 */}
           <h2 style={{ fontSize: 18, margin: "10px 0 0" }}>Upcoming</h2>

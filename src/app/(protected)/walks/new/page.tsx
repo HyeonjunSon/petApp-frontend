@@ -4,11 +4,15 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import { Page } from "@/components/shell/Page";
 import { Input, Textarea, Select, Field, Banner, Spinner } from "@/components/ui";
 import { type Match, peerOf, pickPet } from "../../chat/types";
+
+// Leaflet은 window를 만지므로 SSR 제외
+const WalkMap = dynamic(() => import("@/components/WalkMap"), { ssr: false });
 
 /* v2 인풋: --paper 배경 + radius 12 (보더는 공용 컴포넌트의 --line 그대로) */
 const inputBg: React.CSSProperties = { background: "var(--paper)" };
@@ -29,6 +33,7 @@ export default function NewWalkInvitePage() {
   const [time, setTime] = useState("");
   const [petCond, setPetCond] = useState("any");
   const [approval, setApproval] = useState("auto");
+  const [picked, setPicked] = useState<{ lat: number; lng: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -60,6 +65,7 @@ export default function NewWalkInvitePage() {
         date,
         time,
         place: place || undefined,
+        location: picked || undefined,
         note: noteParts.join(" · ") || undefined,
       });
       router.replace("/walks");
@@ -105,6 +111,16 @@ export default function NewWalkInvitePage() {
             </Field>
             <Field label="Address · Meeting point">
               <Textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Enter an address or meeting point" style={inputBg} />
+            </Field>
+            <Field label="Pin the meeting point on the map">
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <WalkMap height={220} picked={picked} onPick={setPicked} />
+                <span style={{ fontSize: 13, color: "var(--fence)" }}>
+                  {picked
+                    ? `Pinned ✓ (${picked.lat.toFixed(4)}, ${picked.lng.toFixed(4)}) — tap the map to move it`
+                    : "Tap the map to drop a pin — it shows up on everyone's Walks map."}
+                </span>
+              </div>
             </Field>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
               <Field label="Estimated duration (min)">
