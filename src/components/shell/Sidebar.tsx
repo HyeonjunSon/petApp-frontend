@@ -3,11 +3,10 @@
 /** Offleash v2 — 좌측 사이드바: 동네 후드 + 네비 5개 + New post + 내 계정.
     720px 미만에서는 하단 탭바로 변신 (globals.css .sidebar 미디어쿼리). */
 
-import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/store/auth";
-import { api } from "@/lib/api";
-import type { Pet } from "@/types/pet";
+import { api } from "@/lib/api"; // logout만
+import { usePetsQuery } from "@/store/api";
 
 const items = [
   { href: "/home", label: "Home" },
@@ -21,11 +20,7 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname() || "/";
   const { user, setUser, logout } = useAuth();
-  const [pets, setPets] = useState<Pet[]>([]);
-
-  useEffect(() => {
-    api.get<Pet[]>("/pets").then(({ data }) => setPets(data || [])).catch(() => {});
-  }, []);
+  const { data: pets = [] } = usePetsQuery();
 
   const onLogout = async () => {
     try {

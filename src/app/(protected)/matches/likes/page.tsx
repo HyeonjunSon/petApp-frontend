@@ -1,40 +1,19 @@
 "use client";
 
-/** Likes you — 실데이터. 프리미엄이면 전체 공개 + Like back, 아니면 개수만 + 잠금 타일. */
+/** Likes you — RTK Query. like 뮤테이션이 LikesMe 태그를 무효화해
+    Like back 후 목록이 캐시에서 자동 갱신된다. */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import { Page } from "@/components/shell/Page";
 import { Toast, type ToastData } from "@/components/ui";
-
-type Liker = {
-  id: string;
-  name: string;
-  petName?: string;
-  breed?: string;
-  photo?: string;
-  likedAt?: string;
-};
-type LikesMe =
-  | { locked: true; count: number }
-  | { locked: false; users: Liker[] };
+import { useLikesMeQuery, useLikeMutation, type Liker } from "@/store/api";
 
 export default function LikesMePage() {
   const router = useRouter();
-  const [data, setData] = useState<LikesMe | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { data, isLoading } = useLikesMeQuery();
+  const [like, { isLoading: liking }] = useLikeMutation();
   const [toast, setToast] = useState<ToastData>(null);
-
-  const load = () =>
-    api
-      .get<LikesMe>("/matches/likes-me")
-      .then(({ data }) => setData(data))
-      .catch(() => setData({ locked: true, count: 0 }));
-
-  useEffect(() => {
-    load();
-  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -43,20 +22,13 @@ export default function LikesMePage() {
   }, [toast]);
 
   const likeBack = async (u: Liker) => {
-    if (busyId) return;
-    setBusyId(u.id);
+    if (liking) return;
     try {
-      const { data: r } = await api.post(`/matches/like/${u.id}`);
-      if (r?.matchId) {
-        setToast({ msg: `It's a match with ${u.petName || u.name}! 🎾`, type: "ok" });
-        setData((d) => (d && !d.locked ? { ...d, users: d.users.filter((x) => x.id !== u.id) } : d));
-      } else {
-        setToast({ msg: "Liked back!", type: "ok" });
-      }
+      const r = await like(u.id).unwrap();
+      if (r?.matchId) setToast({ msg: `It's a match with ${u.petName || u.name}! 🎾`, type: "ok" });
+      else setToast({ msg: "Liked back!", type: "ok" });
     } catch {
       setToast({ msg: "Something went wrong. Please try again.", type: "error" });
-    } finally {
-      setBusyId(null);
     }
   };
 
@@ -66,11 +38,11 @@ export default function LikesMePage() {
     <Page
       title="Likes you"
       subtitle={
-        data === null
+        isLoading || !data
           ? "See the friends who liked you."
           : count === 0
             ? "No likes yet — say hi in the Pack first."
-            : `${count} neighbour${count === 1 ? "" : "s"} liked ${count === 1 ? "you" : "you"}.`
+            : `${count} neighbour${count === 1 ? "" : "s"} liked you.`
       }
       right={
         <button type="button" className="btn btn-ghost" onClick={() => router.push("/matches")}>
@@ -78,7 +50,7 @@ export default function LikesMePage() {
         </button>
       }
     >
-      {data === null ? (
+      {isLoading || !data ? (
         <div className="card" style={{ color: "var(--fence)" }}>Loading…</div>
       ) : data.locked ? (
         <>
@@ -146,7 +118,7 @@ export default function LikesMePage() {
                   type="button"
                   className="btn btn-ball btn-sm"
                   style={{ flex: 1, justifyContent: "center" }}
-                  disabled={busyId === u.id}
+                  disabled={liking}
                   onClick={() => likeBack(u)}
                 >
                   Like back 🐾

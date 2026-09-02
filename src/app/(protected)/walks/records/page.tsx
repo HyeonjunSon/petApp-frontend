@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { useWalksQuery, usePetsQuery } from "@/store/api";
 import { Page } from "@/components/shell/Page";
 import { Spinner, EmptyState, Avatar } from "@/components/ui";
 
@@ -43,24 +43,16 @@ function dateParts(iso: string) {
 
 export default function WalkRecordsPage() {
   const router = useRouter();
-  const [walks, setWalks] = useState<Walk[]>([]);
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  /* RTK Query — /walks 목록 화면과 같은 쿼리라 캐시를 공유한다 */
+  const range = useMemo(() => {
     const today = new Date();
     const from = new Date(today);
     from.setFullYear(from.getFullYear() - 1);
     const iso = (d: Date) => d.toISOString().slice(0, 10);
-    Promise.allSettled([
-      api.get<Walk[]>("/walks", { params: { from: iso(from), to: iso(today) } }),
-      api.get<Pet[]>("/pets"),
-    ]).then(([wk, pt]) => {
-      if (wk.status === "fulfilled") setWalks(wk.value.data || []);
-      if (pt.status === "fulfilled") setPets(pt.value.data || []);
-      setLoading(false);
-    });
+    return { from: iso(from), to: iso(today) };
   }, []);
+  const { data: walks = [], isLoading: loading } = useWalksQuery(range);
+  const { data: pets = [] } = usePetsQuery();
 
   const petName = (id: string) => pets.find((p) => p._id === id)?.name || "Pet";
 

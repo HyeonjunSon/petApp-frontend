@@ -4,7 +4,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import {
+  useWalkInvitesQuery,
+  useMatchesQuery,
+  useUpdateInviteMutation,
+} from "@/store/api";
 import { useAuth } from "@/store/auth";
 import { Page, ImagePlaceholder } from "@/components/shell/Page";
 import { Avatar, Spinner, EmptyState, Icon } from "@/components/ui";
@@ -54,32 +58,21 @@ export default function WalkInviteDetailPage() {
   const { user } = useAuth();
   const myId = (user as any)?._id || "";
 
-  const [invite, setInvite] = useState<WalkInvite | null>(null);
-  const [match, setMatch] = useState<Match | null>(null);
-  const [loading, setLoading] = useState(true);
+  /* RTK Query — 목록 캐시에서 찾고, 상태 변경은 Invites 태그 무효화로 자동 반영 */
+  const { data: invites = [], isLoading: loading } = useWalkInvitesQuery();
+  const { data: matches = [] } = useMatchesQuery();
+  const [updateInvite] = useUpdateInviteMutation();
+  const invite: WalkInvite | null = invites.find((i) => i._id === id) || null;
+  const match: Match | null = invite
+    ? matches.find((m) => m._id === invite.match) || null
+    : null;
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    Promise.allSettled([
-      api.get<WalkInvite[]>("/walk-invites"),
-      api.get<Match[]>("/matches"),
-    ]).then(([inv, mt]) => {
-      const found =
-        inv.status === "fulfilled" ? (inv.value.data || []).find((i) => i._id === id) || null : null;
-      setInvite(found);
-      if (found && mt.status === "fulfilled") {
-        setMatch((mt.value.data || []).find((m) => m._id === found.match) || null);
-      }
-      setLoading(false);
-    });
-  }, [id]);
 
   const respond = async (status: "confirmed" | "declined" | "cancelled" | "completed") => {
     if (!invite) return;
     setBusy(true);
     try {
-      const { data } = await api.patch<WalkInvite>(`/walk-invites/${invite._id}`, { status });
-      setInvite(data);
+      await updateInvite({ id: invite._id, status }).unwrap();
     } catch {}
     setBusy(false);
   };

@@ -2,35 +2,26 @@
 
 /** Me — Offleash v2 프로필 허브. 기존 /profile 데이터·링크 유지, v2 카드 문법. */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api"; // logout만 (인증 플로우는 RTK 경계 밖)
 import { useAuth } from "@/store/auth";
 import { Avatar } from "@/components/ui";
-import type { Pet } from "@/types/pet";
+import { usePetsQuery, useMatchesQuery, useWalkInvitesQuery } from "@/store/api";
 
 export default function MePage() {
   const router = useRouter();
   const { user, setUser, logout } = useAuth();
-  const [pets, setPets] = useState<Pet[]>([]);
-  const [matchCount, setMatchCount] = useState<number | null>(null);
-  const [walkCount, setWalkCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    Promise.allSettled([
-      api.get<Pet[]>("/pets"),
-      api.get("/matches"),
-      api.get("/walk-invites"),
-    ]).then(([pt, mt, inv]) => {
-      if (pt.status === "fulfilled") setPets(pt.value.data || []);
-      if (mt.status === "fulfilled") setMatchCount((mt.value.data || []).length);
-      if (inv.status === "fulfilled")
-        setWalkCount(
-          (inv.value.data || []).filter((i: any) => i.status === "completed").length
-        );
-    });
-  }, []);
+  /* RTK Query — 홈/산책 화면과 캐시 공유 */
+  const { data: pets = [] } = usePetsQuery();
+  const { data: matchesData } = useMatchesQuery();
+  const { data: invitesData } = useWalkInvitesQuery();
+  const matchCount = matchesData ? matchesData.length : null;
+  const walkCount = invitesData
+    ? invitesData.filter((i) => i.status === "completed").length
+    : null;
 
   const onLogout = async () => {
     setBusy(true);

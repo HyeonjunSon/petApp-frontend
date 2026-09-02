@@ -1,21 +1,12 @@
 "use client";
 
-/** 프리미엄 구독 — 플랜 비교 + FAQ. */
+/** 프리미엄 구독 — 플랜 비교 + FAQ (RTK Query: billingMe/plans 쿼리 + checkout 뮤테이션). */
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import { Page } from "@/components/shell/Page";
 import { Button, Icon, Toast, type ToastData } from "@/components/ui";
-
-type Plan = {
-  code: string;
-  label: string;
-  priceCents: number;
-  currency?: string;
-  interval: "month" | "year";
-  features?: string[];
-};
+import { useBillingMeQuery, usePlansQuery, useCheckoutMutation } from "@/store/api";
 
 const FREE_FEATURES = ["5 swipes per day", "3 match messages per day", "Basic filters (distance & breed)", "Includes ads"];
 const PREMIUM_FEATURES = [
@@ -35,21 +26,14 @@ const FAQ = [
 
 export default function SubscriptionPage() {
   const router = useRouter();
-  const [premium, setPremium] = useState(false);
-  const [planCode, setPlanCode] = useState("premium_monthly");
-  const [busy, setBusy] = useState(false);
+  const { data: billing } = useBillingMeQuery();
+  const { data: plans } = usePlansQuery();
+  const [checkout, { isLoading: busy }] = useCheckoutMutation();
   const [toast, setToast] = useState<ToastData>(null);
 
-  useEffect(() => {
-    api.get("/billing/me").then(({ data }) => {
-      const active = data?.active || data?.subscription?.status === "active" || data?.plan === "premium";
-      setPremium(!!active);
-    }).catch(() => {});
-    api.get<Plan[]>("/billing/plans").then(({ data }) => {
-      const p = (Array.isArray(data) ? data : []).find((x) => x.interval === "month") || data?.[0];
-      if (p?.code) setPlanCode(p.code);
-    }).catch(() => {});
-  }, []);
+  const premium = !!billing?.active;
+  const planCode =
+    plans?.find((x) => x.interval === "month")?.code || plans?.[0]?.code || "premium_monthly";
 
   useEffect(() => {
     if (!toast) return;
@@ -58,27 +42,18 @@ export default function SubscriptionPage() {
   }, [toast]);
 
   const subscribe = async () => {
-    setBusy(true);
     try {
-      const { data } = await api.post<{ url?: string; ok?: boolean; demo?: boolean }>(
-        "/billing/checkout",
-        { planCode }
-      );
+      const data = await checkout({ planCode }).unwrap();
       if (data?.url) {
         window.location.href = data.url; // Stripe checkout
       } else if (data?.ok) {
-        setPremium(true);
+        // checkout 뮤테이션이 Billing/LikesMe 태그를 무효화 → 화면 자동 갱신
         setToast({ msg: "Welcome to Premium! 🎾 All benefits are active.", type: "ok" });
       } else {
         setToast({ msg: "Payments are coming soon.", type: "error" });
       }
     } catch (e: any) {
-      setToast({
-        msg: e?.response?.data?.msg || "Payments are coming soon.",
-        type: "error",
-      });
-    } finally {
-      setBusy(false);
+      setToast({ msg: e?.data?.msg || "Payments are coming soon.", type: "error" });
     }
   };
 
@@ -109,14 +84,22 @@ export default function SubscriptionPage() {
           title="Free"
           price="₩0"
           features={FREE_FEATURES}
-          cta={<Button variant="secondary" fullWidth disabled>Current plan</Button>}
+          cta={<Button variant="secondary" fullWidth disabled>{premium ? "Downgrade not available" : "Current plan"}</Button>}
         />
         <PlanCard
           title="Premium"
           price="₩9,900"
           highlight
           features={PREMIUM_FEATURES}
-          cta={<Button fullWidth loading={busy} onClick={subscribe}>Start Premium</Button>}
+          cta={
+            premium ? (
+              <Button variant="secondary" fullWidth onClick={() => router.push("/subscription/billing")}>
+                Current plan — manage
+              </Button>
+            ) : (
+              <Button fullWidth loading={busy} onClick={subscribe}>Start Premium</Button>
+            )
+          }
         />
       </div>
 

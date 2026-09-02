@@ -5,8 +5,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
+import { useMatchesQuery, useCreateInviteMutation } from "@/store/api";
 import { Page } from "@/components/shell/Page";
 import { Input, Textarea, Select, Field, Banner, Spinner } from "@/components/ui";
 import { type Match, peerOf, pickPet } from "../../chat/types";
@@ -22,7 +22,8 @@ export default function NewWalkInvitePage() {
   const { user } = useAuth();
   const myId = (user as any)?._id || "";
 
-  const [matches, setMatches] = useState<Match[]>([]);
+  const { data: matches = [] } = useMatchesQuery();
+  const [createInvite] = useCreateInviteMutation();
   const [matchId, setMatchId] = useState("");
   const [title, setTitle] = useState("");
   const [place, setPlace] = useState("");
@@ -38,14 +39,8 @@ export default function NewWalkInvitePage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    api
-      .get<Match[]>("/matches")
-      .then(({ data }) => {
-        setMatches(data || []);
-        if (data?.[0]) setMatchId(data[0]._id);
-      })
-      .catch(() => {});
-  }, []);
+    if (!matchId && matches[0]) setMatchId(matches[0]._id);
+  }, [matches, matchId]);
 
   const submit = async () => {
     setErr(null);
@@ -61,16 +56,17 @@ export default function NewWalkInvitePage() {
           `Condition: ${petCond === "small" ? "Small dogs only" : petCond === "medium" ? "Medium dogs only" : "Large dogs only"}`,
         `Up to ${maxPeople} people · ${approval === "auto" ? "Auto-accept" : "Manual approval"}`,
       ].filter(Boolean);
-      await api.post(`/matches/${matchId}/walk-invite`, {
+      await createInvite({
+        matchId,
         date,
         time,
         place: place || undefined,
         location: picked || undefined,
         note: noteParts.join(" · ") || undefined,
-      });
+      }).unwrap(); // Invites 태그 무효화 → /walks 목록·홈 배너 자동 갱신
       router.replace("/walks");
     } catch (e: any) {
-      setErr(e?.response?.data?.msg || e?.response?.data?.message || "Couldn't create the plan.");
+      setErr(e?.data?.msg || e?.data?.message || "Couldn't create the plan.");
     } finally {
       setBusy(false);
     }

@@ -2,14 +2,20 @@
 
 /** Walk Plans — meetup (walk-invite) list. Completed plans auto-create records. */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
 // Leaflet은 window를 만지므로 SSR 제외
 const WalkMap = dynamic(() => import("@/components/WalkMap"), { ssr: false });
-import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
+import {
+  useWalkInvitesQuery,
+  useMatchesQuery,
+  useWalksQuery,
+  useUpdateInviteMutation,
+  type WalkRecord,
+} from "@/store/api";
 import { Page } from "@/components/shell/Page";
 import { Spinner, EmptyState } from "@/components/ui";
 import { type Match, type WalkInvite, peerOf, pickPet } from "../chat/types";
@@ -20,14 +26,6 @@ const STATUS: Record<string, string> = {
   declined: "Declined",
   cancelled: "Cancelled",
   completed: "Completed",
-};
-
-type WalkRecord = {
-  _id: string;
-  pet: string;
-  distanceKm: number;
-  durationMin: number;
-  startedAt: string;
 };
 
 /** "HH:MM" → "10:00 AM" */
@@ -65,35 +63,25 @@ export default function WalksPage() {
   const { user } = useAuth();
   const myId = (user as any)?._id || "";
 
-  const [invites, setInvites] = useState<WalkInvite[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [records, setRecords] = useState<WalkRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  useEffect(() => {
+  /* RTK Query — 캐시 공유(홈 레일과 동일 쿼리), Accept 뮤테이션이 Invites 태그 무효화 */
+  const range = useMemo(() => {
     const today = new Date();
     const from = new Date(today);
     from.setFullYear(from.getFullYear() - 1);
     const iso = (d: Date) => d.toISOString().slice(0, 10);
-    Promise.allSettled([
-      api.get<WalkInvite[]>("/walk-invites"),
-      api.get<Match[]>("/matches"),
-      api.get<WalkRecord[]>("/walks", { params: { from: iso(from), to: iso(today) } }),
-    ]).then(([inv, mt, wk]) => {
-      if (inv.status === "fulfilled") setInvites(inv.value.data || []);
-      if (mt.status === "fulfilled") setMatches(mt.value.data || []);
-      if (wk.status === "fulfilled") setRecords(wk.value.data || []);
-      setLoading(false);
-    });
+    return { from: iso(from), to: iso(today) };
   }, []);
+  const { data: invites = [], isLoading: loading } = useWalkInvitesQuery();
+  const { data: matches = [] } = useMatchesQuery();
+  const { data: records = [] } = useWalksQuery(range);
+  const [updateInvite] = useUpdateInviteMutation();
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  /** Accept a received pending invite (same logic as the detail page). */
+  /** Accept a received pending invite (same PATCH as the detail page). */
   const accept = async (id: string) => {
     setBusyId(id);
     try {
-      const { data } = await api.patch<WalkInvite>(`/walk-invites/${id}`, { status: "confirmed" });
-      setInvites((prev) => prev.map((x) => (x._id === id ? data : x)));
+      await updateInvite({ id, status: "confirmed" }).unwrap();
     } catch {}
     setBusyId(null);
   };

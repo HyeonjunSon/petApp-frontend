@@ -1,14 +1,12 @@
 "use client";
 
-/** Home — Offleash v2 동네 피드.
-    피드는 실데이터(/api/posts): 작성·🐾 반응·댓글까지 동작.
-    서버가 구버전이라 /posts가 없으면 데모 포스트로 폴백.
-    레일: 다음 산책(/walk-invites) + 근처 강아지(/discover, 실제 거리). */
+/** Home — Offleash v2 동네 피드 (RTK Query).
+    posts/discover/walk-invites/matches는 쿼리 캐시로, 작성·반응·댓글은
+    뮤테이션(onQueryStarted 낙관적 업데이트)으로. 서버가 구버전이라
+    /posts가 없으면 데모 포스트로 폴백. */
 
-import { useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api";
+import { useMemo, useState } from "react";
 import { useAuth } from "@/store/auth";
-import { adapt, type Card } from "@/lib/card";
 import { posts as demoPosts, fmtDistance, type PostType } from "@/lib/feed-demo";
 import {
   PostCard,
@@ -18,25 +16,17 @@ import {
   timeAgo,
   type FeedPost,
 } from "@/components/feed";
+import { peerOf, pickPet } from "../chat/types";
 import {
-  type Match,
-  type WalkInvite,
-  peerOf,
-  pickPet,
-} from "../chat/types";
-
-type ApiPost = {
-  id: string;
-  author: { id: string; name: string };
-  type: PostType;
-  body: string;
-  distanceM: number | null;
-  reactions: number;
-  reacted: boolean;
-  commentCount: number;
-  topComment?: { author: string; body: string; createdAt: string } | null;
-  createdAt: string;
-};
+  usePostsQuery,
+  useCreatePostMutation,
+  useReactPostMutation,
+  useCommentPostMutation,
+  useDiscoverQuery,
+  useMatchesQuery,
+  useWalkInvitesQuery,
+  type ApiPost,
+} from "@/store/api";
 
 const fromApi = (p: ApiPost): FeedPost => ({
   id: p.id,
@@ -71,33 +61,24 @@ export default function HomePage() {
   const { user } = useAuth();
   const myId = (user as any)?._id || "";
 
-  const [feed, setFeed] = useState<FeedPost[] | null>(null);
-  const [invites, setInvites] = useState<WalkInvite[]>([]);
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [dogs, setDogs] = useState<Card[]>([]);
+  const { data: apiPosts, isLoading: postsLoading, isError: postsError } = usePostsQuery();
+  const { data: invites = [] } = useWalkInvitesQuery();
+  const { data: matches = [] } = useMatchesQuery();
+  const { data: dogs = [] } = useDiscoverQuery();
+
+  const [createPost, { isLoading: posting }] = useCreatePostMutation();
+  const [reactPost] = useReactPostMutation();
+  const [commentPost] = useCommentPostMutation();
 
   const [composing, setComposing] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftType, setDraftType] = useState<PostType>("question");
-  const [posting, setPosting] = useState(false);
 
-  useEffect(() => {
-    Promise.allSettled([
-      api.get<ApiPost[]>("/posts"),
-      api.get<WalkInvite[]>("/walk-invites"),
-      api.get<Match[]>("/matches"),
-      api.get("/discover"),
-    ]).then(([ps, inv, mt, disc]) => {
-      if (ps.status === "fulfilled") setFeed((ps.value.data || []).map(fromApi));
-      else setFeed(demoPosts.map((p) => ({ ...p, live: false })));
-      if (inv.status === "fulfilled") setInvites(inv.value.data || []);
-      if (mt.status === "fulfilled") setMatches(mt.value.data || []);
-      if (disc.status === "fulfilled") {
-        const data = disc.value.data;
-        setDogs((Array.isArray(data) ? data : []).map(adapt));
-      }
-    });
-  }, []);
+  const feed: FeedPost[] | null = useMemo(() => {
+    if (postsError) return demoPosts.map((p) => ({ ...p, live: false }));
+    if (!apiPosts) return null;
+    return apiPosts.map(fromApi);
+  }, [apiPosts, postsError]);
 
   const next = useMemo(() => {
     const today = new Date().toISOString().slice(0, 10);
@@ -118,54 +99,13 @@ export default function HomePage() {
   const submitPost = async () => {
     const body = draft.trim();
     if (!body || posting) return;
-    setPosting(true);
     try {
-      const { data } = await api.post<ApiPost>("/posts", { type: draftType, body });
-      setFeed((f) => [fromApi(data), ...(f || [])]);
+      await createPost({ type: draftType, body }).unwrap();
       setDraft("");
       setComposing(false);
     } catch {
       /* old server without /posts — keep the draft so nothing is lost */
-    } finally {
-      setPosting(false);
     }
-  };
-
-  const react = async (p: FeedPost) => {
-    setFeed(
-      (f) =>
-        f?.map((x) =>
-          x.id === p.id
-            ? { ...x, reacted: !x.reacted, reactions: x.reactions + (x.reacted ? -1 : 1) }
-            : x
-        ) || null
-    );
-    try {
-      await api.post(`/posts/${p.id}/react`);
-    } catch {
-      setFeed((f) => f?.map((x) => (x.id === p.id ? p : x)) || null); // rollback
-    }
-  };
-
-  const comment = async (p: FeedPost, body: string) => {
-    const { data } = await api.post(`/posts/${p.id}/comments`, { body });
-    setFeed(
-      (f) =>
-        f?.map((x) =>
-          x.id === p.id
-            ? {
-                ...x,
-                comments: data.commentCount,
-                topComment: {
-                  author: data.comment.author,
-                  initial: ((data.comment.author || "N")[0] || "N").toUpperCase(),
-                  body: data.comment.body,
-                  timeAgo: "just now",
-                },
-              }
-            : x
-        ) || null
-    );
   };
 
   const initial = ((user?.name || "O")[0] || "O").toString();
@@ -229,7 +169,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {feed === null ? (
+        {feed === null || postsLoading ? (
           <div className="card" style={{ color: "var(--fence)" }}>Loading your street…</div>
         ) : feed.length === 0 ? (
           <div className="card" style={{ color: "var(--fence)" }}>
@@ -237,7 +177,14 @@ export default function HomePage() {
           </div>
         ) : (
           feed.map((p) => (
-            <PostCard key={p.id} post={p} onReact={react} onComment={comment} />
+            <PostCard
+              key={p.id}
+              post={p}
+              onReact={(post) => reactPost({ id: post.id, wasReacted: !!post.reacted })}
+              onComment={async (post, body) => {
+                await commentPost({ id: post.id, body }).unwrap();
+              }}
+            />
           ))
         )}
       </main>

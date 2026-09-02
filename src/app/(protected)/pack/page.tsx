@@ -1,32 +1,30 @@
 "use client";
 
-/** Pack — Offleash v2 강아지 그리드. 기존 /discover 데이터·좋아요 로직 연결. */
+/** Pack — Offleash v2 강아지 그리드 (RTK Query).
+    discover 쿼리 캐시 + like/pass 뮤테이션(낙관적 덱 제거는 api slice에서). */
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
-import { useAuth } from "@/store/auth";
-import { adapt, type Card } from "@/lib/card";
+import { type Card } from "@/lib/card";
 import { Toast, type ToastData } from "@/components/ui";
 import MatchModal from "../discover/MatchModal";
 import SwipeLimit from "../discover/SwipeLimit";
 import { NearYouRail } from "@/components/feed";
 import { fmtDistance } from "@/lib/feed-demo";
+import { useDiscoverQuery, useLikeMutation } from "@/store/api";
 
 const SWIPE_LIMIT = 30; // matches backend FREE_DAILY_LIKE_LIMIT
 const SIZE_CHIP: Record<string, string> = { s: "Small", m: "Medium", l: "Large" };
 
 export default function PackPage() {
   const router = useRouter();
-  const { user } = useAuth();
 
-  const [deck, setDeck] = useState<Card[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: deck = [], isLoading } = useDiscoverQuery();
+  const [like, { isLoading: liking }] = useLikeMutation();
+
   const [size, setSize] = useState<string>("all");
-  const [actingId, setActingId] = useState<string | null>(null);
   const [match, setMatch] = useState<Card | null>(null);
   const [showLimit, setShowLimit] = useState(false);
-  const [used, setUsed] = useState(0);
   const [toast, setToast] = useState<ToastData>(null);
 
   useEffect(() => {
@@ -35,45 +33,15 @@ export default function PackPage() {
     return () => clearTimeout(id);
   }, [toast]);
 
-  const fetchDeck = useCallback(async () => {
-    setLoading(true);
+  const sayHi = async (card: Card) => {
+    if (liking) return;
     try {
-      const { data } = await api.get("/discover");
-      const me = (user as any)?._id;
-      setDeck(
-        (Array.isArray(data) ? data : [])
-          .filter((u: any) => String(u.id ?? u._id) !== String(me))
-          .map(adapt)
-      );
-    } catch {
-      setToast({ msg: "Couldn't load the pack. Pull to retry.", type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchDeck();
-  }, [fetchDeck]);
-
-  const like = async (card: Card) => {
-    if (actingId) return;
-    setActingId(card.id);
-    try {
-      const { data } = await api.post(`/matches/like/${card.id}`);
-      setUsed((u) => u + 1);
-      if (data?.matchId) setMatch(card);
+      const r = await like(card.id).unwrap();
+      if (r?.matchId) setMatch(card);
       else setToast({ msg: `You liked ${card.petName || card.ownerName}`, type: "ok" });
-      setDeck((d) => d.filter((c) => c.id !== card.id));
     } catch (e: any) {
-      if (e?.response?.status === 402) {
-        setShowLimit(true);
-        setUsed(SWIPE_LIMIT);
-      } else {
-        setToast({ msg: "Something went wrong. Please try again.", type: "error" });
-      }
-    } finally {
-      setActingId(null);
+      if (e?.status === 402) setShowLimit(true);
+      else setToast({ msg: "Something went wrong. Please try again.", type: "error" });
     }
   };
 
@@ -106,12 +74,12 @@ export default function PackPage() {
 
         {showLimit ? (
           <SwipeLimit
-            used={Math.min(used, SWIPE_LIMIT)}
+            used={SWIPE_LIMIT}
             limit={SWIPE_LIMIT}
             onLater={() => setShowLimit(false)}
             onUpgrade={() => router.push("/subscription")}
           />
-        ) : loading ? (
+        ) : isLoading ? (
           <div className="card" style={{ color: "var(--fence)" }}>Loading the pack…</div>
         ) : shown.length === 0 ? (
           <div className="card" style={{ color: "var(--fence)" }}>
@@ -145,8 +113,8 @@ export default function PackPage() {
                 <div className="dog-acts">
                   <button
                     className="btn btn-ball btn-sm"
-                    disabled={actingId === d.id}
-                    onClick={() => like(d)}
+                    disabled={liking}
+                    onClick={() => sayHi(d)}
                     style={{ flex: 1, justifyContent: "center" }}
                   >
                     Say hi 🐾
