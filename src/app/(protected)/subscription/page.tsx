@@ -60,9 +60,18 @@ export default function SubscriptionPage() {
   const subscribe = async () => {
     setBusy(true);
     try {
-      const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode });
-      if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "Payments are coming soon.", type: "error" });
+      const { data } = await api.post<{ url?: string; ok?: boolean; demo?: boolean }>(
+        "/billing/checkout",
+        { planCode }
+      );
+      if (data?.url) {
+        window.location.href = data.url; // Stripe checkout
+      } else if (data?.ok) {
+        setPremium(true);
+        setToast({ msg: "Welcome to Premium! 🎾 All benefits are active.", type: "ok" });
+      } else {
+        setToast({ msg: "Payments are coming soon.", type: "error" });
+      }
     } catch (e: any) {
       setToast({
         msg: e?.response?.data?.msg || "Payments are coming soon.",

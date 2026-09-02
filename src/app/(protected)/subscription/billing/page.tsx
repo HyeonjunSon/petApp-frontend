@@ -49,14 +49,45 @@ export default function BillingPortalPage() {
     return () => clearTimeout(id);
   }, [toast]);
 
+  const refresh = () =>
+    api.get("/billing/me").then(({ data }) => {
+      const active = data?.active || data?.subscription?.status === "active";
+      setPremium(!!active);
+      setNextDate(data?.subscription?.currentPeriodEnd || null);
+    }).catch(() => {});
+
   const pay = async () => {
     setBusy(true);
     try {
-      const { data } = await api.post<{ url?: string }>("/billing/checkout", { planCode: "premium_monthly" });
-      if (data?.url) window.location.href = data.url;
-      else setToast({ msg: "Payments are coming soon.", type: "error" });
+      const { data } = await api.post<{ url?: string; ok?: boolean }>("/billing/checkout", { planCode: "premium_monthly" });
+      if (data?.url) {
+        window.location.href = data.url; // Stripe checkout
+      } else if (data?.ok) {
+        setToast({ msg: "Payment complete — Premium is active! 🎾", type: "ok" });
+        refresh();
+      } else {
+        setToast({ msg: "Payments are coming soon.", type: "error" });
+      }
     } catch {
       setToast({ msg: "Payments are coming soon.", type: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancel = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.post("/billing/cancel");
+      setToast({
+        msg: data?.currentPeriodEnd
+          ? `Canceled — benefits stay until ${fmtDate(data.currentPeriodEnd)}.`
+          : "Subscription canceled.",
+        type: "ok",
+      });
+      refresh();
+    } catch (e: any) {
+      setToast({ msg: e?.response?.data?.msg || "Couldn't cancel. Please try again.", type: "error" });
     } finally {
       setBusy(false);
     }
@@ -133,11 +164,7 @@ export default function BillingPortalPage() {
           <div style={{ fontSize: "var(--fs-body-sm)", color: "var(--text-secondary)" }}>
             Your benefits stay active until the expiration date even after canceling.
           </div>
-          <Button
-            variant="dangerGhost"
-            disabled={!premium}
-            onClick={() => setToast({ msg: "Subscription cancellation is coming soon.", type: "error" })}
-          >
+          <Button variant="dangerGhost" disabled={!premium || busy} onClick={cancel}>
             Cancel subscription
           </Button>
         </div>
