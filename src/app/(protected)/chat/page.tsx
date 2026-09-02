@@ -77,12 +77,14 @@ const inviteWhenKo = (date: string, time: string) => {
   return `${p.day} · ${p.clock}`;
 };
 
-/** Wireframe naming: "Bori & Minji" */
-const convoName = (match: Match, myId: string) => {
+/** Pet-first naming — the dog is the headline, the human is the caption. */
+const convoParts = (match: Match, myId: string) => {
   const peer = peerOf(match, myId);
-  const pet = pickPet(peer);
-  if (pet?.name && peer?.name) return `${pet.name} & ${peer.name}`;
-  return pet?.name || peer?.name || "New friend";
+  const petName = pickPet(peer)?.name;
+  return {
+    title: petName || peer?.name || "New friend",
+    owner: petName ? peer?.name : undefined,
+  };
 };
 
 const iconBtn: React.CSSProperties = {
@@ -145,18 +147,23 @@ export default function ChatPage() {
 
   const pet = c.partnerPet;
   const partnerPhoto = toAbs(pet?.photos?.[0]?.url) || c.partner?.faceUrl;
-  const partnerInitial = (pet?.name || c.partner?.name || "?")[0];
+  const partnerInitial = ((pet?.name || c.partner?.name || "?")[0] || "?").toUpperCase();
   const lastAt = c.messages[c.messages.length - 1]?.createdAt;
-  const roomTitle = c.matches.find((m) => m._id === c.current)
-    ? convoName(c.matches.find((m) => m._id === c.current)!, c.myId)
-    : "";
+  const roomMatch = c.matches.find((m) => m._id === c.current);
+  const roomParts = roomMatch
+    ? convoParts(roomMatch, c.myId)
+    : { title: "", owner: undefined as string | undefined };
 
-  /* Message rows + day separators */
+  /* Message rows — grouped like a messenger:
+     · avatar only on the first message of a partner group
+     · timestamp only on the last message of a minute-group
+     · no sender label (it's a 1:1 room — the header already says who) */
   const rows: React.ReactNode[] = [];
   let lastDay = "";
   c.messages.forEach((m, i) => {
     const day = (m.createdAt || "").slice(0, 10);
-    if (day && day !== lastDay) {
+    const dayBoundary = !!day && day !== lastDay;
+    if (dayBoundary) {
       lastDay = day;
       rows.push(
         <span key={`sep-${day}`} className="pill pd-day-sep">
@@ -165,42 +172,45 @@ export default function ChatPage() {
       );
     }
     const mine = m.from === c.myId;
+    const prev = c.messages[i - 1];
+    const next = c.messages[i + 1];
+    const startsGroup = dayBoundary || !prev || prev.from !== m.from;
+    const endsGroup =
+      !next ||
+      next.from !== m.from ||
+      timeKo(next.createdAt) !== timeKo(m.createdAt) ||
+      (next.createdAt || "").slice(0, 10) !== day;
+
     rows.push(
-      <div key={m._id || i} className={mine ? "pd-mrow me" : "pd-mrow"}>
-        {!mine && (
-          <Avatar
-            src={partnerPhoto}
-            fallbackText={partnerInitial}
-            size={32}
-            style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 13, alignSelf: "flex-start" }}
-          />
+      <div
+        key={m._id || i}
+        className={mine ? "pd-mrow me" : "pd-mrow"}
+        style={{ marginTop: startsGroup && !dayBoundary ? 10 : 0 }}
+      >
+        {!mine &&
+          (startsGroup ? (
+            <Avatar
+              src={partnerPhoto}
+              fallbackText={partnerInitial}
+              size={32}
+              style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 13, alignSelf: "flex-start" }}
+            />
+          ) : (
+            <span style={{ width: 32, flexShrink: 0 }} aria-hidden />
+          ))}
+        <div className={mine ? "pd-bubble me" : "pd-bubble them"}>{m.text}</div>
+        {endsGroup && (
+          <time
+            style={{
+              fontSize: "var(--fs-nano)",
+              color: "var(--fence)",
+              whiteSpace: "nowrap",
+              marginBottom: 2,
+            }}
+          >
+            {timeKo(m.createdAt)}
+          </time>
         )}
-        <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {!mine && (
-            <span
-              style={{
-                fontSize: "var(--fs-micro)",
-                color: "var(--fence)",
-                marginLeft: 2,
-              }}
-            >
-              {c.partner?.name || pet?.name || ""}
-            </span>
-          )}
-          <div className={mine ? "pd-bubble me" : "pd-bubble them"}>
-            {m.text}
-          </div>
-        </div>
-        <time
-          style={{
-            fontSize: "var(--fs-nano)",
-            color: "var(--fence)",
-            whiteSpace: "nowrap",
-            marginBottom: 2,
-          }}
-        >
-          {timeKo(m.createdAt)}
-        </time>
       </div>
     );
   });
@@ -358,6 +368,7 @@ export default function ChatPage() {
             c.matches.map((m) => {
               const peer = peerOf(m, c.myId);
               const mPet = pickPet(peer);
+              const parts = convoParts(m, c.myId);
               const on = m._id === c.current;
               return (
                 <button
@@ -379,21 +390,26 @@ export default function ChatPage() {
                 >
                   <Avatar
                     src={toAbs(mPet?.photos?.[0]?.url) || peer?.faceUrl}
-                    fallbackText={(mPet?.name || peer?.name || "?")[0]}
+                    fallbackText={((mPet?.name || peer?.name || "?")[0] || "?").toUpperCase()}
                     size={46}
                     style={{ background: "var(--ink)", color: "var(--paper)", fontSize: 19 }}
                   />
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <b
+                    <span
+                      className="pd-line1"
                       style={{
                         display: "block",
                         fontSize: "var(--fs-body-sm)",
-                        fontWeight: 600,
                         color: "var(--ink)",
                       }}
                     >
-                      {convoName(m, c.myId)}
-                    </b>
+                      <b style={{ fontWeight: 700 }}>{parts.title}</b>
+                      {parts.owner && (
+                        <span style={{ color: "var(--fence)", fontWeight: 400 }}>
+                          {" "}· with {parts.owner}
+                        </span>
+                      )}
+                    </span>
                     <span
                       style={{
                         display: "block",
@@ -500,7 +516,7 @@ export default function ChatPage() {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {roomTitle}
+                    {roomParts.title}
                   </b>
                   <span
                     style={{
@@ -508,8 +524,7 @@ export default function ChatPage() {
                       color: "var(--fence)",
                     }}
                   >
-                    {lastAt ? `Last message ${listTimeKo(lastAt)}` : "New conversation"}
-                    {pet?.name ? ` · ${pet.name}` : ""}
+                    {roomParts.owner ? `with ${roomParts.owner}` : "New conversation"}
                   </span>
                 </div>
                 <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
